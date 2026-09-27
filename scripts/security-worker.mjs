@@ -8,6 +8,7 @@ import worker, {
   MAX_BODY_BYTES,
   consumeRateLimit,
   isHomeChefMeal,
+  isTheMealDbMeal,
   originDecision,
   resetRateLimits,
   sanitizeMatchPrefs,
@@ -151,6 +152,8 @@ assert.equal(limited.headers.get("retry-after"), String(limitedBody.retryAfterSe
 
 assert.equal(isHomeChefMeal({ source: "Home Chef", url: "https://www.homechef.com/meals/x" }, "hc-1"), true);
 assert.equal(isHomeChefMeal({ source: "HelloFresh", url: "https://www.hellofresh.com/recipes/x" }, "hf-1"), false);
+assert.equal(isTheMealDbMeal({ source: "TheMealDB", url: "https://www.themealdb.com/meal/52772", id: "tmdb-52772-teriyaki" }, "tmdb-52772-teriyaki"), true);
+assert.equal(isTheMealDbMeal({ source: "Blue Apron", url: "https://www.blueapron.com/recipes/x" }, "ba-1"), false);
 
 const headerBlob = [
   health.headers.get("access-control-allow-origin"),

@@ -4,13 +4,12 @@
  * POST /match  { beef, chicken, salmon, vegetarian, healthyOnly, servings, avoid[], customAvoid[] }
  * GET  /health
  *
- * Fetches HelloFresh, Blue Apron, and TheMealDB public recipe data.
+ * Fetches HelloFresh and Blue Apron public recipe data.
  * Returns structured recipes (paraphrased kit steps) + proposed week slots.
  */
 
 import { fetchHelloFreshPool } from "./hf.js";
 import { fetchBlueApronPool } from "./ba.js";
-import { fetchTheMealDbPool } from "./tmdb.js";
 import { normalizeHelloFreshItem, normalizeJsonLdRecipe, cheapScoreFor } from "./normalize.js";
 import { buildPlanFromCandidates } from "./plan.js";
 
@@ -179,15 +178,22 @@ export function sanitizeMatchPrefs(raw) {
   return { prefs };
 }
 
-export function isHomeChefMeal(m, id) {
-  const blob = [m && m.source, m && m.url, m && m.fetchedFrom, m && m.id, id]
+function sourceBlob(m, id) {
+  return [m && m.source, m && m.url, m && m.fetchedFrom, m && m.id, id]
     .filter(Boolean)
     .join(" ");
-  return /home\s*chef|homechef\.com/i.test(blob);
+}
+
+export function isHomeChefMeal(m, id) {
+  return /home\s*chef|homechef\.com/i.test(sourceBlob(m, id));
+}
+
+export function isTheMealDbMeal(m, id) {
+  return /themealdb|the\s*meal\s*db|(?:^|[\s/])tmdb-/i.test(sourceBlob(m, id));
 }
 
 function acceptMeal(candidates, meal) {
-  if (!meal || isHomeChefMeal(meal, meal.id)) return;
+  if (!meal || isHomeChefMeal(meal, meal.id) || isTheMealDbMeal(meal, meal.id)) return;
   if (meal.cheapScore == null) meal.cheapScore = cheapScoreFor(meal.ingredients);
   if (!candidates[meal.id]) candidates[meal.id] = meal;
 }
@@ -232,16 +238,8 @@ async function handleMatch(prefs, env) {
     errors.push("Blue Apron: " + (err.message || String(err)));
   }
 
-  // --- TheMealDB public filter + lookup ---
-  try {
-    const tmdb = await fetchTheMealDbPool(proteinsNeeded);
-    for (const norm of tmdb) acceptMeal(candidates, norm);
-  } catch (err) {
-    errors.push("TheMealDB: " + (err.message || String(err)));
-  }
-
   for (const id of Object.keys(candidates)) {
-    if (isHomeChefMeal(candidates[id], id)) delete candidates[id];
+    if (isHomeChefMeal(candidates[id], id) || isTheMealDbMeal(candidates[id], id)) delete candidates[id];
   }
 
   const count = Object.keys(candidates).length;
@@ -266,7 +264,6 @@ async function handleMatch(prefs, env) {
     providerNotes: {
       helloFresh: "public recipe search",
       blueApron: "public recipe pages",
-      themealDB: "public recipe API",
       cheapBias: "When cheapBias=true, prefer higher cheapScore (staples / shorter lists; not store prices)",
       copyright: "Steps paraphrased; temps/times retained",
     },

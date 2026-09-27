@@ -2,7 +2,7 @@
   "name": "weekly-meal-plan-live",
   "private": true,
   "version": "1.0.0",
-  "description": "Cloudflare Worker: live HelloFresh, Blue Apron, and TheMealDB recipe match for the weekly meal planner",
+  "description": "Cloudflare Worker: live HelloFresh and Blue Apron recipe match for the weekly meal planner",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
