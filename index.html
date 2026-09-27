@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>This week's dinners</title>
+  <title>Weekly Meal Planner</title>
   <style>
     :root {
       --bg: #f3f6f2;
@@ -15,6 +15,9 @@
       --border: #d9e3db;
       --warn: #8a5a2b;
       --warn-soft: #f5eadc;
+      --beef: #c45c26;
+      --chicken: #2f6b4f;
+      --salmon: #38668c;
     }
     * { box-sizing: border-box; }
     body {
@@ -29,7 +32,7 @@
       min-height: 100vh;
     }
     main { max-width: 640px; margin: 0 auto; padding: 28px 18px 56px; }
-    .week {
+    .badge {
       display: inline-block;
       background: var(--accent-soft);
       color: var(--accent);
@@ -43,37 +46,80 @@
     }
     header h1 { font-size: 1.55rem; margin: 0 0 6px; letter-spacing: -0.02em; }
     header p { margin: 0 0 18px; color: var(--muted); font-size: 0.98rem; }
-    .bias {
-      background: var(--warn-soft);
-      color: var(--warn);
-      border-radius: 12px;
-      padding: 10px 12px;
-      font-size: 0.88rem;
-      margin-bottom: 16px;
-    }
-    #slots { display: grid; gap: 12px; }
-    .meal {
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .card {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 16px;
-      padding: 14px;
+      padding: 16px;
+      margin-bottom: 14px;
       box-shadow: 0 1px 0 rgba(26,34,28,0.03);
+    }
+    .card h2 {
+      font-size: 0.95rem; margin: 0 0 12px;
+      color: var(--accent); letter-spacing: 0.02em;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .row:last-child { margin-bottom: 0; }
+    .row label { font-weight: 600; font-size: 0.95rem; }
+    .row .hint { display: block; font-weight: 400; color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
+    select, input[type="number"], input[type="text"] {
+      font: inherit; padding: 8px 12px; border-radius: 10px;
+      border: 1px solid var(--border); background: #fff; min-width: 88px;
+      color: var(--ink);
+    }
+    input[type="number"] { width: 72px; text-align: center; }
+    .seg {
+      display: inline-flex; border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+    }
+    .seg button {
+      appearance: none; border: none; background: #fff; color: var(--muted);
+      padding: 10px 14px; font: inherit; font-weight: 650; cursor: pointer;
+      margin: 0; border-radius: 0;
+    }
+    .seg button.on { background: var(--accent); color: #fff; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      appearance: none; border: 1px solid var(--border); background: #fbfcf9;
+      border-radius: 999px; padding: 8px 12px; font: inherit; font-size: 0.88rem;
+      cursor: pointer; color: var(--ink);
+    }
+    .chip.on { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); font-weight: 650; }
+    .custom-avoid { display: flex; gap: 8px; margin-top: 10px; }
+    .custom-avoid input { flex: 1; min-width: 0; }
+    .actions { margin-top: 16px; display: grid; gap: 10px; }
+    button.primary, button.secondary, button.ghost {
+      appearance: none; border-radius: 12px; padding: 14px 16px;
+      font-size: 1rem; font-weight: 650; cursor: pointer; border: none;
+    }
+    button.primary { background: var(--accent); color: white; }
+    button.secondary {
+      background: transparent; color: var(--muted); border: 1px solid var(--border);
+    }
+    button.ghost {
+      background: transparent; color: var(--accent); border: none;
+      padding: 8px 0; font-size: 0.9rem; text-align: left;
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .summary-bar {
+      background: var(--accent-soft); border-radius: 12px; padding: 10px 12px;
+      font-size: 0.88rem; color: var(--accent); margin-bottom: 14px;
+    }
+    #slots { display: grid; gap: 12px; }
+    .meal {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 14px;
       transition: opacity 0.15s, border-color 0.15s;
     }
-    .meal.empty { opacity: 1; border-style: dashed; border-color: var(--warn); background: #fffaf3; }
+    .meal.empty { border-style: dashed; border-color: var(--warn); background: #fffaf3; }
     .meal.show-swap { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
-    .swap-btn {
-      margin-top: 8px;
-      appearance: none;
-      border: 1px solid var(--accent);
-      background: var(--accent-soft);
-      color: var(--accent);
-      border-radius: 10px;
-      padding: 8px 12px;
-      font-size: 0.88rem;
-      font-weight: 650;
-      cursor: pointer;
-    }
     .meal-top { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; }
     .meal input[type="checkbox"] {
       width: 22px; height: 22px; margin-top: 2px; accent-color: var(--accent);
@@ -82,15 +128,29 @@
       font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
       letter-spacing: 0.05em; color: var(--accent); margin-bottom: 2px;
     }
+    .day .p-beef { color: var(--beef); }
+    .day .p-chicken { color: var(--chicken); }
+    .day .p-salmon { color: var(--salmon); }
     .name { font-weight: 650; font-size: 1.02rem; margin-bottom: 4px; }
     .meta { color: var(--muted); font-size: 0.88rem; }
     .pitch { margin-top: 6px; font-size: 0.86rem; color: var(--ink); }
+    .tags { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+    .tag {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.03em; padding: 2px 8px; border-radius: 999px;
+      background: var(--accent-soft); color: var(--accent);
+    }
+    .tag.comfort { background: var(--warn-soft); color: var(--warn); }
     .link { font-size: 0.82rem; margin-top: 4px; }
     .link a { color: var(--accent); }
+    .swap-btn {
+      margin-top: 8px; appearance: none; border: 1px solid var(--accent);
+      background: var(--accent-soft); color: var(--accent);
+      border-radius: 10px; padding: 8px 12px; font-size: 0.88rem;
+      font-weight: 650; cursor: pointer;
+    }
     .swap-panel {
-      display: none;
-      margin-top: 12px;
-      padding-top: 12px;
+      display: none; margin-top: 12px; padding-top: 12px;
       border-top: 1px dashed var(--border);
     }
     .meal.show-swap .swap-panel { display: block; }
@@ -99,18 +159,9 @@
       margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em;
     }
     .alt {
-      display: block;
-      width: 100%;
-      text-align: left;
-      font: inherit;
-      color: inherit;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 10px 12px;
-      margin-bottom: 8px;
-      background: #fbfcf9;
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
+      display: block; width: 100%; text-align: left; font: inherit; color: inherit;
+      border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px;
+      margin-bottom: 8px; background: #fbfcf9; cursor: pointer;
     }
     .alt:hover { border-color: var(--accent); background: var(--accent-soft); }
     .alt .aname { font-weight: 650; font-size: 0.95rem; }
@@ -120,14 +171,9 @@
       color: var(--muted); font-size: 0.85rem; cursor: pointer;
       text-decoration: underline; padding: 4px 0;
     }
-    .actions { margin-top: 14px; display: grid; gap: 10px; }
-    button {
-      appearance: none; border: none; border-radius: 12px;
-      padding: 14px 16px; font-size: 1rem; font-weight: 650; cursor: pointer;
-    }
-    button.primary { background: var(--accent); color: white; }
-    button.secondary {
-      background: transparent; color: var(--muted); border: 1px solid var(--border);
+    .warn-box {
+      background: var(--warn-soft); color: var(--warn);
+      border-radius: 12px; padding: 10px 12px; font-size: 0.88rem; margin-bottom: 14px;
     }
     .result {
       display: none; margin-top: 18px; background: #eaf5ef;
@@ -136,564 +182,417 @@
     }
     .result.show { display: block; }
     footer { margin-top: 22px; color: var(--muted); font-size: 0.82rem; }
-
-    /* Printable / PDF sheet (off-screen until print/PDF) */
+    .total-hint { font-size: 0.85rem; color: var(--muted); margin-top: -6px; margin-bottom: 12px; }
     #print-sheet {
-      position: fixed;
-      left: 0;
-      top: 0;
-      width: 8.5in;
-      max-width: 100%;
-      background: white;
-      color: #111;
-      font-family: Georgia, "Times New Roman", serif;
-      padding: 28px;
-      line-height: 1.4;
-      z-index: 2147483646;
-      box-sizing: border-box;
-      visibility: hidden;
-      pointer-events: none;
+      position: fixed; left: 0; top: 0; width: 8.5in; max-width: 100%;
+      background: white; color: #111; font-family: Georgia, serif;
+      padding: 28px; line-height: 1.4; z-index: 2147483646;
+      box-sizing: border-box; visibility: hidden; pointer-events: none;
     }
-    #print-sheet.capturing {
-      visibility: visible;
-    }
-    #print-sheet h1 { font-size: 1.4rem; margin: 0 0 4px; }
-    #print-sheet .sub { color: #555; margin-bottom: 18px; font-size: 0.95rem; }
-    #print-sheet h2 {
-      font-size: 1.1rem; margin: 18px 0 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px;
-    }
-    #print-sheet h3 { font-size: 1rem; margin: 12px 0 4px; }
-    #print-sheet ul { margin: 4px 0 8px 18px; padding: 0; }
-    #print-sheet ol { margin: 4px 0 8px 18px; padding: 0; }
-    #print-sheet .meal-block { margin-bottom: 14px; page-break-inside: avoid; }
-    #print-sheet .empty-note { color: #666; font-style: italic; }
     @media print {
       body > main { display: none !important; }
-      #print-sheet {
-        position: static !important; left: auto !important; width: auto !important;
-        padding: 0 !important;
-      }
+      #print-sheet { position: static !important; visibility: visible !important; padding: 0 !important; }
     }
   </style>
 </head>
 <body>
   <main>
-    <header>
-      <div class="week">Week of Sep 27 · Healthier picks</div>
-      <h1>This week's dinners</h1>
-      <p>Tap “Swap this meal” (or uncheck) to pick a healthier same-protein alternate. Then submit to download a PDF of recipes and a grocery list.</p>
-    </header>
-    <div class="bias">Bias: lean proteins · lots of vegetables · grilled / baked / sautéed · lighter sauces</div>
-    <div id="slots"></div>
-    <div class="actions">
-      <button type="button" class="primary" id="submit">Submit picks</button>
-      <button type="button" class="secondary" id="selectAll">Reset to proposed</button>
-    </div>
-    <div class="result" id="result" role="status" aria-live="polite"></div>
-    <footer>Picks stay on this device. Submit downloads a printable PDF (recipes + grocery list). No account required.</footer>
+    <!-- PREFS -->
+    <section id="screen-prefs" class="screen active">
+      <header>
+        <div class="badge">Public planner · no account</div>
+        <h1>Plan your week of dinners</h1>
+        <p>Set protein counts, healthy bias, servings, and ingredients to avoid. We’ll propose matching HelloFresh / Blue Apron–style recipes you can swap before downloading a PDF.</p>
+      </header>
+
+      <div class="card">
+        <h2>How many dinners of each?</h2>
+        <div class="row">
+          <label>Beef <span class="hint">Steaks, bowls, fajitas…</span></label>
+          <input type="number" id="pref-beef" min="0" max="7" value="2" />
+        </div>
+        <div class="row">
+          <label>Chicken <span class="hint">Cutlets, salads, stir-fries…</span></label>
+          <input type="number" id="pref-chicken" min="0" max="7" value="2" />
+        </div>
+        <div class="row">
+          <label>Salmon <span class="hint">Roasted, glazed, tacos…</span></label>
+          <input type="number" id="pref-salmon" min="0" max="7" value="1" />
+        </div>
+        <p class="total-hint" id="pref-total">Total dinners: 5</p>
+      </div>
+
+      <div class="card">
+        <h2>Style</h2>
+        <div class="row">
+          <label>Healthy bias <span class="hint">Lean proteins, veggies, lighter sauces</span></label>
+          <div class="seg" id="pref-healthy" role="group" aria-label="Healthy bias">
+            <button type="button" data-val="healthy" class="on">Healthier</button>
+            <button type="button" data-val="any">Anything goes</button>
+          </div>
+        </div>
+        <div class="row">
+          <label>Servings <span class="hint">Ingredients scale for 4</span></label>
+          <div class="seg" id="pref-servings" role="group" aria-label="Servings">
+            <button type="button" data-val="2" class="on">2</button>
+            <button type="button" data-val="4">4</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Avoid these</h2>
+        <p style="margin:0 0 10px;color:var(--muted);font-size:0.88rem;">Tap to exclude recipes that use these ingredients or tags.</p>
+        <div class="chips" id="avoid-chips"></div>
+        <div class="custom-avoid">
+          <input type="text" id="custom-avoid" placeholder="Add custom ingredient (e.g. cilantro)" />
+          <button type="button" class="secondary" id="add-avoid" style="padding:8px 12px;width:auto;">Add</button>
+        </div>
+        <div class="chips" id="custom-chips" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="primary" id="btn-find">Find matching recipes</button>
+      </div>
+      <div class="warn-box" id="prefs-warn" style="display:none;margin-top:14px;"></div>
+      <footer>Picks stay on this device. No names or emails collected. Submit downloads a printable PDF.</footer>
+    </section>
+
+    <!-- PICKER -->
+    <section id="screen-picker" class="screen">
+      <header>
+        <div class="badge" id="picker-badge">Your picks</div>
+        <h1>This week’s dinners</h1>
+        <p>Uncheck or tap Swap for same-protein alternates. Then submit for a multi-page PDF (menu, grocery list, recipes).</p>
+      </header>
+      <div class="summary-bar" id="picker-summary"></div>
+      <div id="picker-warn" class="warn-box" style="display:none;"></div>
+      <div id="slots"></div>
+      <div class="actions">
+        <button type="button" class="primary" id="submit">Download meal-plan PDF</button>
+        <button type="button" class="secondary" id="reset-picks">Reset to proposed</button>
+        <button type="button" class="ghost" id="back-prefs">← Change preferences</button>
+      </div>
+      <div class="result" id="result" role="status" aria-live="polite"></div>
+      <footer>PDF is generated in your browser with jsPDF (text, not screenshots).</footer>
+    </section>
   </main>
 
   <div id="print-sheet" aria-hidden="true"></div>
 
-  <!-- jsPDF for reliable text PDF (no html2canvas blank pages) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script>
-const DATA = {
-  "weekOf": "2026-09-27",
-  "timezone": "America/Boise",
-  "bias": "healthier — lean proteins, vegetables, grilled/baked/sautéed over fried/creamy-heavy",
-  "proteinMix": {
-    "beef": 2,
-    "chicken": 2,
-    "salmon": 1
-  },
-  "slots": [
-    {
-      "day": "Mon",
-      "protein": "beef",
-      "primary": "warm-steak-kale",
-      "alternates": [
-        "sesame-ginger-steak",
-        "steak-nicoise"
-      ]
-    },
-    {
-      "day": "Tue",
-      "protein": "chicken",
-      "primary": "tuscan-chicken-succotash",
-      "alternates": [
-        "chicken-veggie-feta",
-        "spiced-chicken-yogurt"
-      ]
-    },
-    {
-      "day": "Wed",
-      "protein": "chicken",
-      "primary": "chicken-veggie-feta",
-      "alternates": [
-        "spiced-chicken-yogurt",
-        "tuscan-chicken-succotash"
-      ]
-    },
-    {
-      "day": "Thu",
-      "protein": "beef",
-      "primary": "italian-steak-broccoli",
-      "alternates": [
-        "warm-steak-kale",
-        "sesame-ginger-steak"
-      ]
-    },
-    {
-      "day": "Fri",
-      "protein": "salmon",
-      "primary": "classic-roasted-salmon",
-      "alternates": [
-        "soy-glazed-salmon-kale",
-        "cajun-sheet-salmon"
-      ]
-    }
-  ],
-  "candidates": {
-    "warm-steak-kale": {
-      "id": "warm-steak-kale",
-      "name": "Warm Steak, Kale & Sweet Potato Salad",
-      "shortName": "Warm Steak Kale Salad",
-      "source": "HelloFresh",
-      "url": "https://www.hellofresh.com/recipes/warm-steak-kale-and-sweet-potato-salad-68ac43b582758da705ef5797",
-      "protein": "beef",
-      "time": "~15–20 min",
-      "pitch": "Seared garlic-thyme steak over massaged kale with browned sweet potato — high protein, veggie-forward, light balsamic finish.",
-      "ingredients": [
-        "10 oz ranch steak",
-        "1 sweet potato",
-        "4 oz kale",
-        "2 tsp garlic powder",
-        "1 tsp dried thyme",
-        "3 oz creamy balsamic dressing",
-        "3 Tbsp Parmesan cheese",
-        "½ oz pecans",
-        "1 oz dried cranberries",
-        "2 Tbsp butter (from pantry)",
-        "Olive oil, cooking oil, salt, pepper"
-      ],
-      "steps": [
-        "Wash and dry produce. Dice sweet potato into ½-inch pieces. In a large microwave-safe bowl, toss sweet potato with half the garlic powder, salt, and pepper. Add 2 Tbsp butter, cover tightly with plastic wrap, and microwave until tender and steaming, 6–7 minutes. Remove wrap and stir.",
-        "Meanwhile, strip any large stems from kale and chop leaves if desired. Place kale in a second large bowl. Massage with a large drizzle of olive oil (like kneading dough) until leaves soften and darken, 1–2 minutes — this keeps kale tender, not fibrous.",
-        "Pat steak dry with paper towels; thinly slice against the grain. Heat a drizzle of cooking oil in a large pan over medium-high heat. Add steak; season with half the dried thyme (all for 4 servings), remaining garlic powder, salt, and pepper. Cook, stirring occasionally, to desired doneness, 3–6 minutes (beef is done at 145°F). Transfer steak to a plate. Wipe out pan and let cool slightly.",
-        "Return pan to high heat; add microwaved sweet potato. Cook, stirring constantly, until edges are browned, 30–60 seconds. Turn off heat; tip sweet potato into the bowl with kale.",
-        "Reserve 4 tsp balsamic dressing in a small bowl for finishing. Add Parmesan to kale and sweet potato; drizzle with as much remaining dressing as you like and toss. Divide salad between plates, top with steak, drizzle reserved dressing, and sprinkle with pecans and cranberries. Serve."
-      ],
-      "servings": 2,
-      "calories": 720,
-      "spiceLevel": "Mild",
-      "difficulty": "Easy",
-      "utensils": [
-        "Large microwave-safe bowl",
-        "Plastic wrap",
-        "Paper towels",
-        "Large pan",
-        "Small bowl"
-      ]
-    },
-    "sesame-ginger-steak": {
-      "id": "sesame-ginger-steak",
-      "name": "Sesame Ginger Steak Salad",
-      "shortName": "Sesame Ginger Steak Salad",
-      "source": "HelloFresh",
-      "url": "https://www.hellofresh.com/recipes/sesame-ginger-steak-salad-6930a6179351d52b5c264052",
-      "protein": "beef",
-      "time": "~15 min",
-      "pitch": "Quick seared steak over mixed greens with cucumber and tomato — carb-conscious, no heavy cream sauces.",
-      "ingredients": [
-        "10 oz ranch steak",
-        "4 oz mixed greens",
-        "1 mini cucumber",
-        "4 oz grape tomatoes",
-        "1 unit sesame ginger crunch seasoning",
-        "2 oz garlic-ginger scallion paste",
-        "2 oz sweet Thai chili sauce",
-        "10 tsp rice wine vinegar",
-        "1 lime",
-        "1 unit crispy fried onions",
-        "½ oz peanuts",
-        "2 Tbsp olive oil + cooking oil, salt, pepper"
-      ],
-      "steps": [
-        "Wash and dry produce. Quarter lime. Trim and thinly slice cucumber into rounds. Halve grape tomatoes.",
-        "Pat steak dry; thinly slice crosswise. Toss in a medium bowl with sesame ginger crunch seasoning, a pinch of salt, and pepper. Heat a drizzle of oil in a large nonstick pan over medium-high heat. Add steak and cook, stirring occasionally, to desired doneness, 3–5 minutes. In the last minute, stir in garlic-ginger scallion paste, half the sweet Thai chili sauce, and juice from 1 lime wedge (2 wedges for 4 servings).",
-        "Meanwhile, whisk rice wine vinegar, remaining chili sauce, 2 Tbsp olive oil, and juice from 1 lime wedge (use 4 Tbsp oil and 2 wedges for 4) in a small bowl for the dressing.",
-        "In a large bowl, toss mixed greens, cucumber, and tomatoes with as much dressing as you like; taste and season with salt and pepper. Divide salad into shallow bowls, top with glazed steak, and garnish with crispy fried onions and peanuts. Serve with remaining lime wedges."
-      ],
-      "servings": 2,
-      "calories": 630,
-      "spiceLevel": "Mild–Medium",
-      "difficulty": "Easy",
-      "utensils": [
-        "Medium bowl",
-        "Small bowl",
-        "Large nonstick pan",
-        "Large bowl",
-        "Whisk",
-        "Paper towels"
-      ]
-    },
-    "steak-nicoise": {
-      "id": "steak-nicoise",
-      "name": "Steak Niçoise Salad",
-      "shortName": "Steak Niçoise Salad",
-      "source": "HelloFresh",
-      "url": "https://www.hellofresh.com/recipes/steak-nicoise-salad-68dabd589ed4d679418a8509",
-      "protein": "beef",
-      "time": "~20–25 min",
-      "pitch": "Provençal steak salad with green beans, potatoes, tomatoes, and olives — lighter bistro plate, vinaigrette over creamy sauces.",
-      "ingredients": [
-        "10 oz ranch steak",
-        "1 head baby lettuce",
-        "12 oz potatoes",
-        "8 oz green beans",
-        "4 oz heirloom grape tomatoes",
-        "1 Tbsp herbes de Provence",
-        "2 Tbsp garlic herb butter",
-        "2 tsp Dijon mustard",
-        "5 tsp white wine vinegar",
-        "1 unit green olives",
-        "1 demi-baguette (optional garlic bread)",
-        "2 Tbsp olive oil + cooking oil, salt, pepper"
-      ],
-      "steps": [
-        "Wash and dry produce. Cut potatoes into 1-inch pieces. Place potatoes and half the garlic herb butter in a medium microwave-safe bowl; season with salt and pepper. Cover with plastic wrap and microwave until tender, 6–7 minutes. Remove wrap.",
-        "Meanwhile, trim green beans if needed and halve widthwise. Trim root end from lettuce; chop leaves into bite-size pieces. Roughly chop olives. Place green beans in a second microwave-safe bowl, cover tightly, and microwave until tender, 2–3 minutes.",
-        "Pat steak dry; season with half the herbes de Provence (rest goes in the dressing), salt, and pepper. Heat a drizzle of oil in a large pan over medium-high heat. Sear steak 3–6 minutes per side to desired doneness (145°F). Transfer to a cutting board to rest.",
-        "Optional: Halve and toast baguette; spread cut sides with remaining garlic herb butter; cut each piece on a diagonal. In a large bowl, whisk white wine vinegar, Dijon, remaining herbes de Provence, 1 Tbsp olive oil (2 Tbsp for 4), salt, and pepper.",
-        "Add lettuce, potatoes, green beans, tomatoes, and olives to the dressing; toss to coat. Thinly slice steak against the grain. Divide salad between plates, top with steak, and serve garlic bread alongside if using."
-      ],
-      "servings": 2,
-      "calories": 720,
-      "spiceLevel": "Mild",
-      "difficulty": "Easy",
-      "utensils": [
-        "Medium microwave-safe bowls",
-        "Plastic wrap",
-        "Large pan",
-        "Whisk",
-        "Large bowl",
-        "Paper towels"
-      ]
-    },
-    "italian-steak-broccoli": {
-      "id": "italian-steak-broccoli",
-      "name": "Italian-Style Steak & Roasted Baby Broccoli",
-      "shortName": "Italian Steak & Broccoli",
-      "source": "HelloFresh",
-      "url": "https://www.hellofresh.com/recipes/italian-style-steak-and-roasted-baby-broccoli-68d655b49ed4d6794189f44c",
-      "protein": "beef",
-      "time": "~30 min",
-      "pitch": "Balsamic-marinated seared steak with roasted baby broccoli and arugula panzanella — veggie-heavy, sodium-smart.",
-      "ingredients": [
-        "10 oz bavette steak",
-        "1 unit baby broccoli (broccolini)",
-        "2 oz arugula",
-        "1 mini cucumber",
-        "4 oz grape tomatoes",
-        "½ red onion",
-        "1 ciabatta roll",
-        "5 tsp balsamic vinegar",
-        "1 tsp dried rosemary",
-        "5 tsp sherry vinegar",
-        "2 tsp honey",
-        "2 tsp Dijon mustard",
-        "2 tsp garlic powder",
-        "1 Parmesan cheese block",
-        "Olive oil (~3 Tbsp), cooking oil, salt, pepper"
-      ],
-      "steps": [
-        "Adjust oven rack to middle; preheat to 425°F. Wash and dry produce. Trim woody ends from baby broccoli. Tear ciabatta into bite-size pieces. Slice cucumber into ½-inch rounds; halve tomatoes. Halve, peel, and thinly slice half the onion (all for 4); soak slices in a medium bowl of ice water.",
-        "Toss baby broccoli on one side of a baking sheet with a drizzle of oil, half the garlic powder, salt, and pepper. Toss ciabatta on the empty side with a drizzle of olive oil, salt, and pepper. Roast until broccoli is tender and ciabatta is crisped, 12–15 minutes.",
-        "Meanwhile, pat steak dry; season with salt and pepper. In a medium bowl, combine balsamic vinegar, dried rosemary, and 1 Tbsp olive oil (2 Tbsp for 4). Add steak, turn to coat, and marinate while veggies roast, turning occasionally.",
-        "In a large bowl, whisk sherry vinegar, honey, Dijon, remaining garlic powder, 1 Tbsp olive oil (2 Tbsp for 4), salt, and pepper. Drain onion, pat dry, and add with cucumber, tomatoes, and roasted ciabatta croutons; toss to coat.",
-        "Heat a drizzle of oil in a large pan over medium-high heat. Let excess marinade drip off steak; sear 5–7 minutes per side to desired doneness. Discard leftover marinade. Transfer steak to a cutting board and rest at least 5 minutes.",
-        "Add arugula to the salad bowl and toss. Thinly slice steak against the grain. Plate steak; grate half the Parmesan over it. Serve roasted baby broccoli and arugula panzanella alongside; grate remaining Parmesan over the salad."
-      ],
-      "servings": 2,
-      "calories": 760,
-      "spiceLevel": "Mild",
-      "difficulty": "Easy",
-      "utensils": [
-        "Baking sheet",
-        "Large pan",
-        "Large bowl",
-        "Medium bowls",
-        "Whisk",
-        "Box grater",
-        "Paper towels"
-      ]
-    },
-    "tuscan-chicken-succotash": {
-      "id": "tuscan-chicken-succotash",
-      "name": "Tuscan Chicken & Tomato-Basil Succotash",
-      "shortName": "Tuscan Chicken Succotash",
-      "source": "HelloFresh",
-      "url": "https://www.hellofresh.com/recipes/tuscan-chicken-and-tomato-basil-succotash-6a512ba2748b7cf792503255",
-      "protein": "chicken",
-      "time": "~25 min",
-      "pitch": "Oven-roasted spice-rubbed chicken over blistered zucchini, corn, pepper, and tomatoes — high protein, carb-conscious, light lemon aioli.",
-      "ingredients": [
-        "10–12 oz chicken cutlets (kit packs 24 oz; use half for 2)",
-        "1 zucchini",
-        "1 green bell pepper",
-        "2 ears / units corn (or drained canned/frozen)",
-        "4 oz grape tomatoes",
-        "2 scallions",
-        "1 lemon",
-        "1 tsp Tuscan Heat Spice (measure; kit sends more)",
-        "1 oz basil paste",
-        "2 Tbsp mayonnaise (or vegan mayo)",
-        "1 tsp garlic powder",
-        "Olive oil, cooking oil, salt, pepper"
-      ],
-      "steps": [
-        "Adjust rack to top position (top and middle for 4) and preheat oven to 425°F. Wash and dry produce. Trim and quarter zucchini lengthwise; slice crosswise into ½-inch pieces. Thinly slice scallions, separating whites from greens. Core, deseed, and dice bell pepper into ¼-inch pieces. Drain corn if needed. Zest and quarter lemon.",
-        "Pat chicken dry. Season all over with a drizzle of olive oil, 1 tsp Tuscan Heat Spice (2 tsp for 4 — measure; kit sends more), salt, and pepper. Place on a lightly oiled baking sheet. Roast on top rack until cooked through (165°F), 15–18 minutes.",
-        "While chicken roasts, heat a large drizzle of oil in a large nonstick pan over medium-high heat. Add zucchini and tomatoes; cook, stirring occasionally, until zucchini is browned and tomatoes blister, 3–4 minutes. Add scallion whites, bell pepper, and corn (add more oil if pan seems dry). Season with salt and pepper; cook until lightly browned, 2–3 minutes. Remove from heat; stir in basil paste.",
-        "In a small bowl, combine lemon zest, mayonnaise, garlic powder, and juice from 1 lemon wedge (2 wedges for 4) to make lemon garlic aioli.",
-        "Divide succotash between plates. Top with chicken; spread aioli over chicken. Sprinkle with scallion greens and serve remaining lemon wedges on the side."
-      ],
-      "servings": 2,
-      "calories": 730,
-      "spiceLevel": "Medium (Tuscan Heat)",
-      "difficulty": "Easy",
-      "utensils": [
-        "Baking sheet",
-        "Large nonstick pan",
-        "Small bowl",
-        "Paper towels",
-        "Zester"
-      ]
-    },
-    "chicken-veggie-feta": {
-      "id": "chicken-veggie-feta",
-      "name": "Roasted Chicken, Potatoes & Veggie-Feta Jumble",
-      "shortName": "Chicken Veggie-Feta Sheet Pan",
-      "source": "HelloFresh",
-      "url": "https://www.hellofresh.com/recipes/roasted-chicken-potatoes-and-veggie-feta-jumble-68dac0089ed4d679418a8a44",
-      "protein": "chicken",
-      "time": "~30 min",
-      "pitch": "Sheet-pan roasted chicken with Mediterranean potatoes and zucchini–carrot–onion jumble finished with feta — GLP-1 friendly, ~590 kcal.",
-      "ingredients": [
-        "12 oz chicken cutlets",
-        "12 oz potatoes",
-        "9 oz carrots",
-        "1 zucchini",
-        "1 red onion",
-        "½ cup feta cheese",
-        "½ Tbsp Mediterranean spice blend",
-        "½ Tbsp fry seasoning",
-        "1 tsp garlic powder",
-        "3 tsp cooking oil, salt, pepper"
-      ],
-      "steps": [
-        "Adjust racks to top and middle; preheat oven to 425°F. Wash and dry produce. Dice potatoes into ½-inch pieces. Peel and cut carrots on a diagonal into ½-inch pieces. Trim zucchini and cut on a diagonal into ½-inch rounds. Halve, peel, and cut onion into ½-inch wedges.",
-        "Toss potatoes on one side of a baking sheet with a drizzle of oil, garlic powder, half the Mediterranean spice blend (all for 4), and salt. (Line with parchment or foil for easy cleanup.) Toss carrots, zucchini, and onion on the empty side with a drizzle of oil, salt, and pepper. Roast on top rack for 5 minutes (they finish in the next step).",
-        "Meanwhile, pat chicken dry; season with a drizzle of oil, half the fry seasoning (all for 4), salt, and pepper. Place on a second lightly oiled baking sheet. After veggies have roasted 5 minutes, move that sheet to the middle rack and put chicken on the top rack. Roast until veggies are browned and tender and chicken reaches 165°F, 18–22 minutes.",
-        "Transfer carrots, zucchini, and onion to a large bowl; add feta and toss. Slice chicken crosswise on a cutting board. Divide chicken, veggie-feta jumble, and potatoes between plates. Serve."
-      ],
-      "servings": 2,
-      "calories": 590,
-      "spiceLevel": "Mild–Medium",
-      "difficulty": "Medium",
-      "utensils": [
-        "Peeler",
-        "2 baking sheets",
-        "Large bowl",
-        "Paper towels"
-      ]
-    },
-    "spiced-chicken-yogurt": {
-      "id": "spiced-chicken-yogurt",
-      "name": "Spiced Chicken Cutlets with Roasted Vegetables & Lemon Yogurt Sauce",
-      "shortName": "Spiced Chicken & Lemon Yogurt",
-      "source": "HelloFresh",
-      "url": "https://www.hellofresh.com/recipes/sheet-pan-spiced-chicken-cutlets-61017253ccdb8c6c2132a9cf",
-      "protein": "chicken",
-      "time": "~35 min",
-      "pitch": "Shawarma-spiced cutlets with roasted veg and lemon yogurt — Calorie Smart / Mediterranean, yogurt sauce instead of cream.",
-      "ingredients": [
-        "10 oz chicken cutlets",
-        "12 oz potatoes",
-        "1 zucchini",
-        "1 red onion",
-        "1 lemon",
-        "1 clove garlic",
-        "1 Tbsp shawarma spice blend",
-        "1 Tbsp Turkish spice blend",
-        "4 Tbsp sour cream (or plain yogurt)",
-        "½ cup feta cheese",
-        "Cooking oil, salt, pepper"
-      ],
-      "steps": [
-        "Adjust rack to top (top and middle for 4); preheat oven to 425°F. Wash and dry produce. Cut potatoes into ½-inch-thick wedges. Peel and mince or grate garlic. Zest and quarter lemon. Trim and halve zucchini lengthwise; thinly slice into half-moons. Halve, peel, and cut onion into ½-inch wedges.",
-        "Toss potatoes on one side of a baking sheet with a drizzle of oil, Turkish spice blend, and a big pinch of salt and pepper (for 4, spread potatoes across the whole sheet). Roast on top rack for 10 minutes.",
-        "In a large bowl, combine garlic, shawarma spice, a large drizzle of oil, juice from half the lemon, salt, and pepper. Pat chicken dry; add to bowl and turn to coat. Set aside to marinate.",
-        "In a medium bowl, toss zucchini and onion with a drizzle of oil, salt, and pepper. Once potatoes have roasted 10 minutes, remove sheet. Carefully add veggies and chicken to the empty side (for 4, leave potatoes roasting and use a second sheet on the middle rack). Return to top rack until potatoes and veggies are tender and chicken is cooked through (165°F), 15–20 minutes.",
-        "Meanwhile, mash feta in a small bowl. Stir in sour cream (or yogurt), lemon zest, and a pinch of salt and pepper. Thin with water 1 tsp at a time until drizzle-able.",
-        "Divide chicken, roasted veggies, and potato wedges between plates. Serve with lemon feta crema for drizzling or dipping, plus remaining lemon wedges."
-      ],
-      "servings": 2,
-      "calories": 420,
-      "spiceLevel": "Medium (shawarma)",
-      "difficulty": "Easy",
-      "utensils": [
-        "Baking sheet",
-        "Large bowl",
-        "Medium bowl",
-        "Small bowl",
-        "Zester",
-        "Paper towels"
-      ],
-      "note": "Exact HF card 'Spiced Chicken Cutlets with Roasted Vegetables and Lemon Yogurt Sauce' omitted steps on the public page; using the matching Sheet Pan Spiced Chicken Cutlets (shawarma/Turkish spices, roasted veg, lemon feta crema) as the kit-equivalent."
-    },
-    "classic-roasted-salmon": {
-      "id": "classic-roasted-salmon",
-      "name": "Classic Roasted Salmon",
-      "shortName": "Classic Roasted Salmon",
-      "source": "HelloFresh",
-      "url": "https://www.hellofresh.com/recipes/classic-roasted-salmon-59ce4c827901f9567d137723",
-      "protein": "salmon",
-      "time": "~30 min",
-      "pitch": "Oven-roasted salmon with green beans, burst tomatoes, and crispy potato rounds — ~560 kcal, omega-3s, no heavy cream sauce.",
-      "ingredients": [
-        "10 oz skin-on salmon fillets",
-        "12 oz Yukon Gold potatoes",
-        "6 oz green beans",
-        "4 oz heirloom grape tomatoes",
-        "2 cloves garlic",
-        "¼ oz fresh dill",
-        "1 Tbsp butter",
-        "1 Tbsp olive oil (+ more for pan/sheet)",
-        "Salt, pepper"
-      ],
-      "steps": [
-        "Wash and dry all produce. Preheat oven to 425°F. Fill a large pot with salted water and bring to a boil. Halve tomatoes lengthwise. Thinly slice garlic. Pick dill fronds and finely chop. Slice potatoes into ½-inch-thick rounds.",
-        "When water boils, add green beans; cook until bright green, 1–2 minutes. Lift out with a slotted spoon into a strainer and rinse under cold water (keep pot boiling). Add potatoes to the same pot; boil until easily pierced with a knife, 12–15 minutes. Drain and let cool slightly.",
-        "Meanwhile, melt 1 Tbsp butter in a large pan over medium heat. Add tomatoes; season with salt and pepper. Cook, tossing, until slightly wilted, 2–3 minutes. Add green beans and garlic; cook until tender, 2–3 minutes. Stir in half the dill; season. Remove from pan, cover, and keep warm.",
-        "Place salmon skin-side down on a lightly oiled baking sheet. Drizzle with olive oil; season with salt and pepper. Roast to desired doneness, 8–10 minutes (fish is done at 145°F).",
-        "When potatoes are cool enough to handle, lightly crush each round with the back of a knife. Heat a drizzle of olive oil in the veggie pan over medium-high heat. Add potatoes and cook until browned, 2–3 minutes per side (work in batches if needed). Sprinkle with remaining dill; season with salt and pepper.",
-        "Divide green beans and tomatoes, salmon, and crispy potato rounds between plates. Serve."
-      ],
-      "servings": 2,
-      "calories": 560,
-      "spiceLevel": "Mild",
-      "difficulty": "Easy",
-      "utensils": [
-        "Large pot",
-        "Slotted spoon",
-        "Strainer",
-        "Large pan",
-        "Baking sheet"
-      ]
-    },
-    "soy-glazed-salmon-kale": {
-      "id": "soy-glazed-salmon-kale",
-      "name": "Sweet Soy-Glazed Salmon & Kale Salad",
-      "shortName": "Soy-Glazed Salmon Kale Salad",
-      "source": "HelloFresh",
-      "url": "https://www.hellofresh.com/recipes/sweet-soy-glazed-salmon-and-kale-salad-65a5581c4bb81dc143a6cdba",
-      "protein": "salmon",
-      "time": "~15 min",
-      "pitch": "Seared salmon over sesame kale–slaw salad with quick pickles — Protein Smart / Carb Smart, no fried sides.",
-      "ingredients": [
-        "10 oz skin-on salmon",
-        "4 Tbsp sweet soy glaze",
-        "4 oz kale",
-        "4 oz coleslaw mix",
-        "4 oz shredded carrots",
-        "1 red onion",
-        "5 tsp rice wine vinegar",
-        "1.5 oz sesame dressing",
-        "½ oz peanuts",
-        "2 tsp olive oil + 1 tsp cooking oil, ½ tsp sugar, salt, pepper"
-      ],
-      "steps": [
-        "Wash and dry produce. Pat salmon dry; season all over with salt and pepper. Drizzle oil in a hot large pan. Cook salmon skin-sides down until skin is crisp, 5–7 minutes. Flip and cook until cooked through, 1–2 minutes more (145°F). Transfer to a plate and drizzle with as much sweet soy glaze as you like. (Start pickles while salmon cooks.)",
-        "Thinly slice onion. In a small microwave-safe bowl, mix onion, shredded carrots, rice wine vinegar, ½ tsp sugar (1 tsp for 4), salt, and pepper. Cover with plastic wrap; microwave 1–2 minutes. Set aside to pickle, tossing occasionally.",
-        "Strip large stems from kale; chop if desired. Place in a large bowl and massage with a large drizzle of olive oil until leaves are tender, about 1 minute. Add coleslaw mix; season with salt and pepper. Add 1 tsp pickling liquid (2 tsp for 4) and as much sesame dressing as you like; toss.",
-        "Top salad with glazed salmon and drained pickled veggies to taste. Sprinkle with peanuts (toast them first if you have an extra minute) and serve."
-      ],
-      "servings": 2,
-      "calories": 720,
-      "spiceLevel": "Mild",
-      "difficulty": "Easy",
-      "utensils": [
-        "Large pan",
-        "Small microwave-safe bowl",
-        "Plastic wrap",
-        "Large bowl",
-        "Paper towels"
-      ]
-    },
-    "cajun-sheet-salmon": {
-      "id": "cajun-sheet-salmon",
-      "name": "Sheet Pan Cajun Salmon with Asparagus & Sweet Potato",
-      "shortName": "Cajun Sheet-Pan Salmon",
-      "source": "Blue Apron",
-      "url": "https://www.blueapron.com/recipes/standard-meal-kit/sheet-pan-cajun-salmon-with-asparagus-sweet-potato-spiced-sour-cream",
-      "protein": "salmon",
-      "time": "~35 min",
-      "pitch": "One-pan Cajun-spiced salmon with roasted sweet potato and asparagus — baked not fried; light spiced yogurt/sour cream drizzle.",
-      "ingredients": [
-        "2 skin-on salmon fillets (~10 oz total)",
-        "8 oz sweet potato",
-        "6 oz asparagus",
-        "1 lemon",
-        "1 Tbsp Cajun spice blend (smoked paprika, mustard, onion/garlic powder, oregano, thyme, cayenne)",
-        "1 Tbsp light brown sugar",
-        "½ Tbsp weeknight hero spice blend (onion/garlic powder, smoked paprika, parsley)",
-        "¼ cup sour cream",
-        "Hot sauce to taste (optional)",
-        "Olive oil, salt, pepper"
-      ],
-      "steps": [
-        "Preheat oven to 450°F. Wash and dry produce. Medium-dice sweet potato. Snap off tough woody ends of asparagus. Quarter and deseed lemon. In a bowl, combine Cajun spice blend and brown sugar.",
-        "Line two sheet pans with foil. Spread diced sweet potato on one pan; drizzle with olive oil and season with salt, pepper, and half the weeknight hero spice blend. Toss and arrange in an even layer. Roast 20–24 minutes until lightly browned and fork-tender.",
-        "Meanwhile, pat salmon dry; season both sides with salt and pepper. Place on one side of the second pan. Coat with enough Cajun–sugar mixture (you may have extra) and drizzle with olive oil. Roast 10 minutes. Leaving oven on, add asparagus to the other side of the pan; season with salt and pepper and drizzle with oil. Roast 8–12 minutes more until asparagus is fork-tender and salmon reaches 145°F. Squeeze juice from 2 lemon wedges (4 for 4 servings) over asparagus and toss.",
-        "In a bowl, mix sour cream, remaining weeknight hero spice, 2 tsp water (4 tsp for 4), and as much hot sauce as you like; season with salt and pepper. Plate salmon with roasted sweet potato and asparagus; drizzle with spiced sour cream. Serve remaining lemon wedges on the side."
-      ],
-      "servings": 2,
-      "calories": 450,
-      "spiceLevel": "Medium–Hot (Cajun; hot sauce to taste)",
-      "difficulty": "Easy",
-      "utensils": [
-        "2 foil-lined sheet pans",
-        "2 mixing bowls"
-      ]
-    }
-  },
-  "notes": {
-    "pii": "Site UI must remain generic — no household names or emails in the page.",
-    "pdfOnSubmit": "Client-side printable PDF of selected meals (recipes + grocery list).",
-    "nightlyEmail": "Static Pages cannot send email. Scheduled nightly email needs a bot routine + Gmail (human-in-the-loop) or a backend; this data file is the source of truth for that automation."
-  }
-};
+const DATA = {"version": 2, "title": "Weekly Meal Planner", "timezone": "America/Boise", "avoidOptions": [{"id": "dairy", "label": "Dairy"}, {"id": "nuts", "label": "Nuts"}, {"id": "soy", "label": "Soy"}, {"id": "gluten", "label": "Gluten / wheat"}, {"id": "spicy", "label": "Spicy"}, {"id": "mushrooms", "label": "Mushrooms"}, {"id": "sesame", "label": "Sesame"}, {"id": "egg", "label": "Egg"}, {"id": "mustard", "label": "Mustard"}, {"id": "shellfish", "label": "Shellfish"}], "dayLabels": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], "candidates": {"warm-steak-kale": {"id": "warm-steak-kale", "name": "Warm Steak, Kale & Sweet Potato Salad", "shortName": "Warm Steak Kale Salad", "source": "HelloFresh", "url": "https://www.hellofresh.com/recipes/warm-steak-kale-and-sweet-potato-salad-68ac43b582758da705ef5797", "protein": "beef", "time": "~15–20 min", "pitch": "Seared garlic-thyme steak over massaged kale with browned sweet potato — high protein, veggie-forward, light balsamic finish.", "ingredients": ["10 oz ranch steak", "1 sweet potato", "4 oz kale", "2 tsp garlic powder", "1 tsp dried thyme", "3 oz creamy balsamic dressing", "3 Tbsp Parmesan cheese", "½ oz pecans", "1 oz dried cranberries", "2 Tbsp butter (from pantry)", "Olive oil, cooking oil, salt, pepper"], "steps": ["Wash and dry produce. Dice sweet potato into ½-inch pieces. In a large microwave-safe bowl, toss sweet potato with half the garlic powder, salt, and pepper. Add 2 Tbsp butter, cover tightly with plastic wrap, and microwave until tender and steaming, 6–7 minutes. Remove wrap and stir.", "Meanwhile, strip any large stems from kale and chop leaves if desired. Place kale in a second large bowl. Massage with a large drizzle of olive oil (like kneading dough) until leaves soften and darken, 1–2 minutes — this keeps kale tender, not fibrous.", "Pat steak dry with paper towels; thinly slice against the grain. Heat a drizzle of cooking oil in a large pan over medium-high heat. Add steak; season with half the dried thyme (all for 4 servings), remaining garlic powder, salt, and pepper. Cook, stirring occasionally, to desired doneness, 3–6 minutes (beef is done at 145°F). Transfer steak to a plate. Wipe out pan and let cool slightly.", "Return pan to high heat; add microwaved sweet potato. Cook, stirring constantly, until edges are browned, 30–60 seconds. Turn off heat; tip sweet potato into the bowl with kale.", "Reserve 4 tsp balsamic dressing in a small bowl for finishing. Add Parmesan to kale and sweet potato; drizzle with as much remaining dressing as you like and toss. Divide salad between plates, top with steak, drizzle reserved dressing, and sprinkle with pecans and cranberries. Serve."], "servings": 2, "calories": 720, "spiceLevel": "Mild", "difficulty": "Easy", "utensils": ["Large microwave-safe bowl", "Plastic wrap", "Paper towels", "Large pan", "Small bowl"], "healthy": true, "avoidTags": ["dairy", "nuts", "beef"]}, "sesame-ginger-steak": {"id": "sesame-ginger-steak", "name": "Sesame Ginger Steak Salad", "shortName": "Sesame Ginger Steak Salad", "source": "HelloFresh", "url": "https://www.hellofresh.com/recipes/sesame-ginger-steak-salad-6930a6179351d52b5c264052", "protein": "beef", "time": "~15 min", "pitch": "Quick seared steak over mixed greens with cucumber and tomato — carb-conscious, no heavy cream sauces.", "ingredients": ["10 oz ranch steak", "4 oz mixed greens", "1 mini cucumber", "4 oz grape tomatoes", "1 unit sesame ginger crunch seasoning", "2 oz garlic-ginger scallion paste", "2 oz sweet Thai chili sauce", "10 tsp rice wine vinegar", "1 lime", "1 unit crispy fried onions", "½ oz peanuts", "2 Tbsp olive oil + cooking oil, salt, pepper"], "steps": ["Wash and dry produce. Quarter lime. Trim and thinly slice cucumber into rounds. Halve grape tomatoes.", "Pat steak dry; thinly slice crosswise. Toss in a medium bowl with sesame ginger crunch seasoning, a pinch of salt, and pepper. Heat a drizzle of oil in a large nonstick pan over medium-high heat. Add steak and cook, stirring occasionally, to desired doneness, 3–5 minutes. In the last minute, stir in garlic-ginger scallion paste, half the sweet Thai chili sauce, and juice from 1 lime wedge (2 wedges for 4 servings).", "Meanwhile, whisk rice wine vinegar, remaining chili sauce, 2 Tbsp olive oil, and juice from 1 lime wedge (use 4 Tbsp oil and 2 wedges for 4) in a small bowl for the dressing.", "In a large bowl, toss mixed greens, cucumber, and tomatoes with as much dressing as you like; taste and season with salt and pepper. Divide salad into shallow bowls, top with glazed steak, and garnish with crispy fried onions and peanuts. Serve with remaining lime wedges."], "servings": 2, "calories": 630, "spiceLevel": "Mild–Medium", "difficulty": "Easy", "utensils": ["Medium bowl", "Small bowl", "Large nonstick pan", "Large bowl", "Whisk", "Paper towels"], "healthy": true, "avoidTags": ["nuts", "soy", "gluten", "beef", "spicy"]}, "steak-nicoise": {"id": "steak-nicoise", "name": "Steak Niçoise Salad", "shortName": "Steak Niçoise Salad", "source": "HelloFresh", "url": "https://www.hellofresh.com/recipes/steak-nicoise-salad-68dabd589ed4d679418a8509", "protein": "beef", "time": "~20–25 min", "pitch": "Provençal steak salad with green beans, potatoes, tomatoes, and olives — lighter bistro plate, vinaigrette over creamy sauces.", "ingredients": ["10 oz ranch steak", "1 head baby lettuce", "12 oz potatoes", "8 oz green beans", "4 oz heirloom grape tomatoes", "1 Tbsp herbes de Provence", "2 Tbsp garlic herb butter", "2 tsp Dijon mustard", "5 tsp white wine vinegar", "1 unit green olives", "1 demi-baguette (optional garlic bread)", "2 Tbsp olive oil + cooking oil, salt, pepper"], "steps": ["Wash and dry produce. Cut potatoes into 1-inch pieces. Place potatoes and half the garlic herb butter in a medium microwave-safe bowl; season with salt and pepper. Cover with plastic wrap and microwave until tender, 6–7 minutes. Remove wrap.", "Meanwhile, trim green beans if needed and halve widthwise. Trim root end from lettuce; chop leaves into bite-size pieces. Roughly chop olives. Place green beans in a second microwave-safe bowl, cover tightly, and microwave until tender, 2–3 minutes.", "Pat steak dry; season with half the herbes de Provence (rest goes in the dressing), salt, and pepper. Heat a drizzle of oil in a large pan over medium-high heat. Sear steak 3–6 minutes per side to desired doneness (145°F). Transfer to a cutting board to rest.", "Optional: Halve and toast baguette; spread cut sides with remaining garlic herb butter; cut each piece on a diagonal. In a large bowl, whisk white wine vinegar, Dijon, remaining herbes de Provence, 1 Tbsp olive oil (2 Tbsp for 4), salt, and pepper.", "Add lettuce, potatoes, green beans, tomatoes, and olives to the dressing; toss to coat. Thinly slice steak against the grain. Divide salad between plates, top with steak, and serve garlic bread alongside if using."], "servings": 2, "calories": 720, "spiceLevel": "Mild", "difficulty": "Easy", "utensils": ["Medium microwave-safe bowls", "Plastic wrap", "Large pan", "Whisk", "Large bowl", "Paper towels"], "healthy": true, "avoidTags": ["dairy", "gluten", "beef", "mustard"]}, "italian-steak-broccoli": {"id": "italian-steak-broccoli", "name": "Italian-Style Steak & Roasted Baby Broccoli", "shortName": "Italian Steak & Broccoli", "source": "HelloFresh", "url": "https://www.hellofresh.com/recipes/italian-style-steak-and-roasted-baby-broccoli-68d655b49ed4d6794189f44c", "protein": "beef", "time": "~30 min", "pitch": "Balsamic-marinated seared steak with roasted baby broccoli and arugula panzanella — veggie-heavy, sodium-smart.", "ingredients": ["10 oz bavette steak", "1 unit baby broccoli (broccolini)", "2 oz arugula", "1 mini cucumber", "4 oz grape tomatoes", "½ red onion", "1 ciabatta roll", "5 tsp balsamic vinegar", "1 tsp dried rosemary", "5 tsp sherry vinegar", "2 tsp honey", "2 tsp Dijon mustard", "2 tsp garlic powder", "1 Parmesan cheese block", "Olive oil (~3 Tbsp), cooking oil, salt, pepper"], "steps": ["Adjust oven rack to middle; preheat to 425°F. Wash and dry produce. Trim woody ends from baby broccoli. Tear ciabatta into bite-size pieces. Slice cucumber into ½-inch rounds; halve tomatoes. Halve, peel, and thinly slice half the onion (all for 4); soak slices in a medium bowl of ice water.", "Toss baby broccoli on one side of a baking sheet with a drizzle of oil, half the garlic powder, salt, and pepper. Toss ciabatta on the empty side with a drizzle of olive oil, salt, and pepper. Roast until broccoli is tender and ciabatta is crisped, 12–15 minutes.", "Meanwhile, pat steak dry; season with salt and pepper. In a medium bowl, combine balsamic vinegar, dried rosemary, and 1 Tbsp olive oil (2 Tbsp for 4). Add steak, turn to coat, and marinate while veggies roast, turning occasionally.", "In a large bowl, whisk sherry vinegar, honey, Dijon, remaining garlic powder, 1 Tbsp olive oil (2 Tbsp for 4), salt, and pepper. Drain onion, pat dry, and add with cucumber, tomatoes, and roasted ciabatta croutons; toss to coat.", "Heat a drizzle of oil in a large pan over medium-high heat. Let excess marinade drip off steak; sear 5–7 minutes per side to desired doneness. Discard leftover marinade. Transfer steak to a cutting board and rest at least 5 minutes.", "Add arugula to the salad bowl and toss. Thinly slice steak against the grain. Plate steak; grate half the Parmesan over it. Serve roasted baby broccoli and arugula panzanella alongside; grate remaining Parmesan over the salad."], "servings": 2, "calories": 760, "spiceLevel": "Mild", "difficulty": "Easy", "utensils": ["Baking sheet", "Large pan", "Large bowl", "Medium bowls", "Whisk", "Box grater", "Paper towels"], "healthy": true, "avoidTags": ["dairy", "gluten", "beef", "mustard"]}, "tuscan-chicken-succotash": {"id": "tuscan-chicken-succotash", "name": "Tuscan Chicken & Tomato-Basil Succotash", "shortName": "Tuscan Chicken Succotash", "source": "HelloFresh", "url": "https://www.hellofresh.com/recipes/tuscan-chicken-and-tomato-basil-succotash-6a512ba2748b7cf792503255", "protein": "chicken", "time": "~25 min", "pitch": "Oven-roasted spice-rubbed chicken over blistered zucchini, corn, pepper, and tomatoes — high protein, carb-conscious, light lemon aioli.", "ingredients": ["10–12 oz chicken cutlets (kit packs 24 oz; use half for 2)", "1 zucchini", "1 green bell pepper", "2 ears / units corn (or drained canned/frozen)", "4 oz grape tomatoes", "2 scallions", "1 lemon", "1 tsp Tuscan Heat Spice (measure; kit sends more)", "1 oz basil paste", "2 Tbsp mayonnaise (or vegan mayo)", "1 tsp garlic powder", "Olive oil, cooking oil, salt, pepper"], "steps": ["Adjust rack to top position (top and middle for 4) and preheat oven to 425°F. Wash and dry produce. Trim and quarter zucchini lengthwise; slice crosswise into ½-inch pieces. Thinly slice scallions, separating whites from greens. Core, deseed, and dice bell pepper into ¼-inch pieces. Drain corn if needed. Zest and quarter lemon.", "Pat chicken dry. Season all over with a drizzle of olive oil, 1 tsp Tuscan Heat Spice (2 tsp for 4 — measure; kit sends more), salt, and pepper. Place on a lightly oiled baking sheet. Roast on top rack until cooked through (165°F), 15–18 minutes.", "While chicken roasts, heat a large drizzle of oil in a large nonstick pan over medium-high heat. Add zucchini and tomatoes; cook, stirring occasionally, until zucchini is browned and tomatoes blister, 3–4 minutes. Add scallion whites, bell pepper, and corn (add more oil if pan seems dry). Season with salt and pepper; cook until lightly browned, 2–3 minutes. Remove from heat; stir in basil paste.", "In a small bowl, combine lemon zest, mayonnaise, garlic powder, and juice from 1 lemon wedge (2 wedges for 4) to make lemon garlic aioli.", "Divide succotash between plates. Top with chicken; spread aioli over chicken. Sprinkle with scallion greens and serve remaining lemon wedges on the side."], "servings": 2, "calories": 730, "spiceLevel": "Medium (Tuscan Heat)", "difficulty": "Easy", "utensils": ["Baking sheet", "Large nonstick pan", "Small bowl", "Paper towels", "Zester"], "healthy": true, "avoidTags": ["egg", "spicy", "chicken"]}, "chicken-veggie-feta": {"id": "chicken-veggie-feta", "name": "Roasted Chicken, Potatoes & Veggie-Feta Jumble", "shortName": "Chicken Veggie-Feta Sheet Pan", "source": "HelloFresh", "url": "https://www.hellofresh.com/recipes/roasted-chicken-potatoes-and-veggie-feta-jumble-68dac0089ed4d679418a8a44", "protein": "chicken", "time": "~30 min", "pitch": "Sheet-pan roasted chicken with Mediterranean potatoes and zucchini–carrot–onion jumble finished with feta — GLP-1 friendly, ~590 kcal.", "ingredients": ["12 oz chicken cutlets", "12 oz potatoes", "9 oz carrots", "1 zucchini", "1 red onion", "½ cup feta cheese", "½ Tbsp Mediterranean spice blend", "½ Tbsp fry seasoning", "1 tsp garlic powder", "3 tsp cooking oil, salt, pepper"], "steps": ["Adjust racks to top and middle; preheat oven to 425°F. Wash and dry produce. Dice potatoes into ½-inch pieces. Peel and cut carrots on a diagonal into ½-inch pieces. Trim zucchini and cut on a diagonal into ½-inch rounds. Halve, peel, and cut onion into ½-inch wedges.", "Toss potatoes on one side of a baking sheet with a drizzle of oil, garlic powder, half the Mediterranean spice blend (all for 4), and salt. (Line with parchment or foil for easy cleanup.) Toss carrots, zucchini, and onion on the empty side with a drizzle of oil, salt, and pepper. Roast on top rack for 5 minutes (they finish in the next step).", "Meanwhile, pat chicken dry; season with a drizzle of oil, half the fry seasoning (all for 4), salt, and pepper. Place on a second lightly oiled baking sheet. After veggies have roasted 5 minutes, move that sheet to the middle rack and put chicken on the top rack. Roast until veggies are browned and tender and chicken reaches 165°F, 18–22 minutes.", "Transfer carrots, zucchini, and onion to a large bowl; add feta and toss. Slice chicken crosswise on a cutting board. Divide chicken, veggie-feta jumble, and potatoes between plates. Serve."], "servings": 2, "calories": 590, "spiceLevel": "Mild–Medium", "difficulty": "Medium", "utensils": ["Peeler", "2 baking sheets", "Large bowl", "Paper towels"], "healthy": true, "avoidTags": ["dairy", "chicken"]}, "spiced-chicken-yogurt": {"id": "spiced-chicken-yogurt", "name": "Spiced Chicken Cutlets with Roasted Vegetables & Lemon Yogurt Sauce", "shortName": "Spiced Chicken & Lemon Yogurt", "source": "HelloFresh", "url": "https://www.hellofresh.com/recipes/sheet-pan-spiced-chicken-cutlets-61017253ccdb8c6c2132a9cf", "protein": "chicken", "time": "~35 min", "pitch": "Shawarma-spiced cutlets with roasted veg and lemon yogurt — Calorie Smart / Mediterranean, yogurt sauce instead of cream.", "ingredients": ["10 oz chicken cutlets", "12 oz potatoes", "1 zucchini", "1 red onion", "1 lemon", "1 clove garlic", "1 Tbsp shawarma spice blend", "1 Tbsp Turkish spice blend", "4 Tbsp sour cream (or plain yogurt)", "½ cup feta cheese", "Cooking oil, salt, pepper"], "steps": ["Adjust rack to top (top and middle for 4); preheat oven to 425°F. Wash and dry produce. Cut potatoes into ½-inch-thick wedges. Peel and mince or grate garlic. Zest and quarter lemon. Trim and halve zucchini lengthwise; thinly slice into half-moons. Halve, peel, and cut onion into ½-inch wedges.", "Toss potatoes on one side of a baking sheet with a drizzle of oil, Turkish spice blend, and a big pinch of salt and pepper (for 4, spread potatoes across the whole sheet). Roast on top rack for 10 minutes.", "In a large bowl, combine garlic, shawarma spice, a large drizzle of oil, juice from half the lemon, salt, and pepper. Pat chicken dry; add to bowl and turn to coat. Set aside to marinate.", "In a medium bowl, toss zucchini and onion with a drizzle of oil, salt, and pepper. Once potatoes have roasted 10 minutes, remove sheet. Carefully add veggies and chicken to the empty side (for 4, leave potatoes roasting and use a second sheet on the middle rack). Return to top rack until potatoes and veggies are tender and chicken is cooked through (165°F), 15–20 minutes.", "Meanwhile, mash feta in a small bowl. Stir in sour cream (or yogurt), lemon zest, and a pinch of salt and pepper. Thin with water 1 tsp at a time until drizzle-able.", "Divide chicken, roasted veggies, and potato wedges between plates. Serve with lemon feta crema for drizzling or dipping, plus remaining lemon wedges."], "servings": 2, "calories": 420, "spiceLevel": "Medium (shawarma)", "difficulty": "Easy", "utensils": ["Baking sheet", "Large bowl", "Medium bowl", "Small bowl", "Zester", "Paper towels"], "note": "Exact HF card 'Spiced Chicken Cutlets with Roasted Vegetables and Lemon Yogurt Sauce' omitted steps on the public page; using the matching Sheet Pan Spiced Chicken Cutlets (shawarma/Turkish spices, roasted veg, lemon feta crema) as the kit-equivalent.", "healthy": true, "avoidTags": ["dairy", "spicy", "chicken"]}, "classic-roasted-salmon": {"id": "classic-roasted-salmon", "name": "Classic Roasted Salmon", "shortName": "Classic Roasted Salmon", "source": "HelloFresh", "url": "https://www.hellofresh.com/recipes/classic-roasted-salmon-59ce4c827901f9567d137723", "protein": "salmon", "time": "~30 min", "pitch": "Oven-roasted salmon with green beans, burst tomatoes, and crispy potato rounds — ~560 kcal, omega-3s, no heavy cream sauce.", "ingredients": ["10 oz skin-on salmon fillets", "12 oz Yukon Gold potatoes", "6 oz green beans", "4 oz heirloom grape tomatoes", "2 cloves garlic", "¼ oz fresh dill", "1 Tbsp butter", "1 Tbsp olive oil (+ more for pan/sheet)", "Salt, pepper"], "steps": ["Wash and dry all produce. Preheat oven to 425°F. Fill a large pot with salted water and bring to a boil. Halve tomatoes lengthwise. Thinly slice garlic. Pick dill fronds and finely chop. Slice potatoes into ½-inch-thick rounds.", "When water boils, add green beans; cook until bright green, 1–2 minutes. Lift out with a slotted spoon into a strainer and rinse under cold water (keep pot boiling). Add potatoes to the same pot; boil until easily pierced with a knife, 12–15 minutes. Drain and let cool slightly.", "Meanwhile, melt 1 Tbsp butter in a large pan over medium heat. Add tomatoes; season with salt and pepper. Cook, tossing, until slightly wilted, 2–3 minutes. Add green beans and garlic; cook until tender, 2–3 minutes. Stir in half the dill; season. Remove from pan, cover, and keep warm.", "Place salmon skin-side down on a lightly oiled baking sheet. Drizzle with olive oil; season with salt and pepper. Roast to desired doneness, 8–10 minutes (fish is done at 145°F).", "When potatoes are cool enough to handle, lightly crush each round with the back of a knife. Heat a drizzle of olive oil in the veggie pan over medium-high heat. Add potatoes and cook until browned, 2–3 minutes per side (work in batches if needed). Sprinkle with remaining dill; season with salt and pepper.", "Divide green beans and tomatoes, salmon, and crispy potato rounds between plates. Serve."], "servings": 2, "calories": 560, "spiceLevel": "Mild", "difficulty": "Easy", "utensils": ["Large pot", "Slotted spoon", "Strainer", "Large pan", "Baking sheet"], "healthy": true, "avoidTags": ["dairy", "fish", "salmon"]}, "soy-glazed-salmon-kale": {"id": "soy-glazed-salmon-kale", "name": "Sweet Soy-Glazed Salmon & Kale Salad", "shortName": "Soy-Glazed Salmon Kale Salad", "source": "HelloFresh", "url": "https://www.hellofresh.com/recipes/sweet-soy-glazed-salmon-and-kale-salad-65a5581c4bb81dc143a6cdba", "protein": "salmon", "time": "~15 min", "pitch": "Seared salmon over sesame kale–slaw salad with quick pickles — Protein Smart / Carb Smart, no fried sides.", "ingredients": ["10 oz skin-on salmon", "4 Tbsp sweet soy glaze", "4 oz kale", "4 oz coleslaw mix", "4 oz shredded carrots", "1 red onion", "5 tsp rice wine vinegar", "1.5 oz sesame dressing", "½ oz peanuts", "2 tsp olive oil + 1 tsp cooking oil, ½ tsp sugar, salt, pepper"], "steps": ["Wash and dry produce. Pat salmon dry; season all over with salt and pepper. Drizzle oil in a hot large pan. Cook salmon skin-sides down until skin is crisp, 5–7 minutes. Flip and cook until cooked through, 1–2 minutes more (145°F). Transfer to a plate and drizzle with as much sweet soy glaze as you like. (Start pickles while salmon cooks.)", "Thinly slice onion. In a small microwave-safe bowl, mix onion, shredded carrots, rice wine vinegar, ½ tsp sugar (1 tsp for 4), salt, and pepper. Cover with plastic wrap; microwave 1–2 minutes. Set aside to pickle, tossing occasionally.", "Strip large stems from kale; chop if desired. Place in a large bowl and massage with a large drizzle of olive oil until leaves are tender, about 1 minute. Add coleslaw mix; season with salt and pepper. Add 1 tsp pickling liquid (2 tsp for 4) and as much sesame dressing as you like; toss.", "Top salad with glazed salmon and drained pickled veggies to taste. Sprinkle with peanuts (toast them first if you have an extra minute) and serve."], "servings": 2, "calories": 720, "spiceLevel": "Mild", "difficulty": "Easy", "utensils": ["Large pan", "Small microwave-safe bowl", "Plastic wrap", "Large bowl", "Paper towels"], "healthy": true, "avoidTags": ["nuts", "soy", "fish", "salmon"]}, "cajun-sheet-salmon": {"id": "cajun-sheet-salmon", "name": "Sheet Pan Cajun Salmon with Asparagus & Sweet Potato", "shortName": "Cajun Sheet-Pan Salmon", "source": "Blue Apron", "url": "https://www.blueapron.com/recipes/standard-meal-kit/sheet-pan-cajun-salmon-with-asparagus-sweet-potato-spiced-sour-cream", "protein": "salmon", "time": "~35 min", "pitch": "One-pan Cajun-spiced salmon with roasted sweet potato and asparagus — baked not fried; light spiced yogurt/sour cream drizzle.", "ingredients": ["2 skin-on salmon fillets (~10 oz total)", "8 oz sweet potato", "6 oz asparagus", "1 lemon", "1 Tbsp Cajun spice blend (smoked paprika, mustard, onion/garlic powder, oregano, thyme, cayenne)", "1 Tbsp light brown sugar", "½ Tbsp weeknight hero spice blend (onion/garlic powder, smoked paprika, parsley)", "¼ cup sour cream", "Hot sauce to taste (optional)", "Olive oil, salt, pepper"], "steps": ["Preheat oven to 450°F. Wash and dry produce. Medium-dice sweet potato. Snap off tough woody ends of asparagus. Quarter and deseed lemon. In a bowl, combine Cajun spice blend and brown sugar.", "Line two sheet pans with foil. Spread diced sweet potato on one pan; drizzle with olive oil and season with salt, pepper, and half the weeknight hero spice blend. Toss and arrange in an even layer. Roast 20–24 minutes until lightly browned and fork-tender.", "Meanwhile, pat salmon dry; season both sides with salt and pepper. Place on one side of the second pan. Coat with enough Cajun–sugar mixture (you may have extra) and drizzle with olive oil. Roast 10 minutes. Leaving oven on, add asparagus to the other side of the pan; season with salt and pepper and drizzle with oil. Roast 8–12 minutes more until asparagus is fork-tender and salmon reaches 145°F. Squeeze juice from 2 lemon wedges (4 for 4 servings) over asparagus and toss.", "In a bowl, mix sour cream, remaining weeknight hero spice, 2 tsp water (4 tsp for 4), and as much hot sauce as you like; season with salt and pepper. Plate salmon with roasted sweet potato and asparagus; drizzle with spiced sour cream. Serve remaining lemon wedges on the side."], "servings": 2, "calories": 450, "spiceLevel": "Medium–Hot (Cajun; hot sauce to taste)", "difficulty": "Easy", "utensils": ["2 foil-lined sheet pans", "2 mixing bowls"], "healthy": true, "avoidTags": ["dairy", "spicy", "fish", "salmon"]}, "garlic-butter-steak-bites": {"id": "garlic-butter-steak-bites", "name": "Garlic Butter Steak Bites with Creamy Mashed Potatoes", "shortName": "Garlic Butter Steak Bites", "source": "HelloFresh-style", "url": "https://www.hellofresh.com/", "protein": "beef", "time": "~30 min", "pitch": "Seared steak bites in garlic butter over rich mashed potatoes and green beans — comfort-food classic.", "healthy": false, "avoidTags": ["dairy", "beef", "gluten"], "ingredients": ["12 oz sirloin steak", "12 oz Yukon Gold potatoes", "6 oz green beans", "2 cloves garlic", "3 Tbsp butter", "¼ cup sour cream", "2 Tbsp milk", "1 tsp garlic powder", "Cooking oil, salt, pepper"], "steps": ["Wash and dry produce. Dice potatoes into ½-inch pieces. Trim green beans. Mince garlic. Pat steak dry; cut into ¾-inch cubes; season with salt, pepper, and garlic powder.", "Place potatoes in a medium pot with enough salted water to cover by 1 inch. Bring to a boil and cook until tender, 12–15 minutes. Drain; return to pot. Mash with 1 Tbsp butter, sour cream, and milk until creamy. Season with salt and pepper; cover to keep warm.", "Meanwhile, heat a drizzle of oil in a large pan over medium-high. Add steak bites in a single layer; sear undisturbed 2 minutes, then toss and cook to desired doneness, 2–4 minutes more (145°F). Transfer to a plate.", "Reduce heat to medium. Add remaining 2 Tbsp butter and minced garlic to the pan; cook until fragrant, 30–60 seconds. Return steak; toss to coat. In a second pan or the same after wiping, sauté green beans with a drizzle of oil, salt, and pepper until crisp-tender, 4–6 minutes.", "Plate mashed potatoes, top with garlic butter steak bites, and serve green beans alongside. Spoon any pan butter over the steak."], "servings": 2, "calories": 890, "spiceLevel": "Mild", "difficulty": "Easy", "utensils": ["Medium pot", "Potato masher", "Large pan", "Paper towels"]}, "cheeseburger-bowl": {"id": "cheeseburger-bowl", "name": "Loaded Cheeseburger Bowls with Crispy Potatoes", "shortName": "Cheeseburger Bowls", "source": "HelloFresh-style", "url": "https://www.hellofresh.com/", "protein": "beef", "time": "~35 min", "pitch": "Seasoned ground beef, melted cheddar, pickles, and special sauce over crispy potatoes — all the burger vibes, no bun required.", "healthy": false, "avoidTags": ["dairy", "beef", "egg", "gluten"], "ingredients": ["10 oz ground beef", "12 oz potatoes", "1 tomato", "2 oz shredded cheddar", "1 oz pickle chips", "2 Tbsp ketchup", "1 Tbsp mayonnaise", "1 tsp yellow mustard", "1 tsp fry seasoning", "Cooking oil, salt, pepper"], "steps": ["Preheat oven to 425°F. Wash and dry produce. Dice potatoes into ½-inch pieces. Dice tomato. In a small bowl, mix ketchup, mayo, and mustard for special sauce.", "Toss potatoes on a baking sheet with a drizzle of oil, fry seasoning, salt, and pepper. Roast until crispy, 20–25 minutes, flipping halfway.", "Heat a drizzle of oil in a large pan over medium-high. Add ground beef; cook, breaking up, until browned and cooked through, 4–6 minutes. Season with salt and pepper. Sprinkle cheddar over beef; cover briefly to melt, 1 minute.", "Divide crispy potatoes between bowls. Top with cheesy beef, diced tomato, and pickle chips. Drizzle with special sauce and serve."], "servings": 2, "calories": 820, "spiceLevel": "Mild", "difficulty": "Easy", "utensils": ["Baking sheet", "Large pan", "Small bowl"]}, "mushroom-swiss-steak": {"id": "mushroom-swiss-steak", "name": "Mushroom-Swiss Steak with Herb Butter Broccoli", "shortName": "Mushroom Swiss Steak", "source": "Blue Apron-style", "url": "https://www.blueapron.com/", "protein": "beef", "time": "~35 min", "pitch": "Pan-seared steak topped with sautéed mushrooms and melted Swiss — rich and savory, with herb butter broccoli.", "healthy": false, "avoidTags": ["dairy", "mushrooms", "beef"], "ingredients": ["10 oz bavette or sirloin steak", "8 oz cremini mushrooms", "2 slices Swiss cheese", "8 oz broccoli florets", "2 Tbsp butter", "1 tsp dried thyme", "2 cloves garlic", "Cooking oil, salt, pepper"], "steps": ["Wash and dry produce. Slice mushrooms. Mince garlic. Pat steak dry; season generously with salt and pepper.", "Heat a drizzle of oil in a large pan over medium-high. Sear steak 4–6 minutes per side to desired doneness (145°F). In the last minute, top with Swiss cheese; cover until melted. Transfer to a cutting board; rest 5 minutes.", "In the same pan, add mushrooms and a pinch of salt. Cook until browned and moisture evaporates, 5–7 minutes. Add half the garlic and half the butter; toss 30 seconds. Remove mushrooms.", "Add broccoli, remaining garlic, thyme, remaining butter, and a splash of water. Cover and steam-sauté until bright green and tender, 4–6 minutes. Season with salt and pepper.", "Slice steak against the grain. Plate with mushroom topping and herb butter broccoli."], "servings": 2, "calories": 780, "spiceLevel": "Mild", "difficulty": "Easy", "utensils": ["Large pan", "Paper towels", "Cutting board"]}, "korean-beef-bowls": {"id": "korean-beef-bowls", "name": "Korean-Style Beef Bowls with Cucumber Salad", "shortName": "Korean Beef Bowls", "source": "HelloFresh-style", "url": "https://www.hellofresh.com/", "protein": "beef", "time": "~25 min", "pitch": "Sweet-savory gochujang beef over rice with quick pickled cucumber — bold flavor, weeknight-fast.", "healthy": true, "avoidTags": ["soy", "spicy", "gluten", "beef", "sesame"], "ingredients": ["10 oz ground beef", "¾ cup jasmine rice", "1 mini cucumber", "2 scallions", "1 Tbsp gochujang sauce", "2 Tbsp soy sauce", "1 Tbsp sesame oil", "1 Tbsp brown sugar", "1 tsp rice vinegar", "1 tsp garlic powder", "Sesame seeds (optional), cooking oil, salt"], "steps": ["In a small pot, combine rice, 1¼ cups water, and a pinch of salt. Bring to a boil, cover, and reduce to low; cook until tender, 15–18 minutes. Fluff and keep covered.", "Thinly slice cucumber and scallions (whites and greens separate). Toss cucumber with rice vinegar, a pinch of salt, and half the scallion greens; set aside to pickle.", "Heat a drizzle of oil in a large pan over medium-high. Add beef and scallion whites; cook, breaking up, until browned, 4–5 minutes. Stir in gochujang, soy sauce, brown sugar, garlic powder, and sesame oil; simmer 1–2 minutes until glossy.", "Divide rice between bowls; top with Korean beef and cucumber salad. Garnish with remaining scallion greens and sesame seeds if using."], "servings": 2, "calories": 680, "spiceLevel": "Medium–Hot", "difficulty": "Easy", "utensils": ["Small pot", "Large pan", "Small bowl"]}, "honey-garlic-chicken": {"id": "honey-garlic-chicken", "name": "Honey Garlic Chicken Thighs with Broccoli Rice", "shortName": "Honey Garlic Chicken", "source": "HelloFresh-style", "url": "https://www.hellofresh.com/", "protein": "chicken", "time": "~30 min", "pitch": "Sticky honey-garlic glazed thighs with steamed broccoli over fluffy rice — crowd-pleaser sweet-savory.", "healthy": false, "avoidTags": ["soy", "gluten", "chicken"], "ingredients": ["12 oz chicken thighs", "¾ cup jasmine rice", "8 oz broccoli florets", "3 Tbsp honey", "2 Tbsp soy sauce", "3 cloves garlic", "1 tsp cornstarch", "1 tsp garlic powder", "Cooking oil, salt, pepper"], "steps": ["Cook rice: combine rice, 1¼ cups water, and a pinch of salt in a small pot. Bring to boil, cover, low heat 15–18 minutes.", "Pat chicken dry; season with salt, pepper, and garlic powder. Mince garlic. In a bowl, whisk honey, soy sauce, cornstarch, and 2 Tbsp water for glaze.", "Heat oil in a large pan over medium-high. Sear chicken 4–5 minutes per side until cooked through (165°F). Transfer to a plate.", "Reduce heat to medium. Add garlic; cook 30 seconds. Pour in glaze; simmer until thickened, 1–2 minutes. Return chicken and coat.", "Meanwhile, steam or microwave broccoli until tender, 3–4 minutes; season. Serve chicken and glaze over rice with broccoli."], "servings": 2, "calories": 760, "spiceLevel": "Mild", "difficulty": "Easy", "utensils": ["Small pot", "Large pan", "Small bowl", "Paper towels"]}, "crispy-chicken-parm": {"id": "crispy-chicken-parm", "name": "Crispy Chicken Parmesan with Spaghetti", "shortName": "Chicken Parmesan", "source": "HelloFresh-style", "url": "https://www.hellofresh.com/", "protein": "chicken", "time": "~40 min", "pitch": "Breaded cutlets topped with marinara and mozzarella over spaghetti — classic Italian-American comfort.", "healthy": false, "avoidTags": ["dairy", "gluten", "egg", "chicken"], "ingredients": ["10 oz chicken cutlets", "6 oz spaghetti", "½ cup panko breadcrumbs", "¼ cup grated Parmesan", "4 oz fresh mozzarella", "1 cup marinara sauce", "1 egg", "1 tsp Italian seasoning", "Cooking oil, salt, pepper"], "steps": ["Preheat oven to 425°F. Bring a large pot of salted water to a boil. Beat egg in a shallow bowl. Mix panko, half the Parmesan, Italian seasoning, salt, and pepper in another.", "Pat chicken dry. Dip in egg, then press into panko mixture. Heat a thin layer of oil in a large pan over medium-high; cook cutlets until golden, 3–4 minutes per side. Transfer to a baking sheet.", "Top each cutlet with marinara and torn mozzarella. Bake until cheese melts and chicken reaches 165°F, 6–8 minutes.", "Meanwhile, cook spaghetti until al dente; drain. Toss with a spoonful of marinara and remaining Parmesan.", "Plate spaghetti; top with chicken parm. Serve extra marinara on the side."], "servings": 2, "calories": 920, "spiceLevel": "Mild", "difficulty": "Medium", "utensils": ["Large pot", "Large pan", "Baking sheet", "Shallow bowls"]}, "lemon-herb-chicken-orzo": {"id": "lemon-herb-chicken-orzo", "name": "Lemon Herb Chicken with Orzo & Spinach", "shortName": "Lemon Herb Chicken Orzo", "source": "Blue Apron-style", "url": "https://www.blueapron.com/", "protein": "chicken", "time": "~30 min", "pitch": "Bright lemon-herb chicken over orzo with wilted spinach and Parmesan — light but satisfying.", "healthy": true, "avoidTags": ["dairy", "gluten", "chicken"], "ingredients": ["10 oz chicken cutlets", "¾ cup orzo", "2 oz baby spinach", "1 lemon", "2 cloves garlic", "2 Tbsp grated Parmesan", "1 tsp dried oregano", "1 tsp garlic powder", "Olive oil, salt, pepper"], "steps": ["Zest and quarter lemon. Mince garlic. Pat chicken dry; season with oregano, garlic powder, salt, pepper, and a drizzle of olive oil.", "Heat a drizzle of oil in a large pan over medium-high. Cook chicken 3–5 minutes per side until 165°F. Transfer to a plate; squeeze 1 lemon wedge over top.", "In the same pan, toast orzo 1 minute. Add garlic; cook 30 seconds. Add 1¾ cups water and a pinch of salt; simmer, stirring, until orzo is tender and liquid absorbed, 8–10 minutes.", "Stir in spinach, lemon zest, juice from 1 wedge, Parmesan, and a drizzle of olive oil until spinach wilts. Season to taste.", "Slice chicken. Serve over lemon orzo with remaining lemon wedges."], "servings": 2, "calories": 580, "spiceLevel": "Mild", "difficulty": "Easy", "utensils": ["Large pan", "Zester", "Paper towels"]}, "bbq-chicken-salad": {"id": "bbq-chicken-salad", "name": "BBQ Chicken Chopped Salad with Ranch", "shortName": "BBQ Chicken Salad", "source": "HelloFresh-style", "url": "https://www.hellofresh.com/", "protein": "chicken", "time": "~20 min", "pitch": "Grilled-style BBQ chicken over crisp romaine with corn, tomato, cheddar, and ranch — hearty salad night.", "healthy": true, "avoidTags": ["dairy", "chicken"], "ingredients": ["10 oz chicken cutlets", "1 romaine heart", "4 oz grape tomatoes", "1 ear / unit corn (or ½ cup thawed)", "2 oz shredded cheddar", "3 Tbsp BBQ sauce", "3 Tbsp ranch dressing", "1 tsp chili powder", "Cooking oil, salt, pepper"], "steps": ["Pat chicken dry; season with chili powder, salt, and pepper. Heat oil in a large pan over medium-high; cook chicken 3–5 minutes per side until 165°F. Brush with BBQ sauce in the last minute. Rest, then slice.", "Chop romaine. Halve tomatoes. If using fresh corn, cut kernels from cob (or warm thawed corn briefly in the pan).", "Toss romaine, tomatoes, and corn with half the ranch. Divide into bowls; top with sliced BBQ chicken, cheddar, and remaining ranch. Serve."], "servings": 2, "calories": 540, "spiceLevel": "Mild", "difficulty": "Easy", "utensils": ["Large pan", "Large bowl", "Paper towels"]}, "thai-basil-chicken": {"id": "thai-basil-chicken", "name": "Thai Basil Chicken Stir-Fry with Jasmine Rice", "shortName": "Thai Basil Chicken", "source": "HelloFresh-style", "url": "https://www.hellofresh.com/", "protein": "chicken", "time": "~25 min", "pitch": "Spicy-savory basil chicken with peppers over rice — takeout energy, skillet speed.", "healthy": true, "avoidTags": ["soy", "spicy", "gluten", "chicken"], "ingredients": ["10 oz chicken breast, diced", "¾ cup jasmine rice", "1 green bell pepper", "1 red onion", "1 oz fresh basil", "2 cloves garlic", "2 Tbsp soy sauce", "1 Tbsp oyster sauce (or extra soy)", "1 tsp chili garlic sauce", "1 tsp sugar", "Cooking oil, salt"], "steps": ["Cook rice with 1¼ cups water and a pinch of salt: boil, cover, low 15–18 minutes.", "Dice pepper and onion. Mince garlic. Roughly chop basil. Mix soy, oyster sauce, chili garlic, and sugar in a small bowl.", "Heat oil in a large pan or wok over high heat. Stir-fry chicken until nearly cooked, 3–4 minutes. Add pepper, onion, and garlic; cook until crisp-tender, 2–3 minutes.", "Pour in sauce; toss until glossy and chicken is 165°F, 1–2 minutes. Off heat, fold in basil.", "Serve over jasmine rice."], "servings": 2, "calories": 610, "spiceLevel": "Medium–Hot", "difficulty": "Easy", "utensils": ["Small pot", "Large pan or wok", "Small bowl"]}, "creamy-tuscan-salmon": {"id": "creamy-tuscan-salmon", "name": "Creamy Tuscan Salmon with Sun-Dried Tomatoes", "shortName": "Creamy Tuscan Salmon", "source": "HelloFresh-style", "url": "https://www.hellofresh.com/", "protein": "salmon", "time": "~30 min", "pitch": "Pan-seared salmon in a rich sun-dried tomato cream sauce with spinach — restaurant-luxe at home.", "healthy": false, "avoidTags": ["dairy", "fish", "salmon"], "ingredients": ["10 oz skin-on salmon fillets", "2 oz baby spinach", "¼ cup sun-dried tomatoes (oil-packed), chopped", "½ cup heavy cream", "¼ cup grated Parmesan", "2 cloves garlic", "1 tsp Italian seasoning", "Olive oil, salt, pepper"], "steps": ["Pat salmon dry; season with salt, pepper, and Italian seasoning. Mince garlic.", "Heat olive oil in a large pan over medium-high. Sear salmon skin-side down 5–6 minutes; flip and cook 2–3 minutes more to 145°F. Transfer to a plate.", "Reduce heat to medium. Add garlic and sun-dried tomatoes; cook 1 minute. Pour in cream; simmer 2 minutes. Stir in Parmesan until melted; fold in spinach until wilted. Season.", "Return salmon to pan or plate and spoon creamy Tuscan sauce over top. Serve."], "servings": 2, "calories": 740, "spiceLevel": "Mild", "difficulty": "Easy", "utensils": ["Large pan", "Paper towels"]}, "miso-glazed-salmon": {"id": "miso-glazed-salmon", "name": "Miso-Glazed Salmon with Sesame Broccoli", "shortName": "Miso Glazed Salmon", "source": "Blue Apron-style", "url": "https://www.blueapron.com/", "protein": "salmon", "time": "~30 min", "pitch": "Umami miso-maple salmon with sesame-roasted broccoli and rice — balanced and weeknight-easy.", "healthy": true, "avoidTags": ["soy", "sesame", "fish", "salmon", "gluten"], "ingredients": ["10 oz skin-on salmon", "¾ cup jasmine rice", "8 oz broccoli florets", "1 Tbsp white miso paste", "1 Tbsp maple syrup or honey", "1 Tbsp soy sauce", "1 tsp sesame oil", "1 tsp sesame seeds", "Cooking oil, salt, pepper"], "steps": ["Preheat oven to 425°F. Cook rice: 1¼ cups water, pinch of salt; boil, cover, low 15–18 minutes.", "Whisk miso, maple, and soy sauce for glaze. Toss broccoli on a baking sheet with oil, salt, pepper, and sesame oil. Roast 10 minutes.", "Pat salmon dry; place on the sheet with broccoli. Brush with miso glaze. Roast until salmon reaches 145°F and broccoli is tender, 10–12 minutes. Sprinkle sesame seeds.", "Serve salmon and broccoli over rice; drizzle any remaining glaze."], "servings": 2, "calories": 620, "spiceLevel": "Mild", "difficulty": "Easy", "utensils": ["Small pot", "Baking sheet", "Small bowl", "Paper towels"]}, "salmon-tacos": {"id": "salmon-tacos", "name": "Chili-Lime Salmon Tacos with Slaw", "shortName": "Chili-Lime Salmon Tacos", "source": "HelloFresh-style", "url": "https://www.hellofresh.com/", "protein": "salmon", "time": "~25 min", "pitch": "Spiced salmon in warm tortillas with crunchy lime slaw and crema — taco night upgrade.", "healthy": true, "avoidTags": ["dairy", "fish", "salmon", "gluten", "spicy"], "ingredients": ["10 oz skinless salmon", "6 small flour or corn tortillas", "4 oz coleslaw mix", "1 lime", "¼ cup sour cream", "1 tsp chili powder", "½ tsp cumin", "½ tsp garlic powder", "1 tsp honey", "Cooking oil, salt, pepper"], "steps": ["Zest and quarter lime. Pat salmon dry; season with chili powder, cumin, garlic powder, salt, and pepper.", "Toss coleslaw mix with juice from 1 lime wedge, honey, a pinch of salt, and half the lime zest. Mix sour cream with remaining zest and a squeeze of lime for crema.", "Heat oil in a nonstick pan over medium-high. Cook salmon 3–4 minutes per side to 145°F; flake into chunks.", "Warm tortillas. Fill with salmon, slaw, and crema. Serve with remaining lime."], "servings": 2, "calories": 590, "spiceLevel": "Medium", "difficulty": "Easy", "utensils": ["Nonstick pan", "Two small bowls", "Paper towels", "Zester"]}, "teriyaki-salmon-bowl": {"id": "teriyaki-salmon-bowl", "name": "Teriyaki Salmon Bowl with Edamame & Rice", "shortName": "Teriyaki Salmon Bowl", "source": "HelloFresh-style", "url": "https://www.hellofresh.com/", "protein": "salmon", "time": "~30 min", "pitch": "Glazed teriyaki salmon over rice with edamame and cucumber — Protein Smart vibes.", "healthy": true, "avoidTags": ["soy", "sesame", "fish", "salmon", "gluten"], "ingredients": ["10 oz salmon fillets", "¾ cup jasmine rice", "4 oz shelled edamame", "1 mini cucumber", "3 Tbsp teriyaki sauce", "1 tsp sesame oil", "1 tsp sesame seeds", "2 scallions", "Cooking oil, salt"], "steps": ["Cook rice with 1¼ cups water and salt: boil, cover, low 15–18 minutes. Thinly slice cucumber and scallions.", "Pat salmon dry; season with salt. Heat oil in a pan over medium-high; cook skin-side down 5 minutes, flip 2–3 minutes. Add teriyaki; spoon over fish until glazed. Cook to 145°F.", "Warm edamame (microwave or pan) with sesame oil and a pinch of salt.", "Bowl rice; top with glazed salmon, edamame, cucumber, scallions, and sesame seeds."], "servings": 2, "calories": 650, "spiceLevel": "Mild", "difficulty": "Easy", "utensils": ["Small pot", "Large pan", "Paper towels"]}, "steak-fajita-skillet": {"id": "steak-fajita-skillet", "name": "Sizzling Steak Fajita Skillet", "shortName": "Steak Fajita Skillet", "source": "HelloFresh-style", "url": "https://www.hellofresh.com/", "protein": "beef", "time": "~30 min", "pitch": "Strips of steak with peppers and onions, warm tortillas, and lime crema — fajita night without the fuss.", "healthy": true, "avoidTags": ["dairy", "beef", "gluten", "spicy"], "ingredients": ["10 oz ranch steak", "6 small flour tortillas", "1 green bell pepper", "1 red onion", "1 lime", "¼ cup sour cream", "1 Tbsp fajita spice blend", "1 tsp garlic powder", "Cooking oil, salt, pepper"], "steps": ["Slice pepper and onion into strips. Zest and quarter lime. Pat steak dry; thinly slice against the grain. Toss steak with fajita spice, garlic powder, salt, and pepper.", "Mix sour cream with lime zest and juice from 1 wedge for crema.", "Heat oil in a large pan over high. Sear steak strips 2–3 minutes until browned; transfer out. Add more oil; cook pepper and onion until charred-tender, 4–5 minutes. Return steak; toss. Squeeze lime over top.", "Warm tortillas. Serve steak and veggies with crema and remaining lime."], "servings": 2, "calories": 670, "spiceLevel": "Medium", "difficulty": "Easy", "utensils": ["Large pan", "Small bowl", "Paper towels", "Zester"]}, "buffalo-chicken-wraps": {"id": "buffalo-chicken-wraps", "name": "Buffalo Chicken Lettuce Wraps with Blue Cheese", "shortName": "Buffalo Chicken Wraps", "source": "HelloFresh-style", "url": "https://www.hellofresh.com/", "protein": "chicken", "time": "~20 min", "pitch": "Spicy buffalo chicken in crisp lettuce cups with blue cheese drizzle — low-carb heat.", "healthy": true, "avoidTags": ["dairy", "spicy", "chicken"], "ingredients": ["10 oz ground chicken", "1 head butter lettuce", "2 celery stalks", "2 Tbsp buffalo hot sauce", "2 Tbsp blue cheese dressing (or ranch)", "1 Tbsp butter", "1 tsp garlic powder", "Cooking oil, salt, pepper"], "steps": ["Separate lettuce leaves; wash and dry. Thinly slice celery.", "Heat oil in a pan over medium-high. Cook ground chicken with garlic powder, salt, and pepper, breaking up, until cooked through, 5–6 minutes (165°F).", "Reduce heat; stir in butter and buffalo sauce until coated.", "Fill lettuce cups with buffalo chicken and celery. Drizzle with blue cheese dressing. Serve."], "servings": 2, "calories": 480, "spiceLevel": "Hot", "difficulty": "Easy", "utensils": ["Large pan"]}, "chimichurri-steak-salad": {"id": "chimichurri-steak-salad", "name": "Chimichurri Steak with Tomato Cucumber Salad", "shortName": "Chimichurri Steak Salad", "source": "HelloFresh-style", "url": "https://www.hellofresh.com/", "protein": "beef", "time": "~25 min", "pitch": "Seared steak with bright herb chimichurri over tomato-cucumber salad — zero dairy, high protein.", "healthy": true, "avoidTags": ["beef"], "ingredients": ["10 oz ranch steak", "1 romaine heart", "1 mini cucumber", "4 oz grape tomatoes", "½ red onion", "1 bunch parsley (or ½ oz)", "2 cloves garlic", "1 red chili or ½ tsp chili flakes (optional)", "2 Tbsp red wine vinegar", "3 Tbsp olive oil", "Salt, pepper"], "steps": ["Wash and dry produce. Finely chop parsley and garlic (and chili if using). Whisk with vinegar, 2 Tbsp olive oil, salt, and pepper for chimichurri.", "Chop romaine. Slice cucumber and onion; halve tomatoes. Toss salad veggies with a drizzle of olive oil, salt, and pepper.", "Pat steak dry; season with salt and pepper. Heat oil in a large pan over medium-high; sear 3–5 minutes per side to 145°F. Rest 5 minutes; slice against the grain.", "Plate salad; top with steak and spoon chimichurri over. Serve."], "servings": 2, "calories": 520, "spiceLevel": "Mild–Medium", "difficulty": "Easy", "utensils": ["Large pan", "Small bowl", "Paper towels", "Whisk"]}, "balsamic-steak-veggies": {"id": "balsamic-steak-veggies", "name": "Balsamic Steak with Roasted Veggies", "shortName": "Balsamic Steak & Veggies", "source": "Blue Apron-style", "url": "https://www.blueapron.com/", "protein": "beef", "time": "~35 min", "pitch": "Sheet-pan peppers, zucchini, and onion with balsamic-glazed steak — dairy-free and veggie-forward.", "healthy": true, "avoidTags": ["beef"], "ingredients": ["10 oz sirloin steak", "1 zucchini", "1 red bell pepper", "1 red onion", "2 Tbsp balsamic vinegar", "1 tsp dried rosemary", "1 tsp garlic powder", "1 tsp honey", "Olive oil, cooking oil, salt, pepper"], "steps": ["Preheat oven to 425°F. Slice zucchini into half-moons; slice pepper and onion into strips. Toss on a baking sheet with oil, garlic powder, salt, and pepper. Roast 18–22 minutes until tender and browned.", "Pat steak dry; season with rosemary, salt, and pepper. Heat oil in a pan over medium-high; sear 4–6 minutes per side to 145°F. Rest 5 minutes.", "In a small bowl, mix balsamic vinegar, honey, and a drizzle of olive oil. Slice steak; drizzle with balsamic glaze. Serve with roasted veggies."], "servings": 2, "calories": 560, "spiceLevel": "Mild", "difficulty": "Easy", "utensils": ["Baking sheet", "Large pan", "Small bowl", "Paper towels"]}, "ginger-beef-broccoli": {"id": "ginger-beef-broccoli", "name": "Ginger Beef & Broccoli Stir-Fry", "shortName": "Ginger Beef Broccoli", "source": "HelloFresh-style", "url": "https://www.hellofresh.com/", "protein": "beef", "time": "~25 min", "pitch": "Classic ginger beef with crisp broccoli over rice — skip the takeout.", "healthy": true, "avoidTags": ["soy", "gluten", "beef", "sesame"], "ingredients": ["10 oz sirloin, thinly sliced", "¾ cup jasmine rice", "8 oz broccoli florets", "2 cloves garlic", "1 Tbsp fresh ginger, minced (or 1 tsp ground)", "3 Tbsp soy sauce", "1 tsp sesame oil", "1 tsp cornstarch", "1 tsp brown sugar", "2 scallions", "Cooking oil, salt"], "steps": ["Cook rice with 1¼ cups water and a pinch of salt: boil, cover, low 15–18 minutes. Slice scallions; mince garlic and ginger. Mix soy, cornstarch, brown sugar, sesame oil, and 2 Tbsp water for sauce.", "Heat oil in a large pan or wok on high. Stir-fry beef 2–3 minutes until browned; transfer out. Add broccoli and a splash of water; cover 2–3 minutes until crisp-tender.", "Add garlic and ginger; cook 30 seconds. Return beef; pour in sauce; toss until glossy, 1–2 minutes. Serve over rice with scallions."], "servings": 2, "calories": 640, "spiceLevel": "Mild", "difficulty": "Easy", "utensils": ["Small pot", "Large pan or wok", "Small bowl"]}, "herb-roast-chicken-carrots": {"id": "herb-roast-chicken-carrots", "name": "Herb-Roasted Chicken with Carrots & Green Beans", "shortName": "Herb Roast Chicken Tray", "source": "Blue Apron-style", "url": "https://www.blueapron.com/", "protein": "chicken", "time": "~35 min", "pitch": "One-pan herb chicken with roasted carrots and green beans — dairy-free and simple.", "healthy": true, "avoidTags": ["chicken"], "ingredients": ["12 oz chicken cutlets", "9 oz carrots", "6 oz green beans", "1 lemon", "1 tsp dried thyme", "1 tsp garlic powder", "1 tsp paprika", "Olive oil, salt, pepper"], "steps": ["Preheat oven to 425°F. Peel and cut carrots into sticks; trim green beans. Zest and quarter lemon.", "Toss carrots and green beans on a sheet with oil, half the garlic powder, salt, and pepper. Roast 10 minutes.", "Pat chicken dry; season with thyme, paprika, remaining garlic powder, salt, pepper, and lemon zest. Add to sheet; drizzle with oil. Roast until chicken is 165°F and veggies are tender, 15–18 minutes. Squeeze lemon over and serve."], "servings": 2, "calories": 480, "spiceLevel": "Mild", "difficulty": "Easy", "utensils": ["Baking sheet", "Peeler", "Zester", "Paper towels"]}, "salmon-quinoa-bowl": {"id": "salmon-quinoa-bowl", "name": "Lemon Salmon Quinoa Bowl with Cucumber", "shortName": "Lemon Salmon Quinoa Bowl", "source": "HelloFresh-style", "url": "https://www.hellofresh.com/", "protein": "salmon", "time": "~30 min", "pitch": "Roasted lemon salmon over quinoa with cucumber and herbs — dairy-free Protein Smart bowl.", "healthy": true, "avoidTags": ["fish", "salmon"], "ingredients": ["10 oz salmon fillets", "¾ cup quinoa", "1 mini cucumber", "1 lemon", "2 Tbsp chopped parsley or dill", "1 tsp garlic powder", "Olive oil, salt, pepper"], "steps": ["Preheat oven to 425°F. Rinse quinoa; cook with 1½ cups water and a pinch of salt: boil, cover, low 15 minutes. Fluff. Zest and quarter lemon; slice cucumber.", "Pat salmon dry; place on oiled sheet. Season with garlic powder, salt, pepper, lemon zest, and a drizzle of oil. Roast to 145°F, 10–12 minutes. Squeeze 1 lemon wedge over.", "Toss quinoa with cucumber, herbs, olive oil, and juice from 1 lemon wedge. Plate bowls; top with salmon and remaining lemon."], "servings": 2, "calories": 580, "spiceLevel": "Mild", "difficulty": "Easy", "utensils": ["Small pot", "Baking sheet", "Zester", "Paper towels"]}}, "notes": {"pii": "Public site — no names, emails, or mailto.", "pdfOnSubmit": "Client-side jsPDF: cover, grocery, one recipe per page.", "servings": "Recipes authored for 2; scale x2 when servings=4."}};
 
-    const slotsEl = document.getElementById("slots");
-    const result = document.getElementById("result");
-    const printSheet = document.getElementById("print-sheet");
+    // ---- Prefs state ----
+    const prefs = {
+      beef: 2,
+      chicken: 2,
+      salmon: 1,
+      healthyOnly: true,
+      servings: 2,
+      avoid: new Set(),
+      customAvoid: []
+    };
 
-    /** Runtime state per slot index */
-    const state = DATA.slots.map((slot, i) => ({
-      day: slot.day,
-      protein: slot.protein,
-      mealId: slot.primary,
-      kept: true,
-      swapOpen: false,
-      alternateIds: slot.alternates.slice()
-    }));
+    let state = []; // picker slots
+    let lastPlan = null;
+
+    const $ = (id) => document.getElementById(id);
+    const slotsEl = $("slots");
+    const result = $("result");
+
+    function showScreen(id) {
+      document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
+      $(id).classList.add("active");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
 
     function meal(id) { return DATA.candidates[id]; }
 
     function proteinLabel(p) {
       return p.charAt(0).toUpperCase() + p.slice(1);
+    }
+
+    function updateTotal() {
+      const t = prefs.beef + prefs.chicken + prefs.salmon;
+      $("pref-total").textContent = "Total dinners: " + t + (t > 7 ? " (max 7 days)" : "");
+    }
+
+    function wireSeg(el, onChange) {
+      el.querySelectorAll("button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          el.querySelectorAll("button").forEach((b) => b.classList.remove("on"));
+          btn.classList.add("on");
+          onChange(btn.dataset.val);
+        });
+      });
+    }
+
+    // Prefs UI
+    ["beef","chicken","salmon"].forEach((p) => {
+      const input = $("pref-" + p);
+      input.addEventListener("change", () => {
+        let v = Math.max(0, Math.min(7, parseInt(input.value, 10) || 0));
+        input.value = v;
+        prefs[p] = v;
+        updateTotal();
+      });
+    });
+    wireSeg($("pref-healthy"), (v) => { prefs.healthyOnly = v === "healthy"; });
+    wireSeg($("pref-servings"), (v) => { prefs.servings = parseInt(v, 10); });
+
+    function renderAvoidChips() {
+      const box = $("avoid-chips");
+      box.innerHTML = "";
+      (DATA.avoidOptions || []).forEach((opt) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "chip" + (prefs.avoid.has(opt.id) ? " on" : "");
+        b.textContent = opt.label;
+        b.addEventListener("click", () => {
+          if (prefs.avoid.has(opt.id)) prefs.avoid.delete(opt.id);
+          else prefs.avoid.add(opt.id);
+          renderAvoidChips();
+        });
+        box.appendChild(b);
+      });
+      const custom = $("custom-chips");
+      custom.innerHTML = "";
+      prefs.customAvoid.forEach((tag, i) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "chip on";
+        b.textContent = tag + " ×";
+        b.addEventListener("click", () => {
+          prefs.customAvoid.splice(i, 1);
+          renderAvoidChips();
+        });
+        custom.appendChild(b);
+      });
+    }
+
+    $("add-avoid").addEventListener("click", () => {
+      const raw = ($("custom-avoid").value || "").trim().toLowerCase();
+      if (!raw) return;
+      if (!prefs.customAvoid.includes(raw)) prefs.customAvoid.push(raw);
+      $("custom-avoid").value = "";
+      renderAvoidChips();
+    });
+    $("custom-avoid").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); $("add-avoid").click(); }
+    });
+
+    function recipeHitsAvoid(m) {
+      const tags = (m.avoidTags || []).map((t) => t.toLowerCase());
+      for (const a of prefs.avoid) {
+        if (tags.includes(a)) return true;
+      }
+      const blob = [
+        ...(m.ingredients || []),
+        m.name || "",
+        m.pitch || "",
+        ...(m.avoidTags || [])
+      ].join(" ").toLowerCase();
+      for (const c of prefs.customAvoid) {
+        if (c && blob.includes(c)) return true;
+      }
+      return false;
+    }
+
+    function eligiblePool(protein) {
+      return Object.values(DATA.candidates).filter((m) => {
+        if (m.protein !== protein) return false;
+        if (prefs.healthyOnly && !m.healthy) return false;
+        if (recipeHitsAvoid(m)) return false;
+        return true;
+      });
+    }
+
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function buildPlan() {
+      const total = prefs.beef + prefs.chicken + prefs.salmon;
+      const warn = $("prefs-warn");
+      warn.style.display = "none";
+      if (total < 1) {
+        warn.style.display = "block";
+        warn.textContent = "Pick at least one dinner.";
+        return null;
+      }
+      if (total > 7) {
+        warn.style.display = "block";
+        warn.textContent = "Cap dinners at 7 (one week).";
+        return null;
+      }
+
+      const dayLabels = (DATA.dayLabels || ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]).slice(0, total);
+      const mix = [];
+      for (let i = 0; i < prefs.beef; i++) mix.push("beef");
+      for (let i = 0; i < prefs.chicken; i++) mix.push("chicken");
+      for (let i = 0; i < prefs.salmon; i++) mix.push("salmon");
+      // Interleave proteins a bit for variety across the week
+      const ordered = [];
+      const queues = { beef: [], chicken: [], salmon: [] };
+      mix.forEach((p) => queues[p].push(p));
+      while (ordered.length < mix.length) {
+        for (const p of ["beef","chicken","salmon"]) {
+          if (queues[p].length) ordered.push(queues[p].shift());
+        }
+      }
+
+      const used = new Set();
+      const slots = [];
+      const shortages = [];
+
+      ordered.forEach((protein, idx) => {
+        let pool = eligiblePool(protein).filter((m) => !used.has(m.id));
+        if (!pool.length) {
+          // Relax: allow already-used same protein if needed, still respect avoid/healthy
+          pool = eligiblePool(protein);
+        }
+        if (!pool.length) {
+          shortages.push(protein);
+          slots.push({
+            day: dayLabels[idx],
+            protein,
+            mealId: null,
+            kept: false,
+            swapOpen: true,
+            alternateIds: []
+          });
+          return;
+        }
+        const shuffled = shuffle(pool);
+        const primary = shuffled[0];
+        used.add(primary.id);
+        const alts = shuffled.slice(1, 4).map((m) => m.id);
+        // Also include other eligible same-protein not used as primary elsewhere later — keep 2–3 alts
+        slots.push({
+          day: dayLabels[idx],
+          protein,
+          mealId: primary.id,
+          kept: true,
+          swapOpen: false,
+          alternateIds: alts
+        });
+      });
+
+      // Refresh alternates from full eligible pool (excluding current primary)
+      slots.forEach((s) => {
+        if (!s.mealId) return;
+        const pool = eligiblePool(s.protein)
+          .filter((m) => m.id !== s.mealId)
+          .map((m) => m.id);
+        s.alternateIds = shuffle(pool).slice(0, 3);
+      });
+
+      return { slots, shortages, total };
+    }
+
+    $("btn-find").addEventListener("click", () => {
+      const plan = buildPlan();
+      if (!plan) return;
+      lastPlan = plan;
+      state = plan.slots.map((s) => ({ ...s, alternateIds: s.alternateIds.slice() }));
+      const bits = [];
+      if (prefs.healthyOnly) bits.push("Healthier");
+      else bits.push("Anything goes");
+      bits.push(prefs.servings + " servings");
+      if (prefs.avoid.size || prefs.customAvoid.length) {
+        bits.push("Avoiding " + [
+          ...[...prefs.avoid].map((id) => {
+            const o = (DATA.avoidOptions || []).find((x) => x.id === id);
+            return o ? o.label : id;
+          }),
+          ...prefs.customAvoid
+        ].join(", "));
+      }
+      $("picker-badge").textContent = bits[0] + " · " + prefs.servings + " servings";
+      $("picker-summary").textContent =
+        prefs.beef + " beef · " + prefs.chicken + " chicken · " + prefs.salmon + " salmon" +
+        (bits.length > 2 ? " · " + bits.slice(2).join(" · ") : "");
+      const pw = $("picker-warn");
+      if (plan.shortages.length) {
+        pw.style.display = "block";
+        pw.textContent = "Not enough matching recipes for: " +
+          [...new Set(plan.shortages)].join(", ") +
+          ". Try “Anything goes”, fewer avoids, or lower that protein count.";
+      } else {
+        pw.style.display = "none";
+      }
+      result.classList.remove("show");
+      render();
+      showScreen("screen-picker");
+    });
+
+    $("back-prefs").addEventListener("click", () => showScreen("screen-prefs"));
+
+    function scaleIngredientLine(line, factor) {
+      if (factor === 1) return line;
+      // Scale leading numeric quantities (integers, decimals, unicode fractions)
+      const fracMap = { "½": 0.5, "¼": 0.25, "¾": 0.75, "⅓": 1/3, "⅔": 2/3, "⅛": 0.125, "⅜": 0.375, "⅝": 0.625, "⅞": 0.875 };
+      let s = line;
+      // Unicode fraction at start: "½ oz ..."
+      const uf = s.match(/^([½¼¾⅓⅔⅛⅜⅝⅞])(\s+)/);
+      if (uf) {
+        const n = fracMap[uf[1]] * factor;
+        return formatQty(n) + uf[2] + s.slice(uf[0].length);
+      }
+      // "1–2" or "10–12 oz" ranges
+      const range = s.match(/^(\d+(?:\.\d+)?)\s*[–-]\s*(\d+(?:\.\d+)?)(?=\s|[a-zA-Z]|$)/);
+      if (range) {
+        const a = parseFloat(range[1]) * factor;
+        const b = parseFloat(range[2]) * factor;
+        return formatQty(a) + "–" + formatQty(b) + s.slice(range[0].length);
+      }
+      // Mixed number "1 ½"
+      const mixed = s.match(/^(\d+)\s+([½¼¾⅓⅔⅛⅜⅝⅞])(?=\s)/);
+      if (mixed) {
+        const n = (parseFloat(mixed[1]) + fracMap[mixed[2]]) * factor;
+        return formatQty(n) + s.slice(mixed[0].length);
+      }
+      // Plain number at start
+      const num = s.match(/^(\d+(?:\.\d+)?)(?=\s|[a-zA-Z]|$)/);
+      if (num) {
+        const n = parseFloat(num[1]) * factor;
+        return formatQty(n) + s.slice(num[1].length);
+      }
+      // Pantry catch-alls: leave as-is but annotate
+      if (/olive oil|salt|pepper|cooking oil/i.test(s) && !/^\d/.test(s)) {
+        return s + (factor > 1 ? " (scale to taste for " + prefs.servings + ")" : "");
+      }
+      return s;
+    }
+
+    function formatQty(n) {
+      // Prefer clean halves/quarters
+      const rounded = Math.round(n * 100) / 100;
+      if (Math.abs(rounded - Math.round(rounded)) < 0.01) return String(Math.round(rounded));
+      if (Math.abs(rounded - 0.5) < 0.01) return "½";
+      if (Math.abs(rounded - 0.25) < 0.01) return "¼";
+      if (Math.abs(rounded - 0.75) < 0.01) return "¾";
+      if (Math.abs(rounded % 1 - 0.5) < 0.01) return String(Math.floor(rounded)) + " ½";
+      if (Number.isInteger(rounded * 2)) return String(rounded);
+      return String(Math.round(n * 10) / 10);
+    }
+
+    function scaledMeal(m) {
+      const factor = prefs.servings / (m.servings || 2);
+      const cal = m.calories ? Math.round(m.calories * factor) : null;
+      return {
+        ...m,
+        servings: prefs.servings,
+        calories: cal,
+        ingredients: (m.ingredients || []).map((line) => scaleIngredientLine(line, factor))
+      };
     }
 
     function render() {
@@ -707,25 +606,28 @@ const DATA = {
         const titleBlock = (s.kept && s.mealId)
           ? (() => {
               const m = meal(s.mealId);
-              return `<div class="day">${s.day} · ${proteinLabel(s.protein)}</div>
+              const healthyTag = m.healthy
+                ? '<span class="tag">Healthier</span>'
+                : '<span class="tag comfort">Comfort</span>';
+              return `<div class="day">${s.day} · <span class="p-${s.protein}">${proteinLabel(s.protein)}</span></div>
                 <div class="name">${m.shortName}</div>
-                <div class="meta">${m.source} · ${m.time} · ${proteinLabel(m.protein)}</div>
+                <div class="meta">${m.source} · ${m.time} · Spice: ${m.spiceLevel || "—"}</div>
                 <div class="pitch">${m.pitch}</div>
+                <div class="tags">${healthyTag}<span class="tag">${prefs.servings} servings</span></div>
                 <div class="link"><a href="${m.url}" target="_blank" rel="noopener">Recipe card</a></div>
                 <button type="button" class="swap-btn" data-swap="${idx}">Swap this meal</button>`;
             })()
-          : `<div class="day">${s.day} · ${proteinLabel(s.protein)}</div>
+          : `<div class="day">${s.day} · <span class="p-${s.protein}">${proteinLabel(s.protein)}</span></div>
                 <div class="name">${s.mealId ? meal(s.mealId).shortName + " — pick a swap" : "Empty slot — pick a swap"}</div>
                 <div class="meta">Tap an option below (same protein), or leave empty</div>`;
 
         card.innerHTML = `
-            <div class="meal-top">
-              <input type="checkbox" id="c${idx}" ${s.kept && s.mealId ? "checked" : ""} />
-              <label for="c${idx}">${titleBlock}</label>
-            </div>
-            <div class="swap-panel"></div>`;
+          <div class="meal-top">
+            <input type="checkbox" id="c${idx}" ${s.kept && s.mealId ? "checked" : ""} />
+            <label for="c${idx}">${titleBlock}</label>
+          </div>
+          <div class="swap-panel"></div>`;
 
-        // Buttons inside label shouldn't toggle checkbox oddly on all browsers
         card.querySelectorAll("button.swap-btn").forEach((btn) => {
           btn.addEventListener("click", (e) => {
             e.preventDefault();
@@ -741,20 +643,20 @@ const DATA = {
         const panel = card.querySelector(".swap-panel");
         if (showSwap) {
           panel.innerHTML = `<div class="swap-title">Choose a ${s.protein} option</div>`;
-          const primaryId = DATA.slots[idx].primary;
           const pool = [];
           const seen = new Set();
-          for (const id of [primaryId, ...s.alternateIds]) {
-            if (!seen.has(id)) { seen.add(id); pool.push(id); }
+          const candidates = [s.mealId, ...s.alternateIds]
+            .concat(eligiblePool(s.protein).map((m) => m.id));
+          for (const id of candidates) {
+            if (id && !seen.has(id)) { seen.add(id); pool.push(id); }
           }
-          pool.forEach((id) => {
+          pool.slice(0, 6).forEach((id) => {
             const m = meal(id);
             if (!m) return;
             const alt = document.createElement("button");
             alt.type = "button";
             alt.className = "alt";
-            alt.setAttribute("aria-label", "Choose " + m.shortName);
-            alt.innerHTML = `<div class="aname">${m.shortName}${id === s.mealId ? " (current)" : ""}</div>
+            alt.innerHTML = `<div class="aname">${m.shortName}${id === s.mealId ? " (current)" : ""}${m.healthy ? "" : " · comfort"}</div>
               <div class="ameta">${m.source} · ${m.time} · ${m.pitch}</div>`;
             alt.addEventListener("click", (e) => {
               e.preventDefault();
@@ -762,6 +664,11 @@ const DATA = {
               s.mealId = id;
               s.kept = true;
               s.swapOpen = false;
+              // refresh alts excluding new primary
+              s.alternateIds = eligiblePool(s.protein)
+                .filter((x) => x.id !== id)
+                .map((x) => x.id)
+                .slice(0, 3);
               render();
             });
             panel.appendChild(alt);
@@ -784,9 +691,12 @@ const DATA = {
         const checkbox = card.querySelector('input[type="checkbox"]');
         checkbox.addEventListener("change", () => {
           if (checkbox.checked) {
-            if (!s.mealId) s.mealId = DATA.slots[idx].primary;
-            s.kept = true;
-            s.swapOpen = false;
+            if (!s.mealId) {
+              const pool = eligiblePool(s.protein);
+              s.mealId = pool[0] ? pool[0].id : null;
+            }
+            s.kept = !!s.mealId;
+            s.swapOpen = !s.mealId;
           } else {
             s.kept = false;
             s.swapOpen = true;
@@ -806,18 +716,16 @@ const DATA = {
       });
     }
 
-    document.getElementById("selectAll").addEventListener("click", () => {
-      state.forEach((s, i) => {
-        s.mealId = DATA.slots[i].primary;
-        s.kept = true;
-      });
+    $("reset-picks").addEventListener("click", () => {
+      if (!lastPlan) return;
+      state = lastPlan.slots.map((s) => ({ ...s, alternateIds: s.alternateIds.slice() }));
       render();
     });
 
     function selectedMeals() {
       return state
         .filter((s) => s.kept && s.mealId)
-        .map((s) => ({ day: s.day, protein: s.protein, meal: meal(s.mealId) }));
+        .map((s) => ({ day: s.day, protein: s.protein, meal: scaledMeal(meal(s.mealId)) }));
     }
 
     function emptySlots() {
@@ -836,51 +744,21 @@ const DATA = {
     }
 
     function fillPrintSheet(selected, empties) {
-      let html = `<h1>This week's dinners</h1>
-        <div class="sub">Week of Sep 27, 2026 · Healthier lineup · Generated locally</div>`;
-
-      html += `<h2>Keep list</h2>`;
-      if (!selected.length) {
-        html += `<p class="empty-note">No meals selected.</p>`;
-      } else {
-        html += `<ul>` + selected.map(({ day, meal: m, protein }) =>
-          `<li><strong>${day}</strong> — ${m.name} (${protein})</li>`).join("") + `</ul>`;
-      }
-      if (empties.length) {
-        html += `<p class="empty-note">Empty slots: ${empties.join(", ")}</p>`;
-      }
-
-      html += `<h2>Grocery list</h2>`;
-      const groceries = buildGrocery(selected);
-      if (!groceries.length) {
-        html += `<p class="empty-note">No ingredients (no meals kept).</p>`;
-      } else {
-        html += `<ul>` + groceries.map((g) => `<li>${g}</li>`).join("") + `</ul>`;
-      }
-
-      html += `<h2>Recipes</h2>`;
+      let html = `<h1>Weekly meal plan</h1>
+        <div class="sub">${prefs.servings} servings · ${prefs.healthyOnly ? "Healthier" : "Anything goes"} · Generated locally</div>`;
+      html += `<h2>Menu</h2>`;
+      if (!selected.length) html += `<p>No meals selected.</p>`;
+      else html += `<ul>` + selected.map(({ day, meal: m, protein }) =>
+        `<li><strong>${day}</strong> — ${m.name} (${protein})</li>`).join("") + `</ul>`;
+      if (empties.length) html += `<p>Empty slots: ${empties.join(", ")}</p>`;
+      html += `<h2>Grocery list</h2><ul>` +
+        buildGrocery(selected).map((g) => `<li>${g}</li>`).join("") + `</ul>`;
       selected.forEach(({ day, meal: m }) => {
-        const meta = [
-          m.source,
-          m.time,
-          m.servings ? m.servings + " servings" : null,
-          m.spiceLevel ? "Spice: " + m.spiceLevel : null,
-          m.calories ? "~" + m.calories + " kcal" : null
-        ].filter(Boolean).join(" · ");
-        html += `<div class="meal-block">
-          <h3>${day} — ${m.name}</h3>
-          <div class="sub">${meta}${m.url ? ` · <a href="${m.url}">${m.url}</a>` : ""}</div>
-          <p>${m.pitch || ""}</p>
-          ${m.utensils && m.utensils.length ? `<p class="sub"><strong>Utensils:</strong> ${m.utensils.join(", ")}</p>` : ""}
-          <strong>Ingredients</strong>
-          <ul>${(m.ingredients || []).map((i) => `<li>${i}</li>`).join("")}</ul>
-          <strong>Steps</strong>
-          <ol>${(m.steps || []).map((s) => `<li>${s}</li>`).join("")}</ol>
-        </div>`;
+        html += `<div class="meal-block"><h3>${day} — ${m.name}</h3>
+          <strong>Ingredients</strong><ul>${(m.ingredients||[]).map(i=>`<li>${i}</li>`).join("")}</ul>
+          <strong>Steps</strong><ol>${(m.steps||[]).map(s=>`<li>${s}</li>`).join("")}</ol></div>`;
       });
-
-      html += `<p class="sub">Tip: use your browser’s Print → Save as PDF if the download button is blocked.</p>`;
-      printSheet.innerHTML = html;
+      document.getElementById("print-sheet").innerHTML = html;
     }
 
     function downloadPdf() {
@@ -902,9 +780,7 @@ const DATA = {
       if (!JsPDF) {
         result.textContent = summaryLines + "\n\nOpening print dialog — choose “Save as PDF”.";
         result.classList.add("show");
-        printSheet.classList.add("capturing");
         window.print();
-        printSheet.classList.remove("capturing");
         return;
       }
 
@@ -920,7 +796,6 @@ const DATA = {
 
       function newPageFresh() {
         doc.addPage();
-        // soft header bar
         doc.setFillColor(226, 239, 231);
         doc.rect(0, 0, pageW, 28, "F");
         doc.setFillColor(...accent);
@@ -947,22 +822,24 @@ const DATA = {
       }
 
       // Section title with underline BELOW the text (clear gap; never through glyphs)
+      // pdf-section-underline-fix
       function writeSectionHead(title, y) {
         const size = 13;
         doc.setFont("helvetica", "bold");
         doc.setFontSize(size);
         doc.setTextColor(...accent);
-        if (y + size + 10 > pageH - margin) y = newPageFresh();
+        if (y + size + 14 > pageH - margin) y = newPageFresh();
         doc.text(title, margin, y);
-        const underlineY = y + 5; // below baseline + descender clearance
+        // underlineY clearly below baseline so descenders (g,y,p) never collide
+        const underlineY = y + 6;
         doc.setDrawColor(...accent);
         doc.setLineWidth(1.5);
         const tw = doc.getTextWidth(title);
         doc.line(margin, underlineY, margin + Math.max(tw, 48), underlineY);
-        return underlineY + 10; // gap before body content
+        return underlineY + 12; // gap before body content
       }
 
-      // ===== Cover / overview page =====
+      // ===== Cover =====
       doc.setFillColor(243, 246, 242);
       doc.rect(0, 0, pageW, pageH, "F");
       doc.setFillColor(...accent);
@@ -970,31 +847,39 @@ const DATA = {
       doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(26);
-      doc.text("This week's dinners", margin, 48);
+      doc.text("Weekly meal plan", margin, 48);
       doc.setFontSize(12);
       doc.setFont("helvetica", "normal");
-      doc.text("Healthier lineup · recipes + grocery list", margin, 70);
+      const coverSub = (prefs.healthyOnly ? "Healthier picks" : "Anything-goes picks") +
+        " · " + prefs.servings + " servings · recipes + grocery list";
+      doc.text(coverSub, margin, 70);
 
       let y = 120;
-      y = writeWrapped("Week of Sep 27, 2026", margin, y, { size: 12, color: muted, gap: 12 });
-
+      const today = new Date();
+      const dateStr = today.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      y = writeWrapped("Generated " + dateStr, margin, y, { size: 12, color: muted, gap: 12 });
       y = writeWrapped("On the menu", margin, y, { size: 16, style: "bold", color: accent, gap: 8 });
+
       if (!selected.length) {
         y = writeWrapped("No meals selected yet.", margin, y, { size: 11, color: muted });
       } else {
         selected.forEach(({ day, meal: m, protein }, i) => {
-          if (y > pageH - 80) y = newPageFresh();
+          if (y > pageH - 90) y = newPageFresh();
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(12);
+          const nameLines = doc.splitTextToSize(m.name, maxW - 44);
+          const cardH = 28 + nameLines.length * 14;
           doc.setFillColor(255, 254, 249);
           doc.setDrawColor(217, 227, 219);
-          doc.roundedRect(margin, y - 4, maxW, 46, 6, 6, "FD");
+          doc.roundedRect(margin, y - 4, maxW, cardH, 6, 6, "FD");
           doc.setFillColor(...(protein === "beef" ? warm : protein === "salmon" ? [56, 102, 140] : accent));
-          doc.circle(margin + 16, y + 18, 8, "F");
+          doc.circle(margin + 16, y + 14, 8, "F");
           doc.setTextColor(255, 255, 255);
           doc.setFontSize(8);
           doc.setFont("helvetica", "bold");
           const num = String(i + 1);
           const numW = doc.getTextWidth(num);
-          doc.text(num, margin + 16 - numW / 2, y + 21);
+          doc.text(num, margin + 16 - numW / 2, y + 17);
           y = writeWrapped(day + " · " + protein.toUpperCase(), margin + 34, y + 6, {
             size: 9, style: "bold", color: muted, gap: 1, width: maxW - 44
           });
@@ -1007,18 +892,21 @@ const DATA = {
         y = writeWrapped("Empty slots: " + empties.join(", "), margin, y + 4, { size: 10, color: muted });
       }
 
-      // ===== Grocery page =====
+      // ===== Grocery =====
       y = newPageFresh();
       doc.setFillColor(...warm);
       doc.roundedRect(margin, y - 8, 8, 22, 2, 2, "F");
       y = writeWrapped("Grocery list", margin + 16, y, { size: 18, style: "bold", color: accent, gap: 4 });
-      y = writeWrapped("Everything for the dinners you kept — check your pantry first for oil, salt, pepper, and butter.", margin, y, { size: 10, color: muted, gap: 12 });
+      y = writeWrapped(
+        "Scaled for " + prefs.servings + " servings. Check your pantry for oil, salt, pepper, and butter.",
+        margin, y, { size: 10, color: muted, gap: 12 }
+      );
       const groceries = buildGrocery(selected);
       if (!groceries.length) {
         y = writeWrapped("No ingredients (no meals kept).", margin, y, { size: 11, color: muted });
       } else {
         groceries.forEach((g, idx) => {
-          if (y > pageH - margin - 20) y = newPageFresh();
+          if (y > pageH - margin - 24) y = newPageFresh();
           const bg = idx % 2 === 0 ? [255, 254, 249] : [232, 242, 234];
           doc.setFont("helvetica", "normal");
           doc.setFontSize(10);
@@ -1030,10 +918,9 @@ const DATA = {
         });
       }
 
-      // ===== One recipe per page (overflow continues on following pages) =====
+      // ===== Recipes =====
       selected.forEach(({ day, meal: m, protein }, idx) => {
         y = newPageFresh();
-        // Day banner — height grows with title wrap so header never collides with glyphs
         doc.setFont("helvetica", "bold");
         doc.setFontSize(16);
         const titleLines = doc.splitTextToSize(m.name, maxW - 28);
@@ -1052,10 +939,11 @@ const DATA = {
         const metaBits = [
           m.source || "",
           m.time || "",
-          (m.servings ? m.servings + " servings" : "~2 servings"),
+          m.servings + " servings",
           m.spiceLevel ? ("Spice: " + m.spiceLevel) : "",
           m.calories ? ("~" + m.calories + " kcal") : "",
-          m.difficulty || ""
+          m.difficulty || "",
+          m.healthy ? "Healthier" : "Comfort"
         ].filter(Boolean).join(" · ");
         y = writeWrapped(metaBits, margin, y, { size: 10, color: muted, gap: 6 });
         if (m.pitch) y = writeWrapped(m.pitch, margin, y, { size: 11, style: "italic", color: ink, gap: 10 });
@@ -1065,7 +953,6 @@ const DATA = {
           y += 4;
         }
 
-        // Ingredients — accent underline BELOW glyphs (pdf-section-underline-fix)
         if (y > pageH - margin - 80) y = newPageFresh();
         y = writeSectionHead("Ingredients", y);
         (m.ingredients || []).forEach((i) => {
@@ -1077,17 +964,15 @@ const DATA = {
         if (y > pageH - margin - 60) y = newPageFresh();
         y = writeSectionHead("Steps", y);
         (m.steps || []).forEach((s, i) => {
-          // Estimate: if little room left, start overflow page before drawing the step number
           if (y > pageH - margin - 50) y = newPageFresh();
           const n = String(i + 1);
           const cx = margin + 11;
-          const cy = y - 2; // circle center aligned to first-line baseline cluster
+          const cy = y - 2;
           doc.setFillColor(...accent);
           doc.circle(cx, cy, 9, "F");
           doc.setTextColor(255, 255, 255);
           doc.setFont("helvetica", "bold");
           doc.setFontSize(9);
-          // Center digit(s) in the circle (jsPDF text is baseline-left)
           const nw = doc.getTextWidth(n);
           doc.text(n, cx - nw / 2, cy + 3);
           y = writeWrapped(s, margin + 28, y, { size: 10.5, color: ink, gap: 14, width: maxW - 28 });
@@ -1104,19 +989,21 @@ const DATA = {
       result.classList.add("show");
 
       try {
-        localStorage.setItem("mealPlanPicks", JSON.stringify({
+        localStorage.setItem("mealPlanPrefs", JSON.stringify({
+          beef: prefs.beef, chicken: prefs.chicken, salmon: prefs.salmon,
+          healthyOnly: prefs.healthyOnly, servings: prefs.servings,
+          avoid: [...prefs.avoid], customAvoid: prefs.customAvoid,
           kept: selected.map(({ day, meal: m, protein }) => ({ day, name: m.name, protein, id: m.id })),
-          empty: empties,
           at: new Date().toISOString()
         }));
       } catch (_) {}
     }
 
-    document.getElementById("submit").addEventListener("click", () => {
-      downloadPdf();
-    });
+    $("submit").addEventListener("click", downloadPdf);
 
-    render();
+    // Boot
+    renderAvoidChips();
+    updateTotal();
   </script>
 </body>
 </html>

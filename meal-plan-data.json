@@ -1,58 +1,57 @@
 {
-  "weekOf": "2026-09-27",
+  "version": 2,
+  "title": "Weekly Meal Planner",
   "timezone": "America/Boise",
-  "bias": "healthier — lean proteins, vegetables, grilled/baked/sautéed over fried/creamy-heavy",
-  "proteinMix": {
-    "beef": 2,
-    "chicken": 2,
-    "salmon": 1
-  },
-  "slots": [
+  "avoidOptions": [
     {
-      "day": "Mon",
-      "protein": "beef",
-      "primary": "warm-steak-kale",
-      "alternates": [
-        "sesame-ginger-steak",
-        "steak-nicoise"
-      ]
+      "id": "dairy",
+      "label": "Dairy"
     },
     {
-      "day": "Tue",
-      "protein": "chicken",
-      "primary": "tuscan-chicken-succotash",
-      "alternates": [
-        "chicken-veggie-feta",
-        "spiced-chicken-yogurt"
-      ]
+      "id": "nuts",
+      "label": "Nuts"
     },
     {
-      "day": "Wed",
-      "protein": "chicken",
-      "primary": "chicken-veggie-feta",
-      "alternates": [
-        "spiced-chicken-yogurt",
-        "tuscan-chicken-succotash"
-      ]
+      "id": "soy",
+      "label": "Soy"
     },
     {
-      "day": "Thu",
-      "protein": "beef",
-      "primary": "italian-steak-broccoli",
-      "alternates": [
-        "warm-steak-kale",
-        "sesame-ginger-steak"
-      ]
+      "id": "gluten",
+      "label": "Gluten / wheat"
     },
     {
-      "day": "Fri",
-      "protein": "salmon",
-      "primary": "classic-roasted-salmon",
-      "alternates": [
-        "soy-glazed-salmon-kale",
-        "cajun-sheet-salmon"
-      ]
+      "id": "spicy",
+      "label": "Spicy"
+    },
+    {
+      "id": "mushrooms",
+      "label": "Mushrooms"
+    },
+    {
+      "id": "sesame",
+      "label": "Sesame"
+    },
+    {
+      "id": "egg",
+      "label": "Egg"
+    },
+    {
+      "id": "mustard",
+      "label": "Mustard"
+    },
+    {
+      "id": "shellfish",
+      "label": "Shellfish"
     }
+  ],
+  "dayLabels": [
+    "Mon",
+    "Tue",
+    "Wed",
+    "Thu",
+    "Fri",
+    "Sat",
+    "Sun"
   ],
   "candidates": {
     "warm-steak-kale": {
@@ -94,6 +93,12 @@
         "Paper towels",
         "Large pan",
         "Small bowl"
+      ],
+      "healthy": true,
+      "avoidTags": [
+        "dairy",
+        "nuts",
+        "beef"
       ]
     },
     "sesame-ginger-steak": {
@@ -136,6 +141,14 @@
         "Large bowl",
         "Whisk",
         "Paper towels"
+      ],
+      "healthy": true,
+      "avoidTags": [
+        "nuts",
+        "soy",
+        "gluten",
+        "beef",
+        "spicy"
       ]
     },
     "steak-nicoise": {
@@ -179,6 +192,13 @@
         "Whisk",
         "Large bowl",
         "Paper towels"
+      ],
+      "healthy": true,
+      "avoidTags": [
+        "dairy",
+        "gluten",
+        "beef",
+        "mustard"
       ]
     },
     "italian-steak-broccoli": {
@@ -227,6 +247,13 @@
         "Whisk",
         "Box grater",
         "Paper towels"
+      ],
+      "healthy": true,
+      "avoidTags": [
+        "dairy",
+        "gluten",
+        "beef",
+        "mustard"
       ]
     },
     "tuscan-chicken-succotash": {
@@ -269,6 +296,12 @@
         "Small bowl",
         "Paper towels",
         "Zester"
+      ],
+      "healthy": true,
+      "avoidTags": [
+        "egg",
+        "spicy",
+        "chicken"
       ]
     },
     "chicken-veggie-feta": {
@@ -307,6 +340,11 @@
         "2 baking sheets",
         "Large bowl",
         "Paper towels"
+      ],
+      "healthy": true,
+      "avoidTags": [
+        "dairy",
+        "chicken"
       ]
     },
     "spiced-chicken-yogurt": {
@@ -351,7 +389,13 @@
         "Zester",
         "Paper towels"
       ],
-      "note": "Exact HF card 'Spiced Chicken Cutlets with Roasted Vegetables and Lemon Yogurt Sauce' omitted steps on the public page; using the matching Sheet Pan Spiced Chicken Cutlets (shawarma/Turkish spices, roasted veg, lemon feta crema) as the kit-equivalent."
+      "note": "Exact HF card 'Spiced Chicken Cutlets with Roasted Vegetables and Lemon Yogurt Sauce' omitted steps on the public page; using the matching Sheet Pan Spiced Chicken Cutlets (shawarma/Turkish spices, roasted veg, lemon feta crema) as the kit-equivalent.",
+      "healthy": true,
+      "avoidTags": [
+        "dairy",
+        "spicy",
+        "chicken"
+      ]
     },
     "classic-roasted-salmon": {
       "id": "classic-roasted-salmon",
@@ -391,6 +435,12 @@
         "Strainer",
         "Large pan",
         "Baking sheet"
+      ],
+      "healthy": true,
+      "avoidTags": [
+        "dairy",
+        "fish",
+        "salmon"
       ]
     },
     "soy-glazed-salmon-kale": {
@@ -430,6 +480,13 @@
         "Plastic wrap",
         "Large bowl",
         "Paper towels"
+      ],
+      "healthy": true,
+      "avoidTags": [
+        "nuts",
+        "soy",
+        "fish",
+        "salmon"
       ]
     },
     "cajun-sheet-salmon": {
@@ -466,12 +523,876 @@
       "utensils": [
         "2 foil-lined sheet pans",
         "2 mixing bowls"
+      ],
+      "healthy": true,
+      "avoidTags": [
+        "dairy",
+        "spicy",
+        "fish",
+        "salmon"
+      ]
+    },
+    "garlic-butter-steak-bites": {
+      "id": "garlic-butter-steak-bites",
+      "name": "Garlic Butter Steak Bites with Creamy Mashed Potatoes",
+      "shortName": "Garlic Butter Steak Bites",
+      "source": "HelloFresh-style",
+      "url": "https://www.hellofresh.com/",
+      "protein": "beef",
+      "time": "~30 min",
+      "pitch": "Seared steak bites in garlic butter over rich mashed potatoes and green beans — comfort-food classic.",
+      "healthy": false,
+      "avoidTags": [
+        "dairy",
+        "beef",
+        "gluten"
+      ],
+      "ingredients": [
+        "12 oz sirloin steak",
+        "12 oz Yukon Gold potatoes",
+        "6 oz green beans",
+        "2 cloves garlic",
+        "3 Tbsp butter",
+        "¼ cup sour cream",
+        "2 Tbsp milk",
+        "1 tsp garlic powder",
+        "Cooking oil, salt, pepper"
+      ],
+      "steps": [
+        "Wash and dry produce. Dice potatoes into ½-inch pieces. Trim green beans. Mince garlic. Pat steak dry; cut into ¾-inch cubes; season with salt, pepper, and garlic powder.",
+        "Place potatoes in a medium pot with enough salted water to cover by 1 inch. Bring to a boil and cook until tender, 12–15 minutes. Drain; return to pot. Mash with 1 Tbsp butter, sour cream, and milk until creamy. Season with salt and pepper; cover to keep warm.",
+        "Meanwhile, heat a drizzle of oil in a large pan over medium-high. Add steak bites in a single layer; sear undisturbed 2 minutes, then toss and cook to desired doneness, 2–4 minutes more (145°F). Transfer to a plate.",
+        "Reduce heat to medium. Add remaining 2 Tbsp butter and minced garlic to the pan; cook until fragrant, 30–60 seconds. Return steak; toss to coat. In a second pan or the same after wiping, sauté green beans with a drizzle of oil, salt, and pepper until crisp-tender, 4–6 minutes.",
+        "Plate mashed potatoes, top with garlic butter steak bites, and serve green beans alongside. Spoon any pan butter over the steak."
+      ],
+      "servings": 2,
+      "calories": 890,
+      "spiceLevel": "Mild",
+      "difficulty": "Easy",
+      "utensils": [
+        "Medium pot",
+        "Potato masher",
+        "Large pan",
+        "Paper towels"
+      ]
+    },
+    "cheeseburger-bowl": {
+      "id": "cheeseburger-bowl",
+      "name": "Loaded Cheeseburger Bowls with Crispy Potatoes",
+      "shortName": "Cheeseburger Bowls",
+      "source": "HelloFresh-style",
+      "url": "https://www.hellofresh.com/",
+      "protein": "beef",
+      "time": "~35 min",
+      "pitch": "Seasoned ground beef, melted cheddar, pickles, and special sauce over crispy potatoes — all the burger vibes, no bun required.",
+      "healthy": false,
+      "avoidTags": [
+        "dairy",
+        "beef",
+        "egg",
+        "gluten"
+      ],
+      "ingredients": [
+        "10 oz ground beef",
+        "12 oz potatoes",
+        "1 tomato",
+        "2 oz shredded cheddar",
+        "1 oz pickle chips",
+        "2 Tbsp ketchup",
+        "1 Tbsp mayonnaise",
+        "1 tsp yellow mustard",
+        "1 tsp fry seasoning",
+        "Cooking oil, salt, pepper"
+      ],
+      "steps": [
+        "Preheat oven to 425°F. Wash and dry produce. Dice potatoes into ½-inch pieces. Dice tomato. In a small bowl, mix ketchup, mayo, and mustard for special sauce.",
+        "Toss potatoes on a baking sheet with a drizzle of oil, fry seasoning, salt, and pepper. Roast until crispy, 20–25 minutes, flipping halfway.",
+        "Heat a drizzle of oil in a large pan over medium-high. Add ground beef; cook, breaking up, until browned and cooked through, 4–6 minutes. Season with salt and pepper. Sprinkle cheddar over beef; cover briefly to melt, 1 minute.",
+        "Divide crispy potatoes between bowls. Top with cheesy beef, diced tomato, and pickle chips. Drizzle with special sauce and serve."
+      ],
+      "servings": 2,
+      "calories": 820,
+      "spiceLevel": "Mild",
+      "difficulty": "Easy",
+      "utensils": [
+        "Baking sheet",
+        "Large pan",
+        "Small bowl"
+      ]
+    },
+    "mushroom-swiss-steak": {
+      "id": "mushroom-swiss-steak",
+      "name": "Mushroom-Swiss Steak with Herb Butter Broccoli",
+      "shortName": "Mushroom Swiss Steak",
+      "source": "Blue Apron-style",
+      "url": "https://www.blueapron.com/",
+      "protein": "beef",
+      "time": "~35 min",
+      "pitch": "Pan-seared steak topped with sautéed mushrooms and melted Swiss — rich and savory, with herb butter broccoli.",
+      "healthy": false,
+      "avoidTags": [
+        "dairy",
+        "mushrooms",
+        "beef"
+      ],
+      "ingredients": [
+        "10 oz bavette or sirloin steak",
+        "8 oz cremini mushrooms",
+        "2 slices Swiss cheese",
+        "8 oz broccoli florets",
+        "2 Tbsp butter",
+        "1 tsp dried thyme",
+        "2 cloves garlic",
+        "Cooking oil, salt, pepper"
+      ],
+      "steps": [
+        "Wash and dry produce. Slice mushrooms. Mince garlic. Pat steak dry; season generously with salt and pepper.",
+        "Heat a drizzle of oil in a large pan over medium-high. Sear steak 4–6 minutes per side to desired doneness (145°F). In the last minute, top with Swiss cheese; cover until melted. Transfer to a cutting board; rest 5 minutes.",
+        "In the same pan, add mushrooms and a pinch of salt. Cook until browned and moisture evaporates, 5–7 minutes. Add half the garlic and half the butter; toss 30 seconds. Remove mushrooms.",
+        "Add broccoli, remaining garlic, thyme, remaining butter, and a splash of water. Cover and steam-sauté until bright green and tender, 4–6 minutes. Season with salt and pepper.",
+        "Slice steak against the grain. Plate with mushroom topping and herb butter broccoli."
+      ],
+      "servings": 2,
+      "calories": 780,
+      "spiceLevel": "Mild",
+      "difficulty": "Easy",
+      "utensils": [
+        "Large pan",
+        "Paper towels",
+        "Cutting board"
+      ]
+    },
+    "korean-beef-bowls": {
+      "id": "korean-beef-bowls",
+      "name": "Korean-Style Beef Bowls with Cucumber Salad",
+      "shortName": "Korean Beef Bowls",
+      "source": "HelloFresh-style",
+      "url": "https://www.hellofresh.com/",
+      "protein": "beef",
+      "time": "~25 min",
+      "pitch": "Sweet-savory gochujang beef over rice with quick pickled cucumber — bold flavor, weeknight-fast.",
+      "healthy": true,
+      "avoidTags": [
+        "soy",
+        "spicy",
+        "gluten",
+        "beef",
+        "sesame"
+      ],
+      "ingredients": [
+        "10 oz ground beef",
+        "¾ cup jasmine rice",
+        "1 mini cucumber",
+        "2 scallions",
+        "1 Tbsp gochujang sauce",
+        "2 Tbsp soy sauce",
+        "1 Tbsp sesame oil",
+        "1 Tbsp brown sugar",
+        "1 tsp rice vinegar",
+        "1 tsp garlic powder",
+        "Sesame seeds (optional), cooking oil, salt"
+      ],
+      "steps": [
+        "In a small pot, combine rice, 1¼ cups water, and a pinch of salt. Bring to a boil, cover, and reduce to low; cook until tender, 15–18 minutes. Fluff and keep covered.",
+        "Thinly slice cucumber and scallions (whites and greens separate). Toss cucumber with rice vinegar, a pinch of salt, and half the scallion greens; set aside to pickle.",
+        "Heat a drizzle of oil in a large pan over medium-high. Add beef and scallion whites; cook, breaking up, until browned, 4–5 minutes. Stir in gochujang, soy sauce, brown sugar, garlic powder, and sesame oil; simmer 1–2 minutes until glossy.",
+        "Divide rice between bowls; top with Korean beef and cucumber salad. Garnish with remaining scallion greens and sesame seeds if using."
+      ],
+      "servings": 2,
+      "calories": 680,
+      "spiceLevel": "Medium–Hot",
+      "difficulty": "Easy",
+      "utensils": [
+        "Small pot",
+        "Large pan",
+        "Small bowl"
+      ]
+    },
+    "honey-garlic-chicken": {
+      "id": "honey-garlic-chicken",
+      "name": "Honey Garlic Chicken Thighs with Broccoli Rice",
+      "shortName": "Honey Garlic Chicken",
+      "source": "HelloFresh-style",
+      "url": "https://www.hellofresh.com/",
+      "protein": "chicken",
+      "time": "~30 min",
+      "pitch": "Sticky honey-garlic glazed thighs with steamed broccoli over fluffy rice — crowd-pleaser sweet-savory.",
+      "healthy": false,
+      "avoidTags": [
+        "soy",
+        "gluten",
+        "chicken"
+      ],
+      "ingredients": [
+        "12 oz chicken thighs",
+        "¾ cup jasmine rice",
+        "8 oz broccoli florets",
+        "3 Tbsp honey",
+        "2 Tbsp soy sauce",
+        "3 cloves garlic",
+        "1 tsp cornstarch",
+        "1 tsp garlic powder",
+        "Cooking oil, salt, pepper"
+      ],
+      "steps": [
+        "Cook rice: combine rice, 1¼ cups water, and a pinch of salt in a small pot. Bring to boil, cover, low heat 15–18 minutes.",
+        "Pat chicken dry; season with salt, pepper, and garlic powder. Mince garlic. In a bowl, whisk honey, soy sauce, cornstarch, and 2 Tbsp water for glaze.",
+        "Heat oil in a large pan over medium-high. Sear chicken 4–5 minutes per side until cooked through (165°F). Transfer to a plate.",
+        "Reduce heat to medium. Add garlic; cook 30 seconds. Pour in glaze; simmer until thickened, 1–2 minutes. Return chicken and coat.",
+        "Meanwhile, steam or microwave broccoli until tender, 3–4 minutes; season. Serve chicken and glaze over rice with broccoli."
+      ],
+      "servings": 2,
+      "calories": 760,
+      "spiceLevel": "Mild",
+      "difficulty": "Easy",
+      "utensils": [
+        "Small pot",
+        "Large pan",
+        "Small bowl",
+        "Paper towels"
+      ]
+    },
+    "crispy-chicken-parm": {
+      "id": "crispy-chicken-parm",
+      "name": "Crispy Chicken Parmesan with Spaghetti",
+      "shortName": "Chicken Parmesan",
+      "source": "HelloFresh-style",
+      "url": "https://www.hellofresh.com/",
+      "protein": "chicken",
+      "time": "~40 min",
+      "pitch": "Breaded cutlets topped with marinara and mozzarella over spaghetti — classic Italian-American comfort.",
+      "healthy": false,
+      "avoidTags": [
+        "dairy",
+        "gluten",
+        "egg",
+        "chicken"
+      ],
+      "ingredients": [
+        "10 oz chicken cutlets",
+        "6 oz spaghetti",
+        "½ cup panko breadcrumbs",
+        "¼ cup grated Parmesan",
+        "4 oz fresh mozzarella",
+        "1 cup marinara sauce",
+        "1 egg",
+        "1 tsp Italian seasoning",
+        "Cooking oil, salt, pepper"
+      ],
+      "steps": [
+        "Preheat oven to 425°F. Bring a large pot of salted water to a boil. Beat egg in a shallow bowl. Mix panko, half the Parmesan, Italian seasoning, salt, and pepper in another.",
+        "Pat chicken dry. Dip in egg, then press into panko mixture. Heat a thin layer of oil in a large pan over medium-high; cook cutlets until golden, 3–4 minutes per side. Transfer to a baking sheet.",
+        "Top each cutlet with marinara and torn mozzarella. Bake until cheese melts and chicken reaches 165°F, 6–8 minutes.",
+        "Meanwhile, cook spaghetti until al dente; drain. Toss with a spoonful of marinara and remaining Parmesan.",
+        "Plate spaghetti; top with chicken parm. Serve extra marinara on the side."
+      ],
+      "servings": 2,
+      "calories": 920,
+      "spiceLevel": "Mild",
+      "difficulty": "Medium",
+      "utensils": [
+        "Large pot",
+        "Large pan",
+        "Baking sheet",
+        "Shallow bowls"
+      ]
+    },
+    "lemon-herb-chicken-orzo": {
+      "id": "lemon-herb-chicken-orzo",
+      "name": "Lemon Herb Chicken with Orzo & Spinach",
+      "shortName": "Lemon Herb Chicken Orzo",
+      "source": "Blue Apron-style",
+      "url": "https://www.blueapron.com/",
+      "protein": "chicken",
+      "time": "~30 min",
+      "pitch": "Bright lemon-herb chicken over orzo with wilted spinach and Parmesan — light but satisfying.",
+      "healthy": true,
+      "avoidTags": [
+        "dairy",
+        "gluten",
+        "chicken"
+      ],
+      "ingredients": [
+        "10 oz chicken cutlets",
+        "¾ cup orzo",
+        "2 oz baby spinach",
+        "1 lemon",
+        "2 cloves garlic",
+        "2 Tbsp grated Parmesan",
+        "1 tsp dried oregano",
+        "1 tsp garlic powder",
+        "Olive oil, salt, pepper"
+      ],
+      "steps": [
+        "Zest and quarter lemon. Mince garlic. Pat chicken dry; season with oregano, garlic powder, salt, pepper, and a drizzle of olive oil.",
+        "Heat a drizzle of oil in a large pan over medium-high. Cook chicken 3–5 minutes per side until 165°F. Transfer to a plate; squeeze 1 lemon wedge over top.",
+        "In the same pan, toast orzo 1 minute. Add garlic; cook 30 seconds. Add 1¾ cups water and a pinch of salt; simmer, stirring, until orzo is tender and liquid absorbed, 8–10 minutes.",
+        "Stir in spinach, lemon zest, juice from 1 wedge, Parmesan, and a drizzle of olive oil until spinach wilts. Season to taste.",
+        "Slice chicken. Serve over lemon orzo with remaining lemon wedges."
+      ],
+      "servings": 2,
+      "calories": 580,
+      "spiceLevel": "Mild",
+      "difficulty": "Easy",
+      "utensils": [
+        "Large pan",
+        "Zester",
+        "Paper towels"
+      ]
+    },
+    "bbq-chicken-salad": {
+      "id": "bbq-chicken-salad",
+      "name": "BBQ Chicken Chopped Salad with Ranch",
+      "shortName": "BBQ Chicken Salad",
+      "source": "HelloFresh-style",
+      "url": "https://www.hellofresh.com/",
+      "protein": "chicken",
+      "time": "~20 min",
+      "pitch": "Grilled-style BBQ chicken over crisp romaine with corn, tomato, cheddar, and ranch — hearty salad night.",
+      "healthy": true,
+      "avoidTags": [
+        "dairy",
+        "chicken"
+      ],
+      "ingredients": [
+        "10 oz chicken cutlets",
+        "1 romaine heart",
+        "4 oz grape tomatoes",
+        "1 ear / unit corn (or ½ cup thawed)",
+        "2 oz shredded cheddar",
+        "3 Tbsp BBQ sauce",
+        "3 Tbsp ranch dressing",
+        "1 tsp chili powder",
+        "Cooking oil, salt, pepper"
+      ],
+      "steps": [
+        "Pat chicken dry; season with chili powder, salt, and pepper. Heat oil in a large pan over medium-high; cook chicken 3–5 minutes per side until 165°F. Brush with BBQ sauce in the last minute. Rest, then slice.",
+        "Chop romaine. Halve tomatoes. If using fresh corn, cut kernels from cob (or warm thawed corn briefly in the pan).",
+        "Toss romaine, tomatoes, and corn with half the ranch. Divide into bowls; top with sliced BBQ chicken, cheddar, and remaining ranch. Serve."
+      ],
+      "servings": 2,
+      "calories": 540,
+      "spiceLevel": "Mild",
+      "difficulty": "Easy",
+      "utensils": [
+        "Large pan",
+        "Large bowl",
+        "Paper towels"
+      ]
+    },
+    "thai-basil-chicken": {
+      "id": "thai-basil-chicken",
+      "name": "Thai Basil Chicken Stir-Fry with Jasmine Rice",
+      "shortName": "Thai Basil Chicken",
+      "source": "HelloFresh-style",
+      "url": "https://www.hellofresh.com/",
+      "protein": "chicken",
+      "time": "~25 min",
+      "pitch": "Spicy-savory basil chicken with peppers over rice — takeout energy, skillet speed.",
+      "healthy": true,
+      "avoidTags": [
+        "soy",
+        "spicy",
+        "gluten",
+        "chicken"
+      ],
+      "ingredients": [
+        "10 oz chicken breast, diced",
+        "¾ cup jasmine rice",
+        "1 green bell pepper",
+        "1 red onion",
+        "1 oz fresh basil",
+        "2 cloves garlic",
+        "2 Tbsp soy sauce",
+        "1 Tbsp oyster sauce (or extra soy)",
+        "1 tsp chili garlic sauce",
+        "1 tsp sugar",
+        "Cooking oil, salt"
+      ],
+      "steps": [
+        "Cook rice with 1¼ cups water and a pinch of salt: boil, cover, low 15–18 minutes.",
+        "Dice pepper and onion. Mince garlic. Roughly chop basil. Mix soy, oyster sauce, chili garlic, and sugar in a small bowl.",
+        "Heat oil in a large pan or wok over high heat. Stir-fry chicken until nearly cooked, 3–4 minutes. Add pepper, onion, and garlic; cook until crisp-tender, 2–3 minutes.",
+        "Pour in sauce; toss until glossy and chicken is 165°F, 1–2 minutes. Off heat, fold in basil.",
+        "Serve over jasmine rice."
+      ],
+      "servings": 2,
+      "calories": 610,
+      "spiceLevel": "Medium–Hot",
+      "difficulty": "Easy",
+      "utensils": [
+        "Small pot",
+        "Large pan or wok",
+        "Small bowl"
+      ]
+    },
+    "creamy-tuscan-salmon": {
+      "id": "creamy-tuscan-salmon",
+      "name": "Creamy Tuscan Salmon with Sun-Dried Tomatoes",
+      "shortName": "Creamy Tuscan Salmon",
+      "source": "HelloFresh-style",
+      "url": "https://www.hellofresh.com/",
+      "protein": "salmon",
+      "time": "~30 min",
+      "pitch": "Pan-seared salmon in a rich sun-dried tomato cream sauce with spinach — restaurant-luxe at home.",
+      "healthy": false,
+      "avoidTags": [
+        "dairy",
+        "fish",
+        "salmon"
+      ],
+      "ingredients": [
+        "10 oz skin-on salmon fillets",
+        "2 oz baby spinach",
+        "¼ cup sun-dried tomatoes (oil-packed), chopped",
+        "½ cup heavy cream",
+        "¼ cup grated Parmesan",
+        "2 cloves garlic",
+        "1 tsp Italian seasoning",
+        "Olive oil, salt, pepper"
+      ],
+      "steps": [
+        "Pat salmon dry; season with salt, pepper, and Italian seasoning. Mince garlic.",
+        "Heat olive oil in a large pan over medium-high. Sear salmon skin-side down 5–6 minutes; flip and cook 2–3 minutes more to 145°F. Transfer to a plate.",
+        "Reduce heat to medium. Add garlic and sun-dried tomatoes; cook 1 minute. Pour in cream; simmer 2 minutes. Stir in Parmesan until melted; fold in spinach until wilted. Season.",
+        "Return salmon to pan or plate and spoon creamy Tuscan sauce over top. Serve."
+      ],
+      "servings": 2,
+      "calories": 740,
+      "spiceLevel": "Mild",
+      "difficulty": "Easy",
+      "utensils": [
+        "Large pan",
+        "Paper towels"
+      ]
+    },
+    "miso-glazed-salmon": {
+      "id": "miso-glazed-salmon",
+      "name": "Miso-Glazed Salmon with Sesame Broccoli",
+      "shortName": "Miso Glazed Salmon",
+      "source": "Blue Apron-style",
+      "url": "https://www.blueapron.com/",
+      "protein": "salmon",
+      "time": "~30 min",
+      "pitch": "Umami miso-maple salmon with sesame-roasted broccoli and rice — balanced and weeknight-easy.",
+      "healthy": true,
+      "avoidTags": [
+        "soy",
+        "sesame",
+        "fish",
+        "salmon",
+        "gluten"
+      ],
+      "ingredients": [
+        "10 oz skin-on salmon",
+        "¾ cup jasmine rice",
+        "8 oz broccoli florets",
+        "1 Tbsp white miso paste",
+        "1 Tbsp maple syrup or honey",
+        "1 Tbsp soy sauce",
+        "1 tsp sesame oil",
+        "1 tsp sesame seeds",
+        "Cooking oil, salt, pepper"
+      ],
+      "steps": [
+        "Preheat oven to 425°F. Cook rice: 1¼ cups water, pinch of salt; boil, cover, low 15–18 minutes.",
+        "Whisk miso, maple, and soy sauce for glaze. Toss broccoli on a baking sheet with oil, salt, pepper, and sesame oil. Roast 10 minutes.",
+        "Pat salmon dry; place on the sheet with broccoli. Brush with miso glaze. Roast until salmon reaches 145°F and broccoli is tender, 10–12 minutes. Sprinkle sesame seeds.",
+        "Serve salmon and broccoli over rice; drizzle any remaining glaze."
+      ],
+      "servings": 2,
+      "calories": 620,
+      "spiceLevel": "Mild",
+      "difficulty": "Easy",
+      "utensils": [
+        "Small pot",
+        "Baking sheet",
+        "Small bowl",
+        "Paper towels"
+      ]
+    },
+    "salmon-tacos": {
+      "id": "salmon-tacos",
+      "name": "Chili-Lime Salmon Tacos with Slaw",
+      "shortName": "Chili-Lime Salmon Tacos",
+      "source": "HelloFresh-style",
+      "url": "https://www.hellofresh.com/",
+      "protein": "salmon",
+      "time": "~25 min",
+      "pitch": "Spiced salmon in warm tortillas with crunchy lime slaw and crema — taco night upgrade.",
+      "healthy": true,
+      "avoidTags": [
+        "dairy",
+        "fish",
+        "salmon",
+        "gluten",
+        "spicy"
+      ],
+      "ingredients": [
+        "10 oz skinless salmon",
+        "6 small flour or corn tortillas",
+        "4 oz coleslaw mix",
+        "1 lime",
+        "¼ cup sour cream",
+        "1 tsp chili powder",
+        "½ tsp cumin",
+        "½ tsp garlic powder",
+        "1 tsp honey",
+        "Cooking oil, salt, pepper"
+      ],
+      "steps": [
+        "Zest and quarter lime. Pat salmon dry; season with chili powder, cumin, garlic powder, salt, and pepper.",
+        "Toss coleslaw mix with juice from 1 lime wedge, honey, a pinch of salt, and half the lime zest. Mix sour cream with remaining zest and a squeeze of lime for crema.",
+        "Heat oil in a nonstick pan over medium-high. Cook salmon 3–4 minutes per side to 145°F; flake into chunks.",
+        "Warm tortillas. Fill with salmon, slaw, and crema. Serve with remaining lime."
+      ],
+      "servings": 2,
+      "calories": 590,
+      "spiceLevel": "Medium",
+      "difficulty": "Easy",
+      "utensils": [
+        "Nonstick pan",
+        "Two small bowls",
+        "Paper towels",
+        "Zester"
+      ]
+    },
+    "teriyaki-salmon-bowl": {
+      "id": "teriyaki-salmon-bowl",
+      "name": "Teriyaki Salmon Bowl with Edamame & Rice",
+      "shortName": "Teriyaki Salmon Bowl",
+      "source": "HelloFresh-style",
+      "url": "https://www.hellofresh.com/",
+      "protein": "salmon",
+      "time": "~30 min",
+      "pitch": "Glazed teriyaki salmon over rice with edamame and cucumber — Protein Smart vibes.",
+      "healthy": true,
+      "avoidTags": [
+        "soy",
+        "sesame",
+        "fish",
+        "salmon",
+        "gluten"
+      ],
+      "ingredients": [
+        "10 oz salmon fillets",
+        "¾ cup jasmine rice",
+        "4 oz shelled edamame",
+        "1 mini cucumber",
+        "3 Tbsp teriyaki sauce",
+        "1 tsp sesame oil",
+        "1 tsp sesame seeds",
+        "2 scallions",
+        "Cooking oil, salt"
+      ],
+      "steps": [
+        "Cook rice with 1¼ cups water and salt: boil, cover, low 15–18 minutes. Thinly slice cucumber and scallions.",
+        "Pat salmon dry; season with salt. Heat oil in a pan over medium-high; cook skin-side down 5 minutes, flip 2–3 minutes. Add teriyaki; spoon over fish until glazed. Cook to 145°F.",
+        "Warm edamame (microwave or pan) with sesame oil and a pinch of salt.",
+        "Bowl rice; top with glazed salmon, edamame, cucumber, scallions, and sesame seeds."
+      ],
+      "servings": 2,
+      "calories": 650,
+      "spiceLevel": "Mild",
+      "difficulty": "Easy",
+      "utensils": [
+        "Small pot",
+        "Large pan",
+        "Paper towels"
+      ]
+    },
+    "steak-fajita-skillet": {
+      "id": "steak-fajita-skillet",
+      "name": "Sizzling Steak Fajita Skillet",
+      "shortName": "Steak Fajita Skillet",
+      "source": "HelloFresh-style",
+      "url": "https://www.hellofresh.com/",
+      "protein": "beef",
+      "time": "~30 min",
+      "pitch": "Strips of steak with peppers and onions, warm tortillas, and lime crema — fajita night without the fuss.",
+      "healthy": true,
+      "avoidTags": [
+        "dairy",
+        "beef",
+        "gluten",
+        "spicy"
+      ],
+      "ingredients": [
+        "10 oz ranch steak",
+        "6 small flour tortillas",
+        "1 green bell pepper",
+        "1 red onion",
+        "1 lime",
+        "¼ cup sour cream",
+        "1 Tbsp fajita spice blend",
+        "1 tsp garlic powder",
+        "Cooking oil, salt, pepper"
+      ],
+      "steps": [
+        "Slice pepper and onion into strips. Zest and quarter lime. Pat steak dry; thinly slice against the grain. Toss steak with fajita spice, garlic powder, salt, and pepper.",
+        "Mix sour cream with lime zest and juice from 1 wedge for crema.",
+        "Heat oil in a large pan over high. Sear steak strips 2–3 minutes until browned; transfer out. Add more oil; cook pepper and onion until charred-tender, 4–5 minutes. Return steak; toss. Squeeze lime over top.",
+        "Warm tortillas. Serve steak and veggies with crema and remaining lime."
+      ],
+      "servings": 2,
+      "calories": 670,
+      "spiceLevel": "Medium",
+      "difficulty": "Easy",
+      "utensils": [
+        "Large pan",
+        "Small bowl",
+        "Paper towels",
+        "Zester"
+      ]
+    },
+    "buffalo-chicken-wraps": {
+      "id": "buffalo-chicken-wraps",
+      "name": "Buffalo Chicken Lettuce Wraps with Blue Cheese",
+      "shortName": "Buffalo Chicken Wraps",
+      "source": "HelloFresh-style",
+      "url": "https://www.hellofresh.com/",
+      "protein": "chicken",
+      "time": "~20 min",
+      "pitch": "Spicy buffalo chicken in crisp lettuce cups with blue cheese drizzle — low-carb heat.",
+      "healthy": true,
+      "avoidTags": [
+        "dairy",
+        "spicy",
+        "chicken"
+      ],
+      "ingredients": [
+        "10 oz ground chicken",
+        "1 head butter lettuce",
+        "2 celery stalks",
+        "2 Tbsp buffalo hot sauce",
+        "2 Tbsp blue cheese dressing (or ranch)",
+        "1 Tbsp butter",
+        "1 tsp garlic powder",
+        "Cooking oil, salt, pepper"
+      ],
+      "steps": [
+        "Separate lettuce leaves; wash and dry. Thinly slice celery.",
+        "Heat oil in a pan over medium-high. Cook ground chicken with garlic powder, salt, and pepper, breaking up, until cooked through, 5–6 minutes (165°F).",
+        "Reduce heat; stir in butter and buffalo sauce until coated.",
+        "Fill lettuce cups with buffalo chicken and celery. Drizzle with blue cheese dressing. Serve."
+      ],
+      "servings": 2,
+      "calories": 480,
+      "spiceLevel": "Hot",
+      "difficulty": "Easy",
+      "utensils": [
+        "Large pan"
+      ]
+    },
+    "chimichurri-steak-salad": {
+      "id": "chimichurri-steak-salad",
+      "name": "Chimichurri Steak with Tomato Cucumber Salad",
+      "shortName": "Chimichurri Steak Salad",
+      "source": "HelloFresh-style",
+      "url": "https://www.hellofresh.com/",
+      "protein": "beef",
+      "time": "~25 min",
+      "pitch": "Seared steak with bright herb chimichurri over tomato-cucumber salad — zero dairy, high protein.",
+      "healthy": true,
+      "avoidTags": [
+        "beef"
+      ],
+      "ingredients": [
+        "10 oz ranch steak",
+        "1 romaine heart",
+        "1 mini cucumber",
+        "4 oz grape tomatoes",
+        "½ red onion",
+        "1 bunch parsley (or ½ oz)",
+        "2 cloves garlic",
+        "1 red chili or ½ tsp chili flakes (optional)",
+        "2 Tbsp red wine vinegar",
+        "3 Tbsp olive oil",
+        "Salt, pepper"
+      ],
+      "steps": [
+        "Wash and dry produce. Finely chop parsley and garlic (and chili if using). Whisk with vinegar, 2 Tbsp olive oil, salt, and pepper for chimichurri.",
+        "Chop romaine. Slice cucumber and onion; halve tomatoes. Toss salad veggies with a drizzle of olive oil, salt, and pepper.",
+        "Pat steak dry; season with salt and pepper. Heat oil in a large pan over medium-high; sear 3–5 minutes per side to 145°F. Rest 5 minutes; slice against the grain.",
+        "Plate salad; top with steak and spoon chimichurri over. Serve."
+      ],
+      "servings": 2,
+      "calories": 520,
+      "spiceLevel": "Mild–Medium",
+      "difficulty": "Easy",
+      "utensils": [
+        "Large pan",
+        "Small bowl",
+        "Paper towels",
+        "Whisk"
+      ]
+    },
+    "balsamic-steak-veggies": {
+      "id": "balsamic-steak-veggies",
+      "name": "Balsamic Steak with Roasted Veggies",
+      "shortName": "Balsamic Steak & Veggies",
+      "source": "Blue Apron-style",
+      "url": "https://www.blueapron.com/",
+      "protein": "beef",
+      "time": "~35 min",
+      "pitch": "Sheet-pan peppers, zucchini, and onion with balsamic-glazed steak — dairy-free and veggie-forward.",
+      "healthy": true,
+      "avoidTags": [
+        "beef"
+      ],
+      "ingredients": [
+        "10 oz sirloin steak",
+        "1 zucchini",
+        "1 red bell pepper",
+        "1 red onion",
+        "2 Tbsp balsamic vinegar",
+        "1 tsp dried rosemary",
+        "1 tsp garlic powder",
+        "1 tsp honey",
+        "Olive oil, cooking oil, salt, pepper"
+      ],
+      "steps": [
+        "Preheat oven to 425°F. Slice zucchini into half-moons; slice pepper and onion into strips. Toss on a baking sheet with oil, garlic powder, salt, and pepper. Roast 18–22 minutes until tender and browned.",
+        "Pat steak dry; season with rosemary, salt, and pepper. Heat oil in a pan over medium-high; sear 4–6 minutes per side to 145°F. Rest 5 minutes.",
+        "In a small bowl, mix balsamic vinegar, honey, and a drizzle of olive oil. Slice steak; drizzle with balsamic glaze. Serve with roasted veggies."
+      ],
+      "servings": 2,
+      "calories": 560,
+      "spiceLevel": "Mild",
+      "difficulty": "Easy",
+      "utensils": [
+        "Baking sheet",
+        "Large pan",
+        "Small bowl",
+        "Paper towels"
+      ]
+    },
+    "ginger-beef-broccoli": {
+      "id": "ginger-beef-broccoli",
+      "name": "Ginger Beef & Broccoli Stir-Fry",
+      "shortName": "Ginger Beef Broccoli",
+      "source": "HelloFresh-style",
+      "url": "https://www.hellofresh.com/",
+      "protein": "beef",
+      "time": "~25 min",
+      "pitch": "Classic ginger beef with crisp broccoli over rice — skip the takeout.",
+      "healthy": true,
+      "avoidTags": [
+        "soy",
+        "gluten",
+        "beef",
+        "sesame"
+      ],
+      "ingredients": [
+        "10 oz sirloin, thinly sliced",
+        "¾ cup jasmine rice",
+        "8 oz broccoli florets",
+        "2 cloves garlic",
+        "1 Tbsp fresh ginger, minced (or 1 tsp ground)",
+        "3 Tbsp soy sauce",
+        "1 tsp sesame oil",
+        "1 tsp cornstarch",
+        "1 tsp brown sugar",
+        "2 scallions",
+        "Cooking oil, salt"
+      ],
+      "steps": [
+        "Cook rice with 1¼ cups water and a pinch of salt: boil, cover, low 15–18 minutes. Slice scallions; mince garlic and ginger. Mix soy, cornstarch, brown sugar, sesame oil, and 2 Tbsp water for sauce.",
+        "Heat oil in a large pan or wok on high. Stir-fry beef 2–3 minutes until browned; transfer out. Add broccoli and a splash of water; cover 2–3 minutes until crisp-tender.",
+        "Add garlic and ginger; cook 30 seconds. Return beef; pour in sauce; toss until glossy, 1–2 minutes. Serve over rice with scallions."
+      ],
+      "servings": 2,
+      "calories": 640,
+      "spiceLevel": "Mild",
+      "difficulty": "Easy",
+      "utensils": [
+        "Small pot",
+        "Large pan or wok",
+        "Small bowl"
+      ]
+    },
+    "herb-roast-chicken-carrots": {
+      "id": "herb-roast-chicken-carrots",
+      "name": "Herb-Roasted Chicken with Carrots & Green Beans",
+      "shortName": "Herb Roast Chicken Tray",
+      "source": "Blue Apron-style",
+      "url": "https://www.blueapron.com/",
+      "protein": "chicken",
+      "time": "~35 min",
+      "pitch": "One-pan herb chicken with roasted carrots and green beans — dairy-free and simple.",
+      "healthy": true,
+      "avoidTags": [
+        "chicken"
+      ],
+      "ingredients": [
+        "12 oz chicken cutlets",
+        "9 oz carrots",
+        "6 oz green beans",
+        "1 lemon",
+        "1 tsp dried thyme",
+        "1 tsp garlic powder",
+        "1 tsp paprika",
+        "Olive oil, salt, pepper"
+      ],
+      "steps": [
+        "Preheat oven to 425°F. Peel and cut carrots into sticks; trim green beans. Zest and quarter lemon.",
+        "Toss carrots and green beans on a sheet with oil, half the garlic powder, salt, and pepper. Roast 10 minutes.",
+        "Pat chicken dry; season with thyme, paprika, remaining garlic powder, salt, pepper, and lemon zest. Add to sheet; drizzle with oil. Roast until chicken is 165°F and veggies are tender, 15–18 minutes. Squeeze lemon over and serve."
+      ],
+      "servings": 2,
+      "calories": 480,
+      "spiceLevel": "Mild",
+      "difficulty": "Easy",
+      "utensils": [
+        "Baking sheet",
+        "Peeler",
+        "Zester",
+        "Paper towels"
+      ]
+    },
+    "salmon-quinoa-bowl": {
+      "id": "salmon-quinoa-bowl",
+      "name": "Lemon Salmon Quinoa Bowl with Cucumber",
+      "shortName": "Lemon Salmon Quinoa Bowl",
+      "source": "HelloFresh-style",
+      "url": "https://www.hellofresh.com/",
+      "protein": "salmon",
+      "time": "~30 min",
+      "pitch": "Roasted lemon salmon over quinoa with cucumber and herbs — dairy-free Protein Smart bowl.",
+      "healthy": true,
+      "avoidTags": [
+        "fish",
+        "salmon"
+      ],
+      "ingredients": [
+        "10 oz salmon fillets",
+        "¾ cup quinoa",
+        "1 mini cucumber",
+        "1 lemon",
+        "2 Tbsp chopped parsley or dill",
+        "1 tsp garlic powder",
+        "Olive oil, salt, pepper"
+      ],
+      "steps": [
+        "Preheat oven to 425°F. Rinse quinoa; cook with 1½ cups water and a pinch of salt: boil, cover, low 15 minutes. Fluff. Zest and quarter lemon; slice cucumber.",
+        "Pat salmon dry; place on oiled sheet. Season with garlic powder, salt, pepper, lemon zest, and a drizzle of oil. Roast to 145°F, 10–12 minutes. Squeeze 1 lemon wedge over.",
+        "Toss quinoa with cucumber, herbs, olive oil, and juice from 1 lemon wedge. Plate bowls; top with salmon and remaining lemon."
+      ],
+      "servings": 2,
+      "calories": 580,
+      "spiceLevel": "Mild",
+      "difficulty": "Easy",
+      "utensils": [
+        "Small pot",
+        "Baking sheet",
+        "Zester",
+        "Paper towels"
       ]
     }
   },
   "notes": {
-    "pii": "Site UI must remain generic — no household names or emails in the page.",
-    "pdfOnSubmit": "Client-side printable PDF of selected meals (recipes + grocery list).",
-    "nightlyEmail": "Static Pages cannot send email. Scheduled nightly email needs a bot routine + Gmail (human-in-the-loop) or a backend; this data file is the source of truth for that automation."
+    "pii": "Public site — no names, emails, or mailto.",
+    "pdfOnSubmit": "Client-side jsPDF: cover, grocery, one recipe per page.",
+    "servings": "Recipes authored for 2; scale x2 when servings=4."
   }
 }
