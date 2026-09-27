@@ -143,6 +143,17 @@
       background: var(--accent-soft); color: var(--accent);
     }
     .tag.comfort { background: var(--warn-soft); color: var(--warn); }
+    .tag.source {
+      background: #e8eef8; color: #2f4a7a; text-transform: none; letter-spacing: 0.01em;
+      font-weight: 650;
+    }
+    .tag.cheap {
+      background: #eef6e8; color: #3d6b2a;
+    }
+    .help-hint {
+      display: block; margin-top: 6px; color: var(--muted); font-size: 0.8rem; line-height: 1.35;
+      max-width: 36rem;
+    }
     .link { font-size: 0.82rem; margin-top: 4px; }
     .link a { color: var(--accent); }
     .swap-btn {
@@ -229,7 +240,7 @@
       <header>
         <div class="badge">Public planner · no account</div>
         <h1>Plan your week of dinners</h1>
-        <p>Set protein counts, healthy bias, servings, and ingredients to avoid. <strong>Find matching recipes</strong> queries HelloFresh / Blue Apron–style dinners <em>live</em> (via a small Worker API), then lets you swap before downloading a PDF.</p>
+        <p>Set protein counts, healthy bias, servings, and ingredients to avoid. <strong>Find matching recipes</strong> queries HelloFresh / Blue Apron / TheMealDB / Home Chef dinners <em>live</em> (via a small Worker API), then lets you swap before downloading a PDF.</p>
       </header>
 
       <div class="card">
@@ -263,6 +274,15 @@
           </div>
         </div>
         <div class="row">
+          <label>Bias toward cheaper groceries
+            <span class="help-hint">Ranks by fewer specialty/exotic ingredients, more pantry staples, shorter shopping lists — not store prices.</span>
+          </label>
+          <div class="seg" id="pref-cheap" role="group" aria-label="Bias toward cheaper groceries">
+            <button type="button" data-val="off" class="on">Off</button>
+            <button type="button" data-val="on">On</button>
+          </div>
+        </div>
+        <div class="row">
           <label>Servings <span class="hint">Ingredients scale for 4</span></label>
           <div class="seg" id="pref-servings" role="group" aria-label="Servings">
             <button type="button" data-val="2" class="on">2</button>
@@ -290,7 +310,7 @@
         <div class="spinner" aria-hidden="true"></div>
         <div>
           <div><strong>Finding matching recipes…</strong></div>
-          <div class="live-meta">Live lookup against HelloFresh / Blue Apron–style public recipe data. Usually a few seconds.</div>
+          <div class="live-meta">Live lookup against HelloFresh, Blue Apron, TheMealDB, and Home Chef public recipe data. Usually a few seconds.</div>
         </div>
       </div>
       <p class="live-meta" id="live-api-status"></p>
@@ -331,6 +351,7 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
       salmon: 1,
       vegetarian: 0,
       healthyOnly: true,
+      cheapBias: false,
       servings: 2,
       avoid: new Set(),
       customAvoid: []
@@ -407,7 +428,7 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
           total: payload.total,
           prefsSnapshot: {
             beef: prefs.beef, chicken: prefs.chicken, salmon: prefs.salmon, vegetarian: prefs.vegetarian,
-            healthyOnly: prefs.healthyOnly, servings: prefs.servings,
+            healthyOnly: prefs.healthyOnly, cheapBias: prefs.cheapBias, servings: prefs.servings,
             avoid: [...prefs.avoid], customAvoid: prefs.customAvoid.slice()
           }
         }));
@@ -454,6 +475,7 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
       const bits = [];
       if (prefs.healthyOnly) bits.push("Healthier");
       else bits.push("Anything goes");
+      if (prefs.cheapBias) bits.push("Cheaper-grocery bias");
       bits.push(prefs.servings + " servings");
       if (prefs.avoid.size || prefs.customAvoid.length) {
         bits.push("Avoiding " + [
@@ -534,6 +556,7 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
         salmon: prefs.salmon,
         vegetarian: prefs.vegetarian,
         healthyOnly: prefs.healthyOnly,
+        cheapBias: !!prefs.cheapBias,
         servings: prefs.servings,
         avoid: [...prefs.avoid],
         customAvoid: prefs.customAvoid.slice(),
@@ -598,6 +621,7 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
       });
     });
     wireSeg($("pref-healthy"), (v) => { prefs.healthyOnly = v === "healthy"; });
+    wireSeg($("pref-cheap"), (v) => { prefs.cheapBias = v === "on"; });
     wireSeg($("pref-servings"), (v) => { prefs.servings = parseInt(v, 10); });
 
     function renderAvoidChips() {
@@ -933,11 +957,17 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
               const healthyTag = m.healthy
                 ? '<span class="tag">Healthier</span>'
                 : '<span class="tag comfort">Comfort</span>';
+              const sourceTag = m.source
+                ? '<span class="tag source">' + String(m.source).replace(/</g, "") + '</span>'
+                : '';
+              const cheapTag = (prefs.cheapBias && m.cheapScore != null)
+                ? '<span class="tag cheap">Staple score ' + m.cheapScore + '</span>'
+                : '';
               return `<div class="day">${s.day} · <span class="p-${s.protein}">${proteinLabel(s.protein)}</span></div>
                 <div class="name">${m.shortName}</div>
-                <div class="meta">${m.source} · ${m.time} · Spice: ${m.spiceLevel || "—"}</div>
+                <div class="meta">${m.time} · Spice: ${m.spiceLevel || "—"}</div>
                 <div class="pitch">${m.pitch}</div>
-                <div class="tags">${healthyTag}<span class="tag">${prefs.servings} servings</span></div>
+                <div class="tags">${sourceTag}${healthyTag}${cheapTag}<span class="tag">${prefs.servings} servings</span></div>
                 <div class="link"><a href="${m.url}" target="_blank" rel="noopener">Recipe card</a></div>
                 <button type="button" class="swap-btn" data-swap="${idx}">Swap this meal</button>`;
             })()
@@ -980,8 +1010,9 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
             const alt = document.createElement("button");
             alt.type = "button";
             alt.className = "alt";
+            const cheapNote = (prefs.cheapBias && m.cheapScore != null) ? " · staple " + m.cheapScore : "";
             alt.innerHTML = `<div class="aname">${m.shortName}${id === s.mealId ? " (current)" : ""}${m.healthy ? "" : " · comfort"}</div>
-              <div class="ameta">${m.source} · ${m.time} · ${m.pitch}</div>`;
+              <div class="ameta"><span class="tag source" style="display:inline-block;margin-right:4px;vertical-align:middle">${String(m.source||"").replace(/</g,"")}</span>${m.time}${cheapNote} · ${m.pitch}</div>`;
             alt.addEventListener("click", (e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -1087,7 +1118,7 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
 
     function fillPrintSheet(selected, empties) {
       let html = `<h1>Weekly meal plan</h1>
-        <div class="sub">${prefs.servings} servings · ${prefs.healthyOnly ? "Healthier" : "Anything goes"} · Generated locally</div>`;
+        <div class="sub">${prefs.servings} servings · ${prefs.healthyOnly ? "Healthier" : "Anything goes"}${prefs.cheapBias ? " · Cheaper-grocery bias" : ""} · Generated locally</div>`;
       html += `<h2>Menu</h2>`;
       if (!selected.length) html += `<p>No meals selected.</p>`;
       else html += `<ul>` + selected.map(({ day, meal: m, protein }) =>
@@ -1193,6 +1224,7 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
       doc.setFontSize(12);
       doc.setFont("helvetica", "normal");
       const coverSub = (prefs.healthyOnly ? "Healthier picks" : "Anything-goes picks") +
+        (prefs.cheapBias ? " · Cheaper-grocery bias" : "") +
         " · " + prefs.servings + " servings · recipes + grocery list";
       doc.text(coverSub, margin, 70);
 
@@ -1333,7 +1365,7 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
       try {
         localStorage.setItem("mealPlanPrefs", JSON.stringify({
           beef: prefs.beef, chicken: prefs.chicken, salmon: prefs.salmon, vegetarian: prefs.vegetarian,
-          healthyOnly: prefs.healthyOnly, servings: prefs.servings,
+          healthyOnly: prefs.healthyOnly, cheapBias: prefs.cheapBias, servings: prefs.servings,
           avoid: [...prefs.avoid], customAvoid: prefs.customAvoid,
           kept: selected.map(({ day, meal: m, protein }) => ({ day, name: m.name, protein, id: m.id })),
           at: new Date().toISOString()
