@@ -1,0 +1,354 @@
+{
+  "weekOf": "2026-09-27",
+  "timezone": "America/Boise",
+  "bias": "healthier \u2014 lean proteins, vegetables, grilled/baked/saut\u00e9ed over fried/creamy-heavy",
+  "proteinMix": {
+    "beef": 2,
+    "chicken": 2,
+    "salmon": 1
+  },
+  "slots": [
+    {
+      "day": "Mon",
+      "protein": "beef",
+      "primary": "warm-steak-kale",
+      "alternates": [
+        "sesame-ginger-steak",
+        "steak-nicoise"
+      ]
+    },
+    {
+      "day": "Tue",
+      "protein": "chicken",
+      "primary": "tuscan-chicken-succotash",
+      "alternates": [
+        "chicken-veggie-feta",
+        "spiced-chicken-yogurt"
+      ]
+    },
+    {
+      "day": "Wed",
+      "protein": "chicken",
+      "primary": "chicken-veggie-feta",
+      "alternates": [
+        "spiced-chicken-yogurt",
+        "tuscan-chicken-succotash"
+      ]
+    },
+    {
+      "day": "Thu",
+      "protein": "beef",
+      "primary": "italian-steak-broccoli",
+      "alternates": [
+        "warm-steak-kale",
+        "sesame-ginger-steak"
+      ]
+    },
+    {
+      "day": "Fri",
+      "protein": "salmon",
+      "primary": "classic-roasted-salmon",
+      "alternates": [
+        "soy-glazed-salmon-kale",
+        "cajun-sheet-salmon"
+      ]
+    }
+  ],
+  "candidates": {
+    "warm-steak-kale": {
+      "id": "warm-steak-kale",
+      "name": "Warm Steak, Kale & Sweet Potato Salad",
+      "shortName": "Warm Steak Kale Salad",
+      "source": "HelloFresh",
+      "url": "https://www.hellofresh.com/recipes/warm-steak-kale-and-sweet-potato-salad-68ac43b582758da705ef5797",
+      "protein": "beef",
+      "time": "~20 min",
+      "pitch": "Seared garlic-thyme steak over massaged kale with browned sweet potato \u2014 high protein, veggie-forward, light balsamic finish.",
+      "ingredients": [
+        "10 oz ranch steak",
+        "1 sweet potato",
+        "4 oz kale",
+        "2 tsp garlic powder",
+        "1 tsp dried thyme",
+        "3 oz creamy balsamic dressing",
+        "3 Tbsp Parmesan",
+        "\u00bd oz pecans",
+        "1 oz dried cranberries",
+        "Olive oil, cooking oil, butter, salt, pepper"
+      ],
+      "steps": [
+        "Dice sweet potato; microwave with half the garlic powder, salt, pepper, and butter until tender (~6\u20137 min).",
+        "Massage kale with olive oil until tender.",
+        "Slice steak thin; sear with thyme and remaining garlic powder 3\u20136 min. Brown sweet potato briefly in the pan.",
+        "Toss kale with sweet potato, Parmesan, and dressing; top with steak, pecans, and cranberries."
+      ]
+    },
+    "sesame-ginger-steak": {
+      "id": "sesame-ginger-steak",
+      "name": "Sesame Ginger Steak Salad",
+      "shortName": "Sesame Ginger Steak Salad",
+      "source": "HelloFresh",
+      "url": "https://www.hellofresh.com/recipes/sesame-ginger-steak-salad-6930a6179351d52b5c264052",
+      "protein": "beef",
+      "time": "~15 min",
+      "pitch": "Quick seared steak over mixed greens with cucumber and tomato \u2014 carb-conscious, no heavy cream sauces.",
+      "ingredients": [
+        "10 oz ranch steak",
+        "4 oz mixed greens",
+        "1 mini cucumber",
+        "4 oz grape tomatoes",
+        "1 unit sesame ginger crunch seasoning",
+        "2 oz garlic-ginger scallion paste",
+        "2 oz sweet Thai chili sauce",
+        "10 tsp rice wine vinegar",
+        "1 lime",
+        "Crispy fried onions, peanuts",
+        "Olive oil, cooking oil, salt, pepper"
+      ],
+      "steps": [
+        "Slice cucumber and halve tomatoes; quarter lime.",
+        "Slice steak; season with sesame ginger crunch. Sear 3\u20135 min; finish with garlic-ginger paste, half the chili sauce, and lime juice.",
+        "Whisk vinegar, remaining chili sauce, olive oil, and lime for dressing.",
+        "Toss greens, cucumber, and tomatoes; top with steak, crispy onions, and peanuts."
+      ]
+    },
+    "steak-nicoise": {
+      "id": "steak-nicoise",
+      "name": "Steak Ni\u00e7oise Salad",
+      "shortName": "Steak Ni\u00e7oise Salad",
+      "source": "HelloFresh",
+      "url": "https://www.hellofresh.com/recipes/steak-nicoise-salad-68dabd589ed4d679418a8509",
+      "protein": "beef",
+      "time": "~25 min",
+      "pitch": "Proven\u00e7al steak salad with green beans, potatoes, tomatoes, and olives \u2014 lighter bistro plate, vinaigrette over creamy sauces.",
+      "ingredients": [
+        "10 oz ranch steak",
+        "1 baby lettuce",
+        "12 oz potatoes",
+        "8 oz green beans",
+        "4 oz grape tomatoes",
+        "1 Tbsp herbes de Provence",
+        "2 Tbsp garlic herb butter",
+        "2 tsp Dijon mustard",
+        "5 tsp white wine vinegar",
+        "Green olives",
+        "1 demi-baguette (optional)",
+        "Olive oil, cooking oil, salt, pepper"
+      ],
+      "steps": [
+        "Microwave potatoes with half the garlic herb butter until tender.",
+        "Microwave green beans until tender; chop lettuce and olives.",
+        "Season steak with herbes de Provence; sear 3\u20136 min per side; rest.",
+        "Whisk vinegar, mustard, remaining herbs, and olive oil; toss with lettuce, potatoes, beans, tomatoes, and olives. Slice steak on top."
+      ]
+    },
+    "italian-steak-broccoli": {
+      "id": "italian-steak-broccoli",
+      "name": "Italian-Style Steak & Roasted Baby Broccoli",
+      "shortName": "Italian Steak & Broccoli",
+      "source": "HelloFresh",
+      "url": "https://www.hellofresh.com/recipes/italian-style-steak-and-roasted-baby-broccoli-68d655b49ed4d6794189f44c",
+      "protein": "beef",
+      "time": "~30 min",
+      "pitch": "Balsamic-marinated seared steak with roasted baby broccoli and arugula panzanella \u2014 veggie-heavy, sodium-smart.",
+      "ingredients": [
+        "10 oz bavette steak",
+        "1 unit baby broccoli",
+        "2 oz arugula",
+        "1 mini cucumber",
+        "4 oz grape tomatoes",
+        "\u00bd red onion",
+        "1 ciabatta",
+        "5 tsp balsamic vinegar",
+        "1 tsp dried rosemary",
+        "5 tsp sherry vinegar",
+        "2 tsp honey",
+        "2 tsp Dijon mustard",
+        "2 tsp garlic powder",
+        "Parmesan cheese block",
+        "Olive oil, cooking oil, salt, pepper"
+      ],
+      "steps": [
+        "Roast baby broccoli and torn ciabatta at 425\u00b0F until tender/crisp (~12\u201315 min).",
+        "Marinate steak in balsamic, rosemary, and olive oil.",
+        "Whisk sherry vinaigrette; toss cucumber, tomatoes, onion, and croutons.",
+        "Sear steak 5\u20137 min per side; rest and slice. Serve with broccoli and arugula panzanella; grate Parmesan over."
+      ]
+    },
+    "tuscan-chicken-succotash": {
+      "id": "tuscan-chicken-succotash",
+      "name": "Tuscan Chicken & Tomato-Basil Succotash",
+      "shortName": "Tuscan Chicken Succotash",
+      "source": "HelloFresh",
+      "url": "https://www.hellofresh.com/recipes/tuscan-chicken-and-tomato-basil-succotash-6a512ba2748b7cf792503255",
+      "protein": "chicken",
+      "time": "~25 min",
+      "pitch": "Oven-roasted spice-rubbed chicken over blistered zucchini, corn, pepper, and tomatoes \u2014 high protein, carb-conscious, light lemon aioli.",
+      "ingredients": [
+        "24 oz chicken cutlets (kit size; use ~10\u201312 oz for 2)",
+        "1 zucchini",
+        "1 green bell pepper",
+        "2 ears / units corn",
+        "4 oz grape tomatoes",
+        "2 scallions",
+        "1 lemon",
+        "\u2153 Tbsp Tuscan Heat Spice",
+        "1 oz basil paste",
+        "2 Tbsp mayonnaise",
+        "1 tsp garlic powder",
+        "Olive oil, cooking oil, salt, pepper"
+      ],
+      "steps": [
+        "Season chicken with Tuscan spice; roast at 425\u00b0F until cooked through (~15\u201318 min).",
+        "Saut\u00e9 zucchini and tomatoes until blistered; add scallion whites, pepper, and corn; finish with basil paste.",
+        "Mix lemon zest, mayo, garlic powder, and lemon juice for aioli.",
+        "Plate succotash, top with chicken and aioli; garnish with scallion greens."
+      ]
+    },
+    "chicken-veggie-feta": {
+      "id": "chicken-veggie-feta",
+      "name": "Roasted Chicken, Potatoes & Veggie-Feta Jumble",
+      "shortName": "Chicken Veggie-Feta Sheet Pan",
+      "source": "HelloFresh",
+      "url": "https://www.hellofresh.com/recipes/roasted-chicken-potatoes-and-veggie-feta-jumble-68dac0089ed4d679418a8a44",
+      "protein": "chicken",
+      "time": "~30 min",
+      "pitch": "Sheet-pan roasted chicken with Mediterranean potatoes and zucchini\u2013carrot\u2013onion jumble finished with feta \u2014 GLP-1 friendly, ~590 kcal.",
+      "ingredients": [
+        "12 oz chicken cutlets",
+        "12 oz potatoes",
+        "9 oz carrots",
+        "1 zucchini",
+        "1 red onion",
+        "\u00bd cup feta cheese",
+        "\u00bd Tbsp Mediterranean spice blend",
+        "\u00bd Tbsp fry seasoning",
+        "1 tsp garlic powder",
+        "Cooking oil, salt, pepper"
+      ],
+      "steps": [
+        "Toss potatoes with oil, garlic powder, and Mediterranean spice; toss carrots, zucchini, and onion with oil. Roast 5 min.",
+        "Season chicken with fry seasoning; roast on a second sheet until done (~18\u201322 min) while veggies finish.",
+        "Toss roasted veggies with feta; slice chicken.",
+        "Plate chicken with veggie jumble and potatoes."
+      ]
+    },
+    "spiced-chicken-yogurt": {
+      "id": "spiced-chicken-yogurt",
+      "name": "Spiced Chicken Cutlets with Roasted Vegetables & Lemon Yogurt Sauce",
+      "shortName": "Spiced Chicken & Lemon Yogurt",
+      "source": "HelloFresh",
+      "url": "https://www.hellofresh.com/recipes/spiced-chicken-cutlets-with-roasted-vegetables-and-lemon-yogurt-sauce-68d65478681e58ed6e5b2d5e",
+      "protein": "chicken",
+      "time": "~35 min",
+      "pitch": "Shawarma-spiced cutlets with roasted veg and lemon yogurt \u2014 Calorie Smart / Mediterranean, yogurt sauce instead of cream.",
+      "ingredients": [
+        "10 oz chicken cutlets",
+        "Potatoes",
+        "1 zucchini",
+        "1 red onion",
+        "1 lemon",
+        "Garlic",
+        "Shawarma spice blend",
+        "Turkish spice blend",
+        "Sour cream or yogurt for sauce",
+        "Feta cheese",
+        "Salt, pepper, oil"
+      ],
+      "steps": [
+        "Roast potatoes, zucchini, and onion with spices until tender.",
+        "Season chicken with shawarma/Turkish spices; cook until done.",
+        "Stir lemon yogurt/sour cream sauce with garlic.",
+        "Serve chicken over roasted veg with yogurt sauce and a sprinkle of feta."
+      ]
+    },
+    "classic-roasted-salmon": {
+      "id": "classic-roasted-salmon",
+      "name": "Classic Roasted Salmon",
+      "shortName": "Classic Roasted Salmon",
+      "source": "HelloFresh",
+      "url": "https://www.hellofresh.com/recipes/classic-roasted-salmon-59ce4c827901f9567d137723",
+      "protein": "salmon",
+      "time": "~30 min",
+      "pitch": "Oven-roasted salmon with green beans, burst tomatoes, and crispy potato rounds \u2014 ~560 kcal, omega-3s, no heavy cream sauce.",
+      "ingredients": [
+        "10 oz skin-on salmon fillets",
+        "12 oz Yukon Gold potatoes",
+        "6 oz green beans",
+        "4 oz heirloom grape tomatoes",
+        "2 cloves garlic",
+        "\u00bc oz dill",
+        "1 Tbsp butter",
+        "1 Tbsp olive oil",
+        "Salt, pepper"
+      ],
+      "steps": [
+        "Boil green beans briefly; boil potatoes until tender; drain.",
+        "Saut\u00e9 tomatoes, then green beans and garlic with half the dill.",
+        "Roast salmon skin-side down at 425\u00b0F ~8\u201310 min.",
+        "Crush potato rounds and pan-crisp; finish with remaining dill. Plate salmon with veggies and potatoes."
+      ]
+    },
+    "soy-glazed-salmon-kale": {
+      "id": "soy-glazed-salmon-kale",
+      "name": "Sweet Soy-Glazed Salmon & Kale Salad",
+      "shortName": "Soy-Glazed Salmon Kale Salad",
+      "source": "HelloFresh",
+      "url": "https://www.hellofresh.com/recipes/sweet-soy-glazed-salmon-and-kale-salad-65a5581c4bb81dc143a6cdba",
+      "protein": "salmon",
+      "time": "~15 min",
+      "pitch": "Seared salmon over sesame kale\u2013slaw salad with quick pickles \u2014 Protein Smart / Carb Smart, no fried sides.",
+      "ingredients": [
+        "10 oz skin-on salmon",
+        "4 Tbsp sweet soy glaze",
+        "4 oz kale",
+        "4 oz coleslaw mix",
+        "4 oz shredded carrots",
+        "1 red onion",
+        "5 tsp rice wine vinegar",
+        "1.5 oz sesame dressing",
+        "\u00bd oz peanuts",
+        "Olive oil, cooking oil, sugar, salt, pepper"
+      ],
+      "steps": [
+        "Sear salmon skin-side down until crisp; flip briefly; drizzle with sweet soy glaze.",
+        "Microwave onion and carrots with vinegar and sugar to quick-pickle.",
+        "Massage kale with oil; toss with coleslaw, pickling liquid, and sesame dressing.",
+        "Top salad with salmon, drained pickles, and peanuts."
+      ]
+    },
+    "cajun-sheet-salmon": {
+      "id": "cajun-sheet-salmon",
+      "name": "Sheet Pan Cajun Salmon with Asparagus & Sweet Potato",
+      "shortName": "Cajun Sheet-Pan Salmon",
+      "source": "Blue Apron",
+      "url": "https://www.blueapron.com/recipes/standard-meal-kit/sheet-pan-cajun-salmon-with-asparagus-sweet-potato-spiced-sour-cream",
+      "protein": "salmon",
+      "time": "~35 min",
+      "pitch": "One-pan Cajun-spiced salmon with roasted sweet potato and asparagus \u2014 baked not fried; light spiced yogurt/sour cream drizzle.",
+      "ingredients": [
+        "Salmon fillets (~10 oz)",
+        "Sweet potato(es)",
+        "Asparagus",
+        "Lemon",
+        "Cajun spice blend",
+        "Brown sugar (pinch)",
+        "Weeknight hero spice blend",
+        "Sour cream",
+        "Hot sauce (optional)",
+        "Olive oil, salt, pepper"
+      ],
+      "steps": [
+        "Roast diced sweet potato at 450\u00b0F until nearly tender (~20\u201324 min).",
+        "Coat salmon with Cajun spice + sugar; roast with asparagus until fish is done and spears are tender.",
+        "Finish asparagus with lemon juice.",
+        "Mix sour cream with spice blend and a splash of water/hot sauce; drizzle over plated salmon and veggies."
+      ]
+    }
+  },
+  "notes": {
+    "pii": "Site UI must remain generic \u2014 no household names or emails in the page.",
+    "pdfOnSubmit": "Client-side printable PDF of selected meals (recipes + grocery list).",
+    "nightlyEmail": "Static Pages cannot send email. Scheduled nightly email needs a bot routine + Gmail (human-in-the-loop) or a backend; this data file is the source of truth for that automation."
+  }
+}
