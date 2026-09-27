@@ -235,10 +235,20 @@
       padding: 28px; line-height: 1.4; z-index: 2147483646;
       box-sizing: border-box; visibility: hidden; pointer-events: none;
     }
-    #print-sheet h2 { margin: 18px 0 8px; }
-    #print-sheet h3 { margin: 14px 0 4px; font-size: 1.05rem; }
-    #print-sheet h3.staples { color: #8a4b12; }
-    #print-sheet .staple-note { color: #5c675f; font-style: italic; margin: 0 0 6px; }
+    #print-sheet h2 { margin: 18px 0 8px; color: #000; }
+    #print-sheet h3 {
+      margin: 14px 0 4px; font-size: 1.05rem; color: #000;
+      border-bottom: 1px solid #000; display: inline-block; padding-bottom: 1px;
+    }
+    #print-sheet h3.staples { color: #000; }
+    #print-sheet .staple-note { color: #000; font-style: italic; margin: 0 0 6px; }
+    #print-sheet hr.section-rule { border: none; border-top: 1px solid #b4b4b4; margin: 14px 0 4px; }
+    #print-sheet ul.checks { list-style: none; padding-left: 0; margin: 6px 0 0; }
+    #print-sheet ul.checks li { position: relative; margin: 4px 0; padding-left: 20px; }
+    #print-sheet ul.checks li .box {
+      position: absolute; left: 0; top: 0.22em;
+      width: 0.78em; height: 0.78em; border: 1.5px solid #000; box-sizing: border-box;
+    }
     @media print {
       body > main { display: none !important; }
       #print-sheet { position: static !important; visibility: visible !important; padding: 0 !important; }
@@ -1543,7 +1553,7 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
         if (egg) return "Eggs";
         return "Dairy";
       }
-      if (id === "staples") return "Pantry staples / likely already have";
+      if (id === "staples") return "SKIP IF YOU HAVE / Pantry staples";
       return "Pantry & other";
     }
 
@@ -1581,11 +1591,12 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
       html += `<h2>Grocery list</h2>`;
       const grocerySections = buildGrocery(selected);
       if (!grocerySections.length) html += `<p>No ingredients (no meals kept).</p>`;
-      else grocerySections.forEach((section) => {
+      else grocerySections.forEach((section, i) => {
+        if (i > 0) html += `<hr class="section-rule" />`;
         const staple = section.id === "staples";
         html += `<h3${staple ? " class=\"staples\"" : ""}>${escapeHtml(section.title)}</h3>`;
         if (staple) html += `<p class="staple-note">Skip these if you already keep them in the kitchen.</p>`;
-        html += `<ul>` + section.items.map((g) => `<li>${escapeHtml(g)}</li>`).join("") + `</ul>`;
+        html += `<ul class="checks">` + section.items.map((g) => `<li><span class="box"></span>${escapeHtml(g)}</li>`).join("") + `</ul>`;
       });
       selected.forEach(({ day, meal: m }) => {
         html += `<div class="meal-block"><h3>${escapeHtml(day)} — ${escapeHtml(m.name)}</h3>
@@ -1623,18 +1634,30 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
       const pageH = doc.internal.pageSize.getHeight();
       const margin = 48;
       const maxW = pageW - margin * 2;
-      const accent = [47, 107, 79];
-      const warm = [196, 92, 38];
-      const ink = [26, 34, 28];
-      const muted = [95, 107, 99];
+      // Black ink on white. Gray is only for rules, never for meaning.
+      const ink = [0, 0, 0];
+      const ruleGray = [176, 176, 176];
 
       function newPageFresh() {
         doc.addPage();
-        doc.setFillColor(226, 239, 231);
-        doc.rect(0, 0, pageW, 28, "F");
-        doc.setFillColor(...accent);
-        doc.rect(0, 28, pageW, 4, "F");
-        return margin + 24;
+        return margin;
+      }
+
+      function drawUnderlinedHeading(text, x, y, size, width) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(size);
+        doc.setTextColor(0, 0, 0);
+        const lines = doc.splitTextToSize(String(text || ""), width);
+        const lead = size + 3;
+        lines.forEach((line, i) => doc.text(line, x, y + i * lead));
+        const lastBase = y + (lines.length - 1) * lead;
+        const underlineGap = Math.max(5, size * 0.42);
+        const ruleY = lastBase + underlineGap;
+        doc.setDrawColor(0, 0, 0);
+        doc.setLineWidth(0.65);
+        const ruleW = Math.min(doc.getTextWidth(lines[lines.length - 1] || ""), width);
+        doc.line(x, ruleY, x + Math.max(ruleW, 28), ruleY);
+        return ruleY + 14;
       }
 
       function writeWrapped(text, x, y, opts) {
@@ -1656,190 +1679,170 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
       }
 
       // ===== Cover =====
-      doc.setFillColor(243, 246, 242);
-      doc.rect(0, 0, pageW, pageH, "F");
+      let y = 56;
+      y = drawUnderlinedHeading("Weekly meal plan", margin, y, 26, maxW);
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(13);
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
       const coverSub = (prefs.healthyOnly ? "Healthier picks" : "Anything-goes picks") +
         (prefs.cheapBias ? " · Cheaper-grocery bias" : "") +
         " · " + prefs.servings + " servings · recipes + grocery list";
       const subLines = doc.splitTextToSize(coverSub, maxW);
-      const barH = 78 + subLines.length * 16;
-      doc.setFillColor(...accent);
-      doc.rect(0, 0, pageW, barH, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(28);
-      doc.text("Weekly meal plan", margin, 48);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(13);
-      subLines.forEach((line, i) => doc.text(line, margin, 76 + i * 16));
+      subLines.forEach((line, i) => doc.text(line, margin, y + i * 16));
+      y += subLines.length * 16 + 10;
 
-      let y = barH + 28;
       const today = new Date();
       const dateStr = today.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-      y = writeWrapped("Generated " + dateStr, margin, y, { size: 13, color: muted, gap: 12 });
-      y = writeWrapped("On the menu", margin, y, { size: 18, style: "bold", color: accent, gap: 10 });
+      y = writeWrapped("Generated " + dateStr, margin, y, { size: 12, gap: 16 });
+      y = drawUnderlinedHeading("On the menu", margin, y, 16, maxW);
 
       if (!selected.length) {
-        y = writeWrapped("No meals selected yet.", margin, y, { size: 13, color: muted });
+        y = writeWrapped("No meals selected yet.", margin, y, { size: 12 });
       } else {
         selected.forEach(({ day, meal: m, protein }, i) => {
-          const nameSize = 14;
           const labelSize = 11;
-          const textW = maxW - 56;
+          const nameSize = 14;
+          const labelLead = labelSize + 3;
+          const nameLead = nameSize + 3;
           doc.setFont("helvetica", "bold");
           doc.setFontSize(labelSize);
-          const labelLines = doc.splitTextToSize(day + "  ·  " + String(protein || "").toUpperCase(), textW);
+          const labelLines = doc.splitTextToSize(day + "  ·  " + String(protein || "").toUpperCase(), maxW);
+          doc.setFont("helvetica", "normal");
           doc.setFontSize(nameSize);
-          const nameLines = doc.splitTextToSize(m.name, textW);
-          const labelH = labelLines.length * (labelSize + 3);
-          const nameH = nameLines.length * (nameSize + 4);
-          const cardH = labelH + nameH + 30;
-          if (y + cardH > pageH - margin) y = newPageFresh();
-          doc.setFillColor(255, 254, 249);
-          doc.setDrawColor(217, 227, 219);
-          doc.roundedRect(margin, y, maxW, cardH, 6, 6, "FD");
-          const proteinColor = protein === "beef" ? warm : protein === "salmon" ? [56, 102, 140] : protein === "vegetarian" ? [138, 109, 59] : accent;
-          const cy = y + cardH / 2;
-          doc.setFillColor(...proteinColor);
-          doc.circle(margin + 20, cy, 12, "F");
-          doc.setTextColor(255, 255, 255);
+          const nameLines = doc.splitTextToSize(m.name, maxW);
+          const blockH = labelLines.length * labelLead + 3 + nameLines.length * nameLead + 8;
+          const ruleExtra = i < selected.length - 1 ? 14 : 0;
+          if (y + blockH + ruleExtra > pageH - margin) y = newPageFresh();
+          doc.setTextColor(0, 0, 0);
           doc.setFont("helvetica", "bold");
-          doc.setFontSize(11);
-          const num = String(i + 1);
-          doc.text(num, margin + 20 - doc.getTextWidth(num) / 2, cy + 3.6);
-          let ty = y + 18;
           doc.setFontSize(labelSize);
-          doc.setTextColor(...muted);
-          labelLines.forEach((line) => {
-            doc.text(line, margin + 42, ty);
-            ty += labelSize + 3;
-          });
-          ty += 2;
+          labelLines.forEach((line, li) => doc.text(line, margin, y + li * labelLead));
+          let ty = y + labelLines.length * labelLead + 3;
+          doc.setFont("helvetica", "normal");
           doc.setFontSize(nameSize);
-          doc.setTextColor(...ink);
-          nameLines.forEach((line) => {
-            doc.text(line, margin + 42, ty);
-            ty += nameSize + 4;
-          });
-          y += cardH + 8;
+          nameLines.forEach((line, li) => doc.text(line, margin, ty + li * nameLead));
+          y = ty + nameLines.length * nameLead + 8;
+          if (i < selected.length - 1) {
+            doc.setDrawColor(...ruleGray);
+            doc.setLineWidth(0.6);
+            doc.line(margin, y, margin + maxW, y);
+            y += 14;
+          }
         });
       }
       if (empties.length) {
-        y = writeWrapped("Empty slots: " + empties.join(", "), margin, y + 6, { size: 12, color: muted });
+        y = writeWrapped("Empty slots: " + empties.join(", "), margin, y + 6, { size: 12 });
       }
 
       // ===== Grocery =====
       y = newPageFresh();
-      doc.setFillColor(...warm);
-      doc.roundedRect(margin, y - 16, 8, 22, 2, 2, "F");
-      y = writeWrapped("Grocery list", margin + 16, y, { size: 22, style: "bold", color: accent, gap: 6 });
+      y = drawUnderlinedHeading("Grocery list", margin, y, 22, maxW);
       y = writeWrapped(
-        "Scaled for " + prefs.servings + " servings. Grouped for the store. Pantry staples you may already have are listed last.",
-        margin, y, { size: 12, color: muted, gap: 14 }
+        "Scaled for " + prefs.servings + " servings. Grouped for the store. Check off each line. Pantry staples are labeled SKIP IF YOU HAVE.",
+        margin, y, { size: 12, gap: 16 }
       );
       const groceries = buildGrocery(selected);
       if (!groceries.length) {
-        y = writeWrapped("No ingredients (no meals kept).", margin, y, { size: 12, color: muted });
+        y = writeWrapped("No ingredients (no meals kept).", margin, y, { size: 12 });
       } else {
         const itemSize = 12;
-        const lineH = itemSize + 4;
+        const lineH = itemSize + 5;
+        const box = 10;
+        const textIndent = box + 8;
         const bottom = pageH - margin;
 
         function measureItem(text) {
           doc.setFont("helvetica", "normal");
           doc.setFontSize(itemSize);
-          const gLines = doc.splitTextToSize("•  " + text, maxW - 22);
-          return { gLines, rowH: gLines.length * lineH + 10 };
+          const gLines = doc.splitTextToSize(String(text || ""), maxW - textIndent);
+          const textH = Math.max(1, gLines.length) * lineH;
+          return { gLines, rowH: Math.max(box + 6, textH) + 3 };
         }
 
-        function drawItem(text, idx, isStaples) {
+        function drawCheckbox(baseline) {
+          doc.setDrawColor(0, 0, 0);
+          doc.setLineWidth(0.9);
+          doc.rect(margin, baseline - box + 1.5, box, box, "S");
+        }
+
+        function drawItem(text) {
           const measured = measureItem(text);
-          const bg = isStaples
-            ? (idx % 2 === 0 ? [255, 250, 242] : [255, 243, 224])
-            : (idx % 2 === 0 ? [255, 254, 249] : [232, 242, 234]);
-          doc.setFillColor(...bg);
-          doc.roundedRect(margin, y - itemSize * 0.92, maxW, measured.rowH, 3, 3, "F");
-          doc.setTextColor(...ink);
+          drawCheckbox(y);
+          doc.setTextColor(0, 0, 0);
           doc.setFont("helvetica", "normal");
           doc.setFontSize(itemSize);
           measured.gLines.forEach((line, li) => {
-            doc.text(line, margin + 10, y + li * lineH);
+            doc.text(line, margin + textIndent, y + li * lineH);
           });
-          y += measured.rowH + 4;
+          y += measured.rowH;
         }
 
-        groceries.forEach((section) => {
+        groceries.forEach((section, sIdx) => {
           const isStaples = section.id === "staples";
           const headSize = 14;
-          const titleLead = headSize + 3;
+          const noteLead = 14;
           const note = isStaples ? "Skip these if you already keep them in the kitchen." : "";
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(headSize);
-          const titleLines = doc.splitTextToSize(section.title, maxW - 20);
           doc.setFont("helvetica", "italic");
           doc.setFontSize(11);
-          const noteLines = note ? doc.splitTextToSize(note, maxW - 20) : [];
-          const noteLead = 14;
-          const headerH = 24 + titleLines.length * titleLead + (noteLines.length ? 10 + noteLines.length * noteLead : 0) + 12;
-          const firstItem = measureItem(section.items[0]);
+          const noteLines = note ? doc.splitTextToSize(note, maxW) : [];
 
-          function paintHeader(continued) {
+          function headerMetrics(continued) {
             const title = continued ? section.title + " (continued)" : section.title;
             doc.setFont("helvetica", "bold");
             doc.setFontSize(headSize);
-            const lines = doc.splitTextToSize(title, maxW - 20);
-            const noteDraw = continued ? [] : noteLines;
-            const lastBasePreview = y + (lines.length - 1) * titleLead;
-            const underline = Math.max(6, headSize * 0.42);
-            let cursor = lastBasePreview + (isStaples ? 18 : underline + 14);
-            if (noteDraw.length) cursor += noteDraw.length * noteLead + 4;
-            const blockBottom = cursor + 4;
-            if (isStaples) {
-              doc.setFillColor(255, 244, 230);
-              doc.roundedRect(margin, y - 14, maxW, blockBottom - (y - 14), 5, 5, "F");
-            }
-            doc.setFillColor(...(isStaples ? warm : accent));
-            doc.roundedRect(margin + 8, y - 12, 6, 16, 1, 1, "F");
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(headSize);
-            doc.setTextColor(...(isStaples ? warm : accent));
-            lines.forEach((line, i) => {
-              doc.text(line, margin + 20, y + i * titleLead);
-            });
-            const lastBase = y + (lines.length - 1) * titleLead;
-            let next = lastBase + 18;
-            if (!isStaples) {
-              doc.setDrawColor(...accent);
-              doc.setLineWidth(1.1);
-              const ruleY = lastBase + underline;
-              doc.line(margin + 20, ruleY, margin + 20 + Math.min(doc.getTextWidth(lines[lines.length - 1]), maxW - 28), ruleY);
-              next = ruleY + 14;
-            }
-            if (noteDraw.length) {
-              doc.setFont("helvetica", "italic");
-              doc.setFontSize(11);
-              doc.setTextColor(...muted);
-              noteDraw.forEach((line, i) => {
-                doc.text(line, margin + 20, next + i * noteLead);
-              });
-              next += noteDraw.length * noteLead + 4;
-            }
-            y = next + 8;
+            const lines = doc.splitTextToSize(title, maxW);
+            const lead = headSize + 3;
+            const underlineGap = Math.max(5, headSize * 0.42);
+            const notes = continued ? [] : noteLines;
+            const noteBlock = notes.length ? 6 + notes.length * noteLead : 0;
+            const height = (lines.length - 1) * lead + underlineGap + 14 + noteBlock;
+            return { lines, lead, underlineGap, notes, height };
           }
 
-          if (y + headerH + firstItem.rowH > bottom) y = newPageFresh();
-          paintHeader(false);
-          section.items.forEach((item, idx) => {
+          function paintHeader(metrics) {
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(headSize);
+            doc.setTextColor(0, 0, 0);
+            metrics.lines.forEach((line, i) => doc.text(line, margin, y + i * metrics.lead));
+            const lastBase = y + (metrics.lines.length - 1) * metrics.lead;
+            const ruleY = lastBase + metrics.underlineGap;
+            doc.setDrawColor(0, 0, 0);
+            doc.setLineWidth(0.65);
+            const ruleW = Math.min(doc.getTextWidth(metrics.lines[metrics.lines.length - 1] || ""), maxW);
+            doc.line(margin, ruleY, margin + Math.max(ruleW, 28), ruleY);
+            let next = ruleY + 14;
+            if (metrics.notes.length) {
+              doc.setFont("helvetica", "italic");
+              doc.setFontSize(11);
+              doc.setTextColor(0, 0, 0);
+              metrics.notes.forEach((line, i) => doc.text(line, margin, next + i * noteLead));
+              next += metrics.notes.length * noteLead + 6;
+            }
+            y = next;
+          }
+
+          const firstItem = measureItem(section.items[0]);
+          const opening = headerMetrics(false);
+          const ruleGap = 16;
+          const wantRule = sIdx > 0;
+          if (y + (wantRule ? ruleGap : 0) + opening.height + firstItem.rowH > bottom) {
+            y = newPageFresh();
+          } else if (wantRule) {
+            doc.setDrawColor(...ruleGray);
+            doc.setLineWidth(0.7);
+            doc.line(margin, y, margin + maxW, y);
+            y += ruleGap;
+          }
+          paintHeader(opening);
+          section.items.forEach((item) => {
             const measured = measureItem(item);
             if (y + measured.rowH > bottom) {
               y = newPageFresh();
-              paintHeader(true);
+              paintHeader(headerMetrics(true));
             }
-            drawItem(item, idx, isStaples);
+            drawItem(item);
           });
-          y += 16;
+          y += 10;
         });
       }
 
@@ -1882,15 +1885,24 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
         const steps = m.steps || [];
         const blocks = [];
         let h = 0;
-        const titleLines = recipeClamp(m.name, profile.title, contentW - 24, "bold", 2);
+        const titleLines = recipeClamp(m.name, profile.title, contentW, "bold", 2);
         const titleLead = profile.title + 2;
-        const bannerH = 22 + titleLines.length * titleLead + 8;
-        const afterBanner = Math.max(12, profile.meta + 4);
-        blocks.push({ type: "banner", titleLines, bannerH, titleLead, afterBanner });
-        h += bannerH + afterBanner;
+        const kickerAdvance = 16;
+        const underlineGap = Math.max(5, profile.title * 0.42);
+        const afterRule = Math.max(10, profile.meta + 2);
+        blocks.push({
+          type: "title",
+          titleLines,
+          titleLead,
+          kickerAdvance,
+          underlineGap,
+          afterRule,
+          size: profile.title
+        });
+        h += kickerAdvance + (titleLines.length - 1) * titleLead + underlineGap + afterRule;
 
         const metaBits = [
-          m.source || "",
+          m.source ? ("Source: " + m.source) : "",
           m.time || "",
           (m.servings || prefs.servings) + " servings",
           m.spiceLevel ? ("Spice: " + m.spiceLevel) : "",
@@ -1900,7 +1912,7 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
         ].filter(Boolean).join("  ·  ");
         const metaLead = profile.meta + 3;
         const metaLines = recipeClamp(metaBits, profile.meta, contentW, "normal", 2);
-        blocks.push({ type: "wrap", lines: metaLines, size: profile.meta, style: "normal", color: muted, lead: metaLead, gap: 4 });
+        blocks.push({ type: "wrap", lines: metaLines, size: profile.meta, style: "normal", color: ink, lead: metaLead, gap: 4 });
         h += metaLines.length * metaLead + 4;
 
         if (profile.pitchMax && m.pitch) {
@@ -1992,7 +2004,7 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
         newPageFresh();
         const left = 36;
         const contentW = pageW - left * 2;
-        const top = 46;
+        const top = 48;
         const bottom = pageH - 22;
         const budget = bottom - top;
         // Prefer ~12pt ingredients and steps. Smaller profiles are only for a long live card
@@ -2060,24 +2072,31 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
         function stop(next) { return y + next > bottom + 1; }
 
         chosen.composed.blocks.forEach((block) => {
-          if (block.type === "banner") {
-            doc.setFillColor(...accent);
-            doc.roundedRect(left, y, contentW, block.bannerH, 6, 6, "F");
-            doc.setTextColor(255, 255, 255);
+          if (block.type === "title") {
             doc.setFont("helvetica", "bold");
             doc.setFontSize(11);
-            doc.text(recipeFitLine(kicker, 11, contentW - 24, "bold"), left + 12, y + 16);
-            doc.setFontSize(chosen.profile.title);
+            doc.setTextColor(0, 0, 0);
+            doc.text(recipeFitLine(kicker, 11, contentW, "bold"), left, y);
+            y += block.kickerAdvance;
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(block.size);
+            doc.setTextColor(0, 0, 0);
             block.titleLines.forEach((line, i) => {
-              doc.text(line, left + 12, y + 22 + chosen.profile.title + i * block.titleLead);
+              doc.text(line, left, y + i * block.titleLead);
             });
-            y += block.bannerH + (block.afterBanner || 8);
+            const lastBase = y + (block.titleLines.length - 1) * block.titleLead;
+            const underlineY = lastBase + block.underlineGap;
+            doc.setDrawColor(0, 0, 0);
+            doc.setLineWidth(0.65);
+            const lastLine = block.titleLines[block.titleLines.length - 1] || "";
+            doc.line(left, underlineY, left + Math.min(doc.getTextWidth(lastLine), contentW), underlineY);
+            y = underlineY + block.afterRule;
           } else if (block.type === "line") {
             const adv = block.advance || (block.size + 4);
             if (stop(adv)) return;
             doc.setFont("helvetica", block.role === "note" ? "italic" : "normal");
             doc.setFontSize(block.size);
-            doc.setTextColor(...muted);
+            doc.setTextColor(...ink);
             doc.text(block.text, left, y);
             y += adv;
           } else if (block.type === "wrap") {
@@ -2094,11 +2113,11 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
             if (stop(block.size + 8)) return;
             doc.setFont("helvetica", "bold");
             doc.setFontSize(block.size);
-            doc.setTextColor(...accent);
+            doc.setTextColor(...ink);
             doc.text(block.text, left, y);
             const underlineY = y + (block.underline != null ? block.underline : Math.max(5, block.size * 0.42));
-            doc.setDrawColor(...accent);
-            doc.setLineWidth(1.15);
+            doc.setDrawColor(0, 0, 0);
+            doc.setLineWidth(0.65);
             doc.line(left, underlineY, left + doc.getTextWidth(block.text), underlineY);
             y = underlineY + (block.after != null ? block.after : 9);
           } else if (block.type === "ings") {
@@ -2123,7 +2142,7 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
               if (stop(step.blockH)) return;
               doc.setFont("helvetica", "bold");
               doc.setFontSize(block.size);
-              doc.setTextColor(...accent);
+              doc.setTextColor(...ink);
               doc.text(step.n + ".", left, y);
               doc.setFont("helvetica", "normal");
               doc.setTextColor(...ink);
