@@ -946,6 +946,22 @@ const DATA = {
         return y + gap;
       }
 
+      // Section title with underline BELOW the text (clear gap; never through glyphs)
+      function writeSectionHead(title, y) {
+        const size = 13;
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(size);
+        doc.setTextColor(...accent);
+        if (y + size + 10 > pageH - margin) y = newPageFresh();
+        doc.text(title, margin, y);
+        const underlineY = y + 5; // below baseline + descender clearance
+        doc.setDrawColor(...accent);
+        doc.setLineWidth(1.5);
+        const tw = doc.getTextWidth(title);
+        doc.line(margin, underlineY, margin + Math.max(tw, 48), underlineY);
+        return underlineY + 10; // gap before body content
+      }
+
       // ===== Cover / overview page =====
       doc.setFillColor(243, 246, 242);
       doc.rect(0, 0, pageW, pageH, "F");
@@ -976,7 +992,9 @@ const DATA = {
           doc.setTextColor(255, 255, 255);
           doc.setFontSize(8);
           doc.setFont("helvetica", "bold");
-          doc.text(String(i + 1), margin + 13.5, y + 21);
+          const num = String(i + 1);
+          const numW = doc.getTextWidth(num);
+          doc.text(num, margin + 16 - numW / 2, y + 21);
           y = writeWrapped(day + " · " + protein.toUpperCase(), margin + 34, y + 6, {
             size: 9, style: "bold", color: muted, gap: 1, width: maxW - 44
           });
@@ -1002,29 +1020,34 @@ const DATA = {
         groceries.forEach((g, idx) => {
           if (y > pageH - margin - 20) y = newPageFresh();
           const bg = idx % 2 === 0 ? [255, 254, 249] : [232, 242, 234];
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(10);
+          const gLines = doc.splitTextToSize("•  " + g, maxW - 16);
+          const rowH = Math.max(18, gLines.length * 13 + 6);
           doc.setFillColor(...bg);
-          doc.roundedRect(margin, y - 10, maxW, 18, 3, 3, "F");
-          y = writeWrapped("•  " + g, margin + 8, y, { size: 10, color: ink, gap: 6, width: maxW - 16 });
+          doc.roundedRect(margin, y - 11, maxW, rowH, 3, 3, "F");
+          y = writeWrapped("•  " + g, margin + 8, y, { size: 10, color: ink, gap: 8, width: maxW - 16 });
         });
       }
 
       // ===== One recipe per page (overflow continues on following pages) =====
       selected.forEach(({ day, meal: m, protein }, idx) => {
         y = newPageFresh();
-        // Day banner
-        doc.setFillColor(...accent);
-        doc.roundedRect(margin, y - 6, maxW, 56, 8, 8, "F");
-        doc.setTextColor(255, 255, 255);
+        // Day banner — height grows with title wrap so header never collides with glyphs
         doc.setFont("helvetica", "bold");
+        doc.setFontSize(16);
+        const titleLines = doc.splitTextToSize(m.name, maxW - 28);
+        const bannerH = 40 + titleLines.length * 18;
+        doc.setFillColor(...accent);
+        doc.roundedRect(margin, y - 6, maxW, bannerH, 8, 8, "F");
+        doc.setTextColor(255, 255, 255);
         doc.setFontSize(11);
         doc.text(day.toUpperCase() + "  ·  " + protein.toUpperCase() + "  ·  DINNER " + (idx + 1), margin + 14, y + 14);
         doc.setFontSize(16);
-        const titleLines = doc.splitTextToSize(m.name, maxW - 28);
-        doc.text(titleLines[0], margin + 14, y + 36);
-        y += 70;
-        if (titleLines.length > 1) {
-          y = writeWrapped(titleLines.slice(1).join(" "), margin, y, { size: 14, style: "bold", color: ink, gap: 6 });
-        }
+        titleLines.forEach((tl, ti) => {
+          doc.text(tl, margin + 14, y + 36 + ti * 18);
+        });
+        y += bannerH + 16;
 
         const metaBits = [
           m.source || "",
@@ -1042,35 +1065,32 @@ const DATA = {
           y += 4;
         }
 
-        // Ingredients
+        // Ingredients — accent underline BELOW glyphs (pdf-section-underline-fix)
         if (y > pageH - margin - 80) y = newPageFresh();
-        const ingStart = y;
-        y = writeWrapped("Ingredients", margin, y, { size: 13, style: "bold", color: accent, gap: 6 });
-        doc.setDrawColor(...accent);
-        doc.setLineWidth(1.5);
-        doc.line(margin, ingStart - 4, margin + 40, ingStart - 4);
+        y = writeSectionHead("Ingredients", y);
         (m.ingredients || []).forEach((i) => {
           if (y > pageH - margin - 24) y = newPageFresh();
-          y = writeWrapped("•  " + i, margin + 4, y, { size: 10, color: ink, gap: 3, width: maxW - 8 });
+          y = writeWrapped("•  " + i, margin + 4, y, { size: 10, color: ink, gap: 4, width: maxW - 8 });
         });
-        y += 10;
+        y += 12;
 
         if (y > pageH - margin - 60) y = newPageFresh();
-        const stepHeadY = y;
-        y = writeWrapped("Steps", margin, y, { size: 13, style: "bold", color: accent, gap: 8 });
-        doc.setDrawColor(...accent);
-        doc.setLineWidth(1.5);
-        doc.line(margin, stepHeadY - 4, margin + 40, stepHeadY - 4);
+        y = writeSectionHead("Steps", y);
         (m.steps || []).forEach((s, i) => {
           // Estimate: if little room left, start overflow page before drawing the step number
           if (y > pageH - margin - 50) y = newPageFresh();
+          const n = String(i + 1);
+          const cx = margin + 11;
+          const cy = y - 2; // circle center aligned to first-line baseline cluster
           doc.setFillColor(...accent);
-          doc.circle(margin + 10, y - 3, 9, "F");
+          doc.circle(cx, cy, 9, "F");
           doc.setTextColor(255, 255, 255);
           doc.setFont("helvetica", "bold");
           doc.setFontSize(9);
-          doc.text(String(i + 1), margin + (i + 1 > 9 ? 5 : 7.5), y);
-          y = writeWrapped(s, margin + 28, y - 4, { size: 10.5, color: ink, gap: 12, width: maxW - 28 });
+          // Center digit(s) in the circle (jsPDF text is baseline-left)
+          const nw = doc.getTextWidth(n);
+          doc.text(n, cx - nw / 2, cy + 3);
+          y = writeWrapped(s, margin + 28, y, { size: 10.5, color: ink, gap: 14, width: maxW - 28 });
         });
 
         if (m.url) {
