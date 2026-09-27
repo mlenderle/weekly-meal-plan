@@ -261,7 +261,7 @@
       <header>
         <div class="badge">Public planner · no account</div>
         <h1>Plan your week of dinners</h1>
-        <p>Set protein counts, healthy bias, servings, and ingredients to avoid. <strong>Find matching recipes</strong> queries HelloFresh / Blue Apron / TheMealDB / Home Chef dinners <em>live</em> (via a small Worker API), then lets you swap before downloading a PDF.</p>
+        <p>Set protein counts, healthy bias, servings, and ingredients to avoid. <strong>Find matching recipes</strong> queries HelloFresh, Blue Apron, and TheMealDB dinners <em>live</em> (via a small Worker API), then lets you swap before downloading a PDF.</p>
       </header>
 
       <div class="card">
@@ -367,7 +367,7 @@
         <div class="spinner" aria-hidden="true"></div>
         <div>
           <div><strong>Finding matching recipes…</strong></div>
-          <div class="live-meta">Live lookup against HelloFresh, Blue Apron, TheMealDB, and Home Chef public recipe data. Usually a few seconds.</div>
+          <div class="live-meta">Live lookup against HelloFresh, Blue Apron, and TheMealDB public recipe data. Usually a few seconds.</div>
         </div>
       </div>
       <p class="live-meta" id="live-api-status"></p>
@@ -458,11 +458,46 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
+    function isExcludedPreparedSource(m) {
+      if (!m || typeof m !== "object") return false;
+      const blob = [m.source, m.fetchedFrom, m.url, m.id].filter(Boolean).join(" ");
+      return /home\s*chef|homechef\.com/i.test(blob);
+    }
+
+    function catalogWithoutExcluded(candidates) {
+      const out = {};
+      Object.entries(candidates || {}).forEach(([id, m]) => {
+        if (!m || isExcludedPreparedSource(m)) return;
+        out[m.id || id] = m;
+      });
+      return out;
+    }
+
+    function slotsWithoutExcluded(slots, candidates) {
+      return (slots || []).map((s) => {
+        const alternateIds = (s.alternateIds || []).filter((id) => candidates[id]);
+        let mealId = s.mealId && candidates[s.mealId] ? s.mealId : null;
+        if (!mealId) {
+          mealId = alternateIds.find((id) => candidates[id] && candidates[id].protein === s.protein) || null;
+        }
+        return {
+          ...s,
+          mealId,
+          kept: !!mealId && s.kept !== false,
+          swapOpen: mealId ? !!s.swapOpen : true,
+          alternateIds: alternateIds.filter((id) => id !== mealId)
+        };
+      });
+    }
+
     function meal(id) {
       if (!id) return null;
-      if (liveCatalog && liveCatalog[id]) return liveCatalog[id];
-      if (offlineDemoArmed && DATA.candidates[id]) return DATA.candidates[id];
-      return (liveCatalog && liveCatalog[id]) || DATA.candidates[id] || null;
+      let found = null;
+      if (liveCatalog && liveCatalog[id]) found = liveCatalog[id];
+      else if (offlineDemoArmed && DATA.candidates[id]) found = DATA.candidates[id];
+      else found = (liveCatalog && liveCatalog[id]) || DATA.candidates[id] || null;
+      if (isExcludedPreparedSource(found)) return null;
+      return found;
     }
 
     function updateLiveApiStatus() {
@@ -500,15 +535,16 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
     }
 
     function applyLivePayload(payload, badgeNote) {
-      liveCatalog = payload.candidates || {};
+      const candidates = catalogWithoutExcluded(payload.candidates);
+      liveCatalog = candidates;
       liveMeta = {
         fetchedAt: payload.fetchedAt,
         source: payload.source || "live",
-        candidateCount: payload.candidateCount || Object.keys(liveCatalog).length,
+        candidateCount: Object.keys(candidates).length,
         note: badgeNote || ""
       };
       offlineDemoArmed = false;
-      const planSlots = (payload.slots || []).map((s) => ({ ...s, alternateIds: (s.alternateIds || []).slice() }));
+      const planSlots = slotsWithoutExcluded(payload.slots, candidates);
       lastPlan = { slots: planSlots, shortages: payload.shortages || [], total: payload.total };
       state = planSlots.map((s) => ({ ...s, alternateIds: (s.alternateIds || []).slice() }));
 
@@ -637,7 +673,13 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
           err.payload = data;
           throw err;
         }
-        return data;
+        const candidates = catalogWithoutExcluded(data.candidates);
+        return {
+          ...data,
+          candidates,
+          slots: slotsWithoutExcluded(data.slots, candidates),
+          candidateCount: Object.keys(candidates).length
+        };
       } finally {
         clearTimeout(timer);
       }
@@ -744,6 +786,7 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
         ? Object.values(liveCatalog)
         : (offlineDemoArmed ? Object.values(DATA.candidates) : []);
       return catalog.filter((m) => {
+        if (isExcludedPreparedSource(m)) return false;
         if (m.protein !== protein) return false;
         if (prefs.healthyOnly && !m.healthy) return false;
         if (recipeHitsAvoid(m)) return false;
@@ -905,7 +948,7 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
       render();
       try {
         const payload = await fetchLiveMatch(scope, true);
-        const incoming = payload.candidates || {};
+        const incoming = catalogWithoutExcluded(payload.candidates);
         const before = new Set(Object.keys(liveCatalog || {}));
         liveCatalog = { ...(liveCatalog || {}), ...incoming };
         offlineDemoArmed = false;
@@ -1014,8 +1057,11 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
               const healthyTag = m.healthy
                 ? '<span class="tag">Healthier</span>'
                 : '<span class="tag comfort">Comfort</span>';
-              const sourceTag = m.source
-                ? '<span class="tag source">' + String(m.source).replace(/</g, "") + '</span>'
+              const sourceText = m.source && !isExcludedPreparedSource(m)
+                ? String(m.source).replace(/</g, "")
+                : "";
+              const sourceTag = sourceText
+                ? '<span class="tag source">' + sourceText + '</span>'
                 : '';
               const cheapTag = (prefs.cheapBias && m.cheapScore != null)
                 ? '<span class="tag cheap">Staple score ' + m.cheapScore + '</span>'
@@ -1029,7 +1075,7 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
                 <button type="button" class="swap-btn" data-swap="${idx}">Swap this meal</button>`;
             })()
           : `<div class="day">${s.day} · <span class="p-${s.protein}">${proteinLabel(s.protein)}</span></div>
-                <div class="name">${s.mealId ? meal(s.mealId).shortName + " — pick a swap" : "Empty slot — pick a swap"}</div>
+                <div class="name">${(s.mealId && meal(s.mealId)) ? meal(s.mealId).shortName + " — pick a swap" : "Empty slot — pick a swap"}</div>
                 <div class="meta">Tap an option below (same protein), or leave empty</div>`;
 
         card.innerHTML = `
@@ -1068,8 +1114,11 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
             alt.type = "button";
             alt.className = "alt";
             const cheapNote = (prefs.cheapBias && m.cheapScore != null) ? " · staple " + m.cheapScore : "";
+            const altSource = m.source && !isExcludedPreparedSource(m)
+              ? String(m.source).replace(/</g, "")
+              : "";
             alt.innerHTML = `<div class="aname">${m.shortName}${id === s.mealId ? " (current)" : ""}${m.healthy ? "" : " · comfort"}</div>
-              <div class="ameta"><span class="tag source" style="display:inline-block;margin-right:4px;vertical-align:middle">${String(m.source||"").replace(/</g,"")}</span>${m.time}${cheapNote} · ${m.pitch}</div>`;
+              <div class="ameta">${altSource ? '<span class="tag source" style="display:inline-block;margin-right:4px;vertical-align:middle">' + altSource + '</span>' : ''}${m.time}${cheapNote} · ${m.pitch}</div>`;
             alt.addEventListener("click", (e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -1154,7 +1203,7 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
 
     function selectedMeals() {
       return state
-        .filter((s) => s.kept && s.mealId)
+        .filter((s) => s.kept && s.mealId && meal(s.mealId))
         .map((s) => ({ day: s.day, protein: s.protein, meal: scaledMeal(meal(s.mealId)) }));
     }
 
