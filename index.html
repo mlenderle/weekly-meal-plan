@@ -6,246 +6,748 @@
   <title>This week's dinners</title>
   <style>
     :root {
-      --bg: #f6f1ea;
-      --card: #fffdf9;
-      --ink: #1f1a17;
-      --muted: #6b625c;
-      --accent: #c45c26;
-      --accent-soft: #f3e0d4;
-      --border: #e6ddd4;
-      --ok: #2f6b4f;
+      --bg: #f3f6f2;
+      --card: #fffef9;
+      --ink: #1a221c;
+      --muted: #5f6b63;
+      --accent: #2f6b4f;
+      --accent-soft: #e2efe7;
+      --border: #d9e3db;
+      --warn: #8a5a2b;
+      --warn-soft: #f5eadc;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
       background:
-        radial-gradient(1200px 600px at 10% -10%, #f8e7d8 0%, transparent 55%),
-        radial-gradient(900px 500px at 110% 10%, #e7efe8 0%, transparent 50%),
+        radial-gradient(1100px 520px at 8% -8%, #e8f2ea 0%, transparent 55%),
+        radial-gradient(900px 480px at 110% 0%, #f4ebe0 0%, transparent 50%),
         var(--bg);
       color: var(--ink);
       line-height: 1.45;
       min-height: 100vh;
     }
-    main {
-      max-width: 560px;
-      margin: 0 auto;
-      padding: 28px 18px 48px;
-    }
-    header h1 {
-      font-size: 1.55rem;
-      margin: 0 0 6px;
-      letter-spacing: -0.02em;
-    }
-    header p {
-      margin: 0 0 22px;
-      color: var(--muted);
-      font-size: 0.98rem;
-    }
+    main { max-width: 640px; margin: 0 auto; padding: 28px 18px 56px; }
     .week {
       display: inline-block;
       background: var(--accent-soft);
       color: var(--accent);
       font-size: 0.78rem;
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: 0.04em;
       text-transform: uppercase;
       padding: 4px 10px;
       border-radius: 999px;
       margin-bottom: 12px;
     }
-    form {
-      display: grid;
-      gap: 12px;
+    header h1 { font-size: 1.55rem; margin: 0 0 6px; letter-spacing: -0.02em; }
+    header p { margin: 0 0 18px; color: var(--muted); font-size: 0.98rem; }
+    .bias {
+      background: var(--warn-soft);
+      color: var(--warn);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 0.88rem;
+      margin-bottom: 16px;
     }
+    #slots { display: grid; gap: 12px; }
     .meal {
-      display: grid;
-      grid-template-columns: auto 1fr;
-      gap: 12px;
-      align-items: start;
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 16px;
-      padding: 14px 14px 14px 12px;
-      box-shadow: 0 1px 0 rgba(31,26,23,0.03);
-      transition: border-color 0.15s, opacity 0.15s;
+      padding: 14px;
+      box-shadow: 0 1px 0 rgba(26,34,28,0.03);
+      transition: opacity 0.15s, border-color 0.15s;
     }
-    .meal:has(input:not(:checked)) {
-      opacity: 0.55;
-      border-style: dashed;
-    }
-    .meal input {
-      width: 22px;
-      height: 22px;
-      margin-top: 2px;
-      accent-color: var(--accent);
-    }
-    .meal label {
-      cursor: pointer;
-      display: block;
+    .meal.empty { opacity: 0.72; border-style: dashed; }
+    .meal-top { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; }
+    .meal input[type="checkbox"] {
+      width: 22px; height: 22px; margin-top: 2px; accent-color: var(--accent);
     }
     .day {
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--accent);
-      margin-bottom: 2px;
+      font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.05em; color: var(--accent); margin-bottom: 2px;
     }
-    .name {
-      font-weight: 650;
-      font-size: 1.02rem;
-      margin-bottom: 4px;
+    .name { font-weight: 650; font-size: 1.02rem; margin-bottom: 4px; }
+    .meta { color: var(--muted); font-size: 0.88rem; }
+    .pitch { margin-top: 6px; font-size: 0.86rem; color: var(--ink); }
+    .link { font-size: 0.82rem; margin-top: 4px; }
+    .link a { color: var(--accent); }
+    .swap-panel {
+      display: none;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--border);
     }
-    .meta {
-      color: var(--muted);
-      font-size: 0.88rem;
+    .meal.show-swap .swap-panel { display: block; }
+    .swap-title {
+      font-size: 0.82rem; font-weight: 700; color: var(--warn);
+      margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em;
     }
-    .actions {
-      margin-top: 10px;
-      display: grid;
-      gap: 10px;
-    }
-    button {
-      appearance: none;
-      border: none;
-      border-radius: 12px;
-      padding: 14px 16px;
-      font-size: 1rem;
-      font-weight: 650;
-      cursor: pointer;
-    }
-    button.primary {
-      background: var(--accent);
-      color: white;
-    }
-    button.secondary {
-      background: transparent;
-      color: var(--muted);
+    .alt {
       border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      background: #fbfcf9;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .alt:hover { border-color: var(--accent); background: var(--accent-soft); }
+    .alt .aname { font-weight: 650; font-size: 0.95rem; }
+    .alt .ameta { color: var(--muted); font-size: 0.82rem; margin-top: 2px; }
+    .leave-empty {
+      appearance: none; background: transparent; border: none;
+      color: var(--muted); font-size: 0.85rem; cursor: pointer;
+      text-decoration: underline; padding: 4px 0;
+    }
+    .actions { margin-top: 14px; display: grid; gap: 10px; }
+    button {
+      appearance: none; border: none; border-radius: 12px;
+      padding: 14px 16px; font-size: 1rem; font-weight: 650; cursor: pointer;
+    }
+    button.primary { background: var(--accent); color: white; }
+    button.secondary {
+      background: transparent; color: var(--muted); border: 1px solid var(--border);
     }
     .result {
-      display: none;
-      margin-top: 18px;
-      background: #eaf5ef;
-      border: 1px solid #cfe3d7;
-      color: var(--ok);
-      border-radius: 14px;
-      padding: 14px 16px;
-      white-space: pre-wrap;
-      font-size: 0.95rem;
+      display: none; margin-top: 18px; background: #eaf5ef;
+      border: 1px solid #cfe3d7; color: var(--accent);
+      border-radius: 14px; padding: 14px 16px; font-size: 0.95rem; white-space: pre-wrap;
     }
     .result.show { display: block; }
-    footer {
-      margin-top: 22px;
-      color: var(--muted);
-      font-size: 0.82rem;
+    footer { margin-top: 22px; color: var(--muted); font-size: 0.82rem; }
+
+    /* Printable / PDF sheet (off-screen until print/PDF) */
+    #print-sheet {
+      position: absolute; left: -9999px; top: 0; width: 800px;
+      background: white; color: #111; font-family: Georgia, "Times New Roman", serif;
+      padding: 28px; line-height: 1.4;
+    }
+    #print-sheet h1 { font-size: 1.4rem; margin: 0 0 4px; }
+    #print-sheet .sub { color: #555; margin-bottom: 18px; font-size: 0.95rem; }
+    #print-sheet h2 {
+      font-size: 1.1rem; margin: 18px 0 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px;
+    }
+    #print-sheet h3 { font-size: 1rem; margin: 12px 0 4px; }
+    #print-sheet ul { margin: 4px 0 8px 18px; padding: 0; }
+    #print-sheet ol { margin: 4px 0 8px 18px; padding: 0; }
+    #print-sheet .meal-block { margin-bottom: 14px; page-break-inside: avoid; }
+    #print-sheet .empty-note { color: #666; font-style: italic; }
+    @media print {
+      body > main { display: none !important; }
+      #print-sheet {
+        position: static !important; left: auto !important; width: auto !important;
+        padding: 0 !important;
+      }
     }
   </style>
 </head>
 <body>
   <main>
     <header>
-      <div class="week">Week of Sep 27</div>
+      <div class="week">Week of Sep 27 · Healthier picks</div>
       <h1>This week's dinners</h1>
-      <p>Uncheck anything you don't want. Keep the ones that sound good, then hit submit.</p>
+      <p>Uncheck a meal to see healthier same-protein swaps. Pick an alternate or leave the slot empty, then submit to download a PDF of recipes and a grocery list.</p>
     </header>
-
-    <form id="plan" novalidate>
-      <div class="meal">
-        <input type="checkbox" id="m1" name="meals" value="1" checked />
-        <label for="m1">
-          <div class="day">Mon · Beef</div>
-          <div class="name">Sesame Soy Beef Bowls</div>
-          <div class="meta">HelloFresh · ~25 min · rice, cabbage mix, Sriracha mayo</div>
-        </label>
-      </div>
-      <div class="meal">
-        <input type="checkbox" id="m2" name="meals" value="2" checked />
-        <label for="m2">
-          <div class="day">Tue · Chicken</div>
-          <div class="name">Garlic Herb Chicken + grape salad</div>
-          <div class="meta">HelloFresh · ~30 min · Parmesan frico, honey Dijon dressing</div>
-        </label>
-      </div>
-      <div class="meal">
-        <input type="checkbox" id="m3" name="meals" value="3" checked />
-        <label for="m3">
-          <div class="day">Wed · Chicken</div>
-          <div class="name">Thai Coconut Curry Chicken</div>
-          <div class="meta">HelloFresh · ~30 min · cilantro lime rice</div>
-        </label>
-      </div>
-      <div class="meal">
-        <input type="checkbox" id="m4" name="meals" value="4" checked />
-        <label for="m4">
-          <div class="day">Thu · Beef</div>
-          <div class="name">Oven-Baked Harissa Beef Pitas</div>
-          <div class="meta">Blue Apron · ~25 min · tzatziki, feta, mint</div>
-        </label>
-      </div>
-      <div class="meal">
-        <input type="checkbox" id="m5" name="meals" value="5" checked />
-        <label for="m5">
-          <div class="day">Fri · Salmon</div>
-          <div class="name">Salmon in Creamy Dijon Chive Sauce</div>
-          <div class="meta">HelloFresh · ~35 min · potato wedges, lemony zucchini</div>
-        </label>
-      </div>
-
-      <div class="actions">
-        <button type="submit" class="primary">Submit picks</button>
-        <button type="button" class="secondary" id="selectAll">Select all</button>
-      </div>
-    </form>
-
+    <div class="bias">Bias: lean proteins · lots of vegetables · grilled / baked / sautéed · lighter sauces</div>
+    <div id="slots"></div>
+    <div class="actions">
+      <button type="button" class="primary" id="submit">Submit picks</button>
+      <button type="button" class="secondary" id="selectAll">Reset to proposed</button>
+    </div>
     <div class="result" id="result" role="status" aria-live="polite"></div>
-    <footer>Picks stay on this device until you submit. Mitch gets your choices when you submit.</footer>
+    <footer>Picks stay on this device. Submit downloads a printable PDF (recipes + grocery list). No account required.</footer>
   </main>
 
+  <div id="print-sheet" aria-hidden="true"></div>
+
+  <!-- html2pdf via CDN for client-side PDF download -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script>
-    const MEALS = {
-      "1": "Mon — Sesame Soy Beef Bowls",
-      "2": "Tue — Garlic Herb Chicken + grape salad",
-      "3": "Wed — Thai Coconut Curry Chicken",
-      "4": "Thu — Oven-Baked Harissa Beef Pitas",
-      "5": "Fri — Salmon in Creamy Dijon Chive Sauce"
-    };
+const DATA = {
+  "weekOf": "2026-09-27",
+  "timezone": "America/Boise",
+  "bias": "healthier \u2014 lean proteins, vegetables, grilled/baked/saut\u00e9ed over fried/creamy-heavy",
+  "proteinMix": {
+    "beef": 2,
+    "chicken": 2,
+    "salmon": 1
+  },
+  "slots": [
+    {
+      "day": "Mon",
+      "protein": "beef",
+      "primary": "warm-steak-kale",
+      "alternates": [
+        "sesame-ginger-steak",
+        "steak-nicoise"
+      ]
+    },
+    {
+      "day": "Tue",
+      "protein": "chicken",
+      "primary": "tuscan-chicken-succotash",
+      "alternates": [
+        "chicken-veggie-feta",
+        "spiced-chicken-yogurt"
+      ]
+    },
+    {
+      "day": "Wed",
+      "protein": "chicken",
+      "primary": "chicken-veggie-feta",
+      "alternates": [
+        "spiced-chicken-yogurt",
+        "tuscan-chicken-succotash"
+      ]
+    },
+    {
+      "day": "Thu",
+      "protein": "beef",
+      "primary": "italian-steak-broccoli",
+      "alternates": [
+        "warm-steak-kale",
+        "sesame-ginger-steak"
+      ]
+    },
+    {
+      "day": "Fri",
+      "protein": "salmon",
+      "primary": "classic-roasted-salmon",
+      "alternates": [
+        "soy-glazed-salmon-kale",
+        "cajun-sheet-salmon"
+      ]
+    }
+  ],
+  "candidates": {
+    "warm-steak-kale": {
+      "id": "warm-steak-kale",
+      "name": "Warm Steak, Kale & Sweet Potato Salad",
+      "shortName": "Warm Steak Kale Salad",
+      "source": "HelloFresh",
+      "url": "https://www.hellofresh.com/recipes/warm-steak-kale-and-sweet-potato-salad-68ac43b582758da705ef5797",
+      "protein": "beef",
+      "time": "~20 min",
+      "pitch": "Seared garlic-thyme steak over massaged kale with browned sweet potato \u2014 high protein, veggie-forward, light balsamic finish.",
+      "ingredients": [
+        "10 oz ranch steak",
+        "1 sweet potato",
+        "4 oz kale",
+        "2 tsp garlic powder",
+        "1 tsp dried thyme",
+        "3 oz creamy balsamic dressing",
+        "3 Tbsp Parmesan",
+        "\u00bd oz pecans",
+        "1 oz dried cranberries",
+        "Olive oil, cooking oil, butter, salt, pepper"
+      ],
+      "steps": [
+        "Dice sweet potato; microwave with half the garlic powder, salt, pepper, and butter until tender (~6\u20137 min).",
+        "Massage kale with olive oil until tender.",
+        "Slice steak thin; sear with thyme and remaining garlic powder 3\u20136 min. Brown sweet potato briefly in the pan.",
+        "Toss kale with sweet potato, Parmesan, and dressing; top with steak, pecans, and cranberries."
+      ]
+    },
+    "sesame-ginger-steak": {
+      "id": "sesame-ginger-steak",
+      "name": "Sesame Ginger Steak Salad",
+      "shortName": "Sesame Ginger Steak Salad",
+      "source": "HelloFresh",
+      "url": "https://www.hellofresh.com/recipes/sesame-ginger-steak-salad-6930a6179351d52b5c264052",
+      "protein": "beef",
+      "time": "~15 min",
+      "pitch": "Quick seared steak over mixed greens with cucumber and tomato \u2014 carb-conscious, no heavy cream sauces.",
+      "ingredients": [
+        "10 oz ranch steak",
+        "4 oz mixed greens",
+        "1 mini cucumber",
+        "4 oz grape tomatoes",
+        "1 unit sesame ginger crunch seasoning",
+        "2 oz garlic-ginger scallion paste",
+        "2 oz sweet Thai chili sauce",
+        "10 tsp rice wine vinegar",
+        "1 lime",
+        "Crispy fried onions, peanuts",
+        "Olive oil, cooking oil, salt, pepper"
+      ],
+      "steps": [
+        "Slice cucumber and halve tomatoes; quarter lime.",
+        "Slice steak; season with sesame ginger crunch. Sear 3\u20135 min; finish with garlic-ginger paste, half the chili sauce, and lime juice.",
+        "Whisk vinegar, remaining chili sauce, olive oil, and lime for dressing.",
+        "Toss greens, cucumber, and tomatoes; top with steak, crispy onions, and peanuts."
+      ]
+    },
+    "steak-nicoise": {
+      "id": "steak-nicoise",
+      "name": "Steak Ni\u00e7oise Salad",
+      "shortName": "Steak Ni\u00e7oise Salad",
+      "source": "HelloFresh",
+      "url": "https://www.hellofresh.com/recipes/steak-nicoise-salad-68dabd589ed4d679418a8509",
+      "protein": "beef",
+      "time": "~25 min",
+      "pitch": "Proven\u00e7al steak salad with green beans, potatoes, tomatoes, and olives \u2014 lighter bistro plate, vinaigrette over creamy sauces.",
+      "ingredients": [
+        "10 oz ranch steak",
+        "1 baby lettuce",
+        "12 oz potatoes",
+        "8 oz green beans",
+        "4 oz grape tomatoes",
+        "1 Tbsp herbes de Provence",
+        "2 Tbsp garlic herb butter",
+        "2 tsp Dijon mustard",
+        "5 tsp white wine vinegar",
+        "Green olives",
+        "1 demi-baguette (optional)",
+        "Olive oil, cooking oil, salt, pepper"
+      ],
+      "steps": [
+        "Microwave potatoes with half the garlic herb butter until tender.",
+        "Microwave green beans until tender; chop lettuce and olives.",
+        "Season steak with herbes de Provence; sear 3\u20136 min per side; rest.",
+        "Whisk vinegar, mustard, remaining herbs, and olive oil; toss with lettuce, potatoes, beans, tomatoes, and olives. Slice steak on top."
+      ]
+    },
+    "italian-steak-broccoli": {
+      "id": "italian-steak-broccoli",
+      "name": "Italian-Style Steak & Roasted Baby Broccoli",
+      "shortName": "Italian Steak & Broccoli",
+      "source": "HelloFresh",
+      "url": "https://www.hellofresh.com/recipes/italian-style-steak-and-roasted-baby-broccoli-68d655b49ed4d6794189f44c",
+      "protein": "beef",
+      "time": "~30 min",
+      "pitch": "Balsamic-marinated seared steak with roasted baby broccoli and arugula panzanella \u2014 veggie-heavy, sodium-smart.",
+      "ingredients": [
+        "10 oz bavette steak",
+        "1 unit baby broccoli",
+        "2 oz arugula",
+        "1 mini cucumber",
+        "4 oz grape tomatoes",
+        "\u00bd red onion",
+        "1 ciabatta",
+        "5 tsp balsamic vinegar",
+        "1 tsp dried rosemary",
+        "5 tsp sherry vinegar",
+        "2 tsp honey",
+        "2 tsp Dijon mustard",
+        "2 tsp garlic powder",
+        "Parmesan cheese block",
+        "Olive oil, cooking oil, salt, pepper"
+      ],
+      "steps": [
+        "Roast baby broccoli and torn ciabatta at 425\u00b0F until tender/crisp (~12\u201315 min).",
+        "Marinate steak in balsamic, rosemary, and olive oil.",
+        "Whisk sherry vinaigrette; toss cucumber, tomatoes, onion, and croutons.",
+        "Sear steak 5\u20137 min per side; rest and slice. Serve with broccoli and arugula panzanella; grate Parmesan over."
+      ]
+    },
+    "tuscan-chicken-succotash": {
+      "id": "tuscan-chicken-succotash",
+      "name": "Tuscan Chicken & Tomato-Basil Succotash",
+      "shortName": "Tuscan Chicken Succotash",
+      "source": "HelloFresh",
+      "url": "https://www.hellofresh.com/recipes/tuscan-chicken-and-tomato-basil-succotash-6a512ba2748b7cf792503255",
+      "protein": "chicken",
+      "time": "~25 min",
+      "pitch": "Oven-roasted spice-rubbed chicken over blistered zucchini, corn, pepper, and tomatoes \u2014 high protein, carb-conscious, light lemon aioli.",
+      "ingredients": [
+        "24 oz chicken cutlets (kit size; use ~10\u201312 oz for 2)",
+        "1 zucchini",
+        "1 green bell pepper",
+        "2 ears / units corn",
+        "4 oz grape tomatoes",
+        "2 scallions",
+        "1 lemon",
+        "\u2153 Tbsp Tuscan Heat Spice",
+        "1 oz basil paste",
+        "2 Tbsp mayonnaise",
+        "1 tsp garlic powder",
+        "Olive oil, cooking oil, salt, pepper"
+      ],
+      "steps": [
+        "Season chicken with Tuscan spice; roast at 425\u00b0F until cooked through (~15\u201318 min).",
+        "Saut\u00e9 zucchini and tomatoes until blistered; add scallion whites, pepper, and corn; finish with basil paste.",
+        "Mix lemon zest, mayo, garlic powder, and lemon juice for aioli.",
+        "Plate succotash, top with chicken and aioli; garnish with scallion greens."
+      ]
+    },
+    "chicken-veggie-feta": {
+      "id": "chicken-veggie-feta",
+      "name": "Roasted Chicken, Potatoes & Veggie-Feta Jumble",
+      "shortName": "Chicken Veggie-Feta Sheet Pan",
+      "source": "HelloFresh",
+      "url": "https://www.hellofresh.com/recipes/roasted-chicken-potatoes-and-veggie-feta-jumble-68dac0089ed4d679418a8a44",
+      "protein": "chicken",
+      "time": "~30 min",
+      "pitch": "Sheet-pan roasted chicken with Mediterranean potatoes and zucchini\u2013carrot\u2013onion jumble finished with feta \u2014 GLP-1 friendly, ~590 kcal.",
+      "ingredients": [
+        "12 oz chicken cutlets",
+        "12 oz potatoes",
+        "9 oz carrots",
+        "1 zucchini",
+        "1 red onion",
+        "\u00bd cup feta cheese",
+        "\u00bd Tbsp Mediterranean spice blend",
+        "\u00bd Tbsp fry seasoning",
+        "1 tsp garlic powder",
+        "Cooking oil, salt, pepper"
+      ],
+      "steps": [
+        "Toss potatoes with oil, garlic powder, and Mediterranean spice; toss carrots, zucchini, and onion with oil. Roast 5 min.",
+        "Season chicken with fry seasoning; roast on a second sheet until done (~18\u201322 min) while veggies finish.",
+        "Toss roasted veggies with feta; slice chicken.",
+        "Plate chicken with veggie jumble and potatoes."
+      ]
+    },
+    "spiced-chicken-yogurt": {
+      "id": "spiced-chicken-yogurt",
+      "name": "Spiced Chicken Cutlets with Roasted Vegetables & Lemon Yogurt Sauce",
+      "shortName": "Spiced Chicken & Lemon Yogurt",
+      "source": "HelloFresh",
+      "url": "https://www.hellofresh.com/recipes/spiced-chicken-cutlets-with-roasted-vegetables-and-lemon-yogurt-sauce-68d65478681e58ed6e5b2d5e",
+      "protein": "chicken",
+      "time": "~35 min",
+      "pitch": "Shawarma-spiced cutlets with roasted veg and lemon yogurt \u2014 Calorie Smart / Mediterranean, yogurt sauce instead of cream.",
+      "ingredients": [
+        "10 oz chicken cutlets",
+        "Potatoes",
+        "1 zucchini",
+        "1 red onion",
+        "1 lemon",
+        "Garlic",
+        "Shawarma spice blend",
+        "Turkish spice blend",
+        "Sour cream or yogurt for sauce",
+        "Feta cheese",
+        "Salt, pepper, oil"
+      ],
+      "steps": [
+        "Roast potatoes, zucchini, and onion with spices until tender.",
+        "Season chicken with shawarma/Turkish spices; cook until done.",
+        "Stir lemon yogurt/sour cream sauce with garlic.",
+        "Serve chicken over roasted veg with yogurt sauce and a sprinkle of feta."
+      ]
+    },
+    "classic-roasted-salmon": {
+      "id": "classic-roasted-salmon",
+      "name": "Classic Roasted Salmon",
+      "shortName": "Classic Roasted Salmon",
+      "source": "HelloFresh",
+      "url": "https://www.hellofresh.com/recipes/classic-roasted-salmon-59ce4c827901f9567d137723",
+      "protein": "salmon",
+      "time": "~30 min",
+      "pitch": "Oven-roasted salmon with green beans, burst tomatoes, and crispy potato rounds \u2014 ~560 kcal, omega-3s, no heavy cream sauce.",
+      "ingredients": [
+        "10 oz skin-on salmon fillets",
+        "12 oz Yukon Gold potatoes",
+        "6 oz green beans",
+        "4 oz heirloom grape tomatoes",
+        "2 cloves garlic",
+        "\u00bc oz dill",
+        "1 Tbsp butter",
+        "1 Tbsp olive oil",
+        "Salt, pepper"
+      ],
+      "steps": [
+        "Boil green beans briefly; boil potatoes until tender; drain.",
+        "Saut\u00e9 tomatoes, then green beans and garlic with half the dill.",
+        "Roast salmon skin-side down at 425\u00b0F ~8\u201310 min.",
+        "Crush potato rounds and pan-crisp; finish with remaining dill. Plate salmon with veggies and potatoes."
+      ]
+    },
+    "soy-glazed-salmon-kale": {
+      "id": "soy-glazed-salmon-kale",
+      "name": "Sweet Soy-Glazed Salmon & Kale Salad",
+      "shortName": "Soy-Glazed Salmon Kale Salad",
+      "source": "HelloFresh",
+      "url": "https://www.hellofresh.com/recipes/sweet-soy-glazed-salmon-and-kale-salad-65a5581c4bb81dc143a6cdba",
+      "protein": "salmon",
+      "time": "~15 min",
+      "pitch": "Seared salmon over sesame kale\u2013slaw salad with quick pickles \u2014 Protein Smart / Carb Smart, no fried sides.",
+      "ingredients": [
+        "10 oz skin-on salmon",
+        "4 Tbsp sweet soy glaze",
+        "4 oz kale",
+        "4 oz coleslaw mix",
+        "4 oz shredded carrots",
+        "1 red onion",
+        "5 tsp rice wine vinegar",
+        "1.5 oz sesame dressing",
+        "\u00bd oz peanuts",
+        "Olive oil, cooking oil, sugar, salt, pepper"
+      ],
+      "steps": [
+        "Sear salmon skin-side down until crisp; flip briefly; drizzle with sweet soy glaze.",
+        "Microwave onion and carrots with vinegar and sugar to quick-pickle.",
+        "Massage kale with oil; toss with coleslaw, pickling liquid, and sesame dressing.",
+        "Top salad with salmon, drained pickles, and peanuts."
+      ]
+    },
+    "cajun-sheet-salmon": {
+      "id": "cajun-sheet-salmon",
+      "name": "Sheet Pan Cajun Salmon with Asparagus & Sweet Potato",
+      "shortName": "Cajun Sheet-Pan Salmon",
+      "source": "Blue Apron",
+      "url": "https://www.blueapron.com/recipes/standard-meal-kit/sheet-pan-cajun-salmon-with-asparagus-sweet-potato-spiced-sour-cream",
+      "protein": "salmon",
+      "time": "~35 min",
+      "pitch": "One-pan Cajun-spiced salmon with roasted sweet potato and asparagus \u2014 baked not fried; light spiced yogurt/sour cream drizzle.",
+      "ingredients": [
+        "Salmon fillets (~10 oz)",
+        "Sweet potato(es)",
+        "Asparagus",
+        "Lemon",
+        "Cajun spice blend",
+        "Brown sugar (pinch)",
+        "Weeknight hero spice blend",
+        "Sour cream",
+        "Hot sauce (optional)",
+        "Olive oil, salt, pepper"
+      ],
+      "steps": [
+        "Roast diced sweet potato at 450\u00b0F until nearly tender (~20\u201324 min).",
+        "Coat salmon with Cajun spice + sugar; roast with asparagus until fish is done and spears are tender.",
+        "Finish asparagus with lemon juice.",
+        "Mix sour cream with spice blend and a splash of water/hot sauce; drizzle over plated salmon and veggies."
+      ]
+    }
+  },
+  "notes": {
+    "pii": "Site UI must remain generic \u2014 no household names or emails in the page.",
+    "pdfOnSubmit": "Client-side printable PDF of selected meals (recipes + grocery list).",
+    "nightlyEmail": "Static Pages cannot send email. Scheduled nightly email needs a bot routine + Gmail (human-in-the-loop) or a backend; this data file is the source of truth for that automation."
+  }
+};
 
-    const form = document.getElementById("plan");
+    const slotsEl = document.getElementById("slots");
     const result = document.getElementById("result");
-    const selectAll = document.getElementById("selectAll");
+    const printSheet = document.getElementById("print-sheet");
 
-    selectAll.addEventListener("click", () => {
-      form.querySelectorAll('input[name="meals"]').forEach((el) => { el.checked = true; });
+    /** Runtime state per slot index */
+    const state = DATA.slots.map((slot, i) => ({
+      day: slot.day,
+      protein: slot.protein,
+      mealId: slot.primary,
+      kept: true,
+      alternateIds: slot.alternates.slice()
+    }));
+
+    function meal(id) { return DATA.candidates[id]; }
+
+    function proteinLabel(p) {
+      return p.charAt(0).toUpperCase() + p.slice(1);
+    }
+
+    function render() {
+      slotsEl.innerHTML = "";
+      state.forEach((s, idx) => {
+        const card = document.createElement("div");
+        card.className = "meal" + (s.kept ? "" : " empty") + (s.kept ? "" : " show-swap");
+        card.dataset.idx = String(idx);
+
+        if (s.kept && s.mealId) {
+          const m = meal(s.mealId);
+          card.innerHTML = `
+            <div class="meal-top">
+              <input type="checkbox" id="c${idx}" checked />
+              <label for="c${idx}">
+                <div class="day">${s.day} · ${proteinLabel(s.protein)}</div>
+                <div class="name">${m.shortName}</div>
+                <div class="meta">${m.source} · ${m.time} · ${proteinLabel(m.protein)}</div>
+                <div class="pitch">${m.pitch}</div>
+                <div class="link"><a href="${m.url}" target="_blank" rel="noopener">Recipe card</a></div>
+              </label>
+            </div>
+            <div class="swap-panel"></div>`;
+        } else {
+          card.innerHTML = `
+            <div class="meal-top">
+              <input type="checkbox" id="c${idx}" />
+              <label for="c${idx}">
+                <div class="day">${s.day} · ${proteinLabel(s.protein)}</div>
+                <div class="name">${s.mealId ? meal(s.mealId).shortName + " (unchecked)" : "Empty slot"}</div>
+                <div class="meta">Choose a ${s.protein} alternate below, or leave empty</div>
+              </label>
+            </div>
+            <div class="swap-panel"></div>`;
+        }
+
+        const panel = card.querySelector(".swap-panel");
+        if (!s.kept) {
+          panel.innerHTML = `<div class="swap-title">Same-protein swaps (${s.protein})</div>`;
+          const opts = s.alternateIds.filter((id) => id !== s.mealId);
+          // also allow original primary back in if swapped away
+          const primaryId = DATA.slots[idx].primary;
+          const pool = [];
+          const seen = new Set();
+          for (const id of [primaryId, ...s.alternateIds]) {
+            if (!seen.has(id)) { seen.add(id); pool.push(id); }
+          }
+          pool.forEach((id) => {
+            const m = meal(id);
+            const alt = document.createElement("div");
+            alt.className = "alt";
+            alt.innerHTML = `<div class="aname">${m.shortName}</div>
+              <div class="ameta">${m.source} · ${m.time} · ${m.pitch}</div>`;
+            alt.addEventListener("click", () => {
+              s.mealId = id;
+              s.kept = true;
+              render();
+            });
+            panel.appendChild(alt);
+          });
+          const leave = document.createElement("button");
+          leave.type = "button";
+          leave.className = "leave-empty";
+          leave.textContent = "Leave this day empty";
+          leave.addEventListener("click", () => {
+            s.mealId = null;
+            s.kept = false;
+            render();
+          });
+          panel.appendChild(leave);
+        }
+
+        const checkbox = card.querySelector('input[type="checkbox"]');
+        checkbox.addEventListener("change", () => {
+          if (checkbox.checked) {
+            // re-check without a meal → restore primary
+            if (!s.mealId) s.mealId = DATA.slots[idx].primary;
+            s.kept = true;
+          } else {
+            s.kept = false;
+          }
+          render();
+        });
+
+        // prevent recipe link click from toggling checkbox oddly
+        card.querySelectorAll("a").forEach((a) => {
+          a.addEventListener("click", (e) => e.stopPropagation());
+        });
+
+        slotsEl.appendChild(card);
+      });
+    }
+
+    document.getElementById("selectAll").addEventListener("click", () => {
+      state.forEach((s, i) => {
+        s.mealId = DATA.slots[i].primary;
+        s.kept = true;
+      });
+      render();
     });
 
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const kept = [...form.querySelectorAll('input[name="meals"]:checked')].map((el) => el.value);
-      const skipped = Object.keys(MEALS).filter((id) => !kept.includes(id));
+    function selectedMeals() {
+      return state
+        .filter((s) => s.kept && s.mealId)
+        .map((s) => ({ day: s.day, protein: s.protein, meal: meal(s.mealId) }));
+    }
 
-      const keptLines = kept.length
-        ? kept.map((id) => "• " + MEALS[id]).join("\n")
-        : "(none — please pick at least one)";
-      const skipLines = skipped.length
-        ? skipped.map((id) => "• " + MEALS[id]).join("\n")
-        : "(none)";
+    function emptySlots() {
+      return state.filter((s) => !s.kept || !s.mealId).map((s) => s.day);
+    }
 
-      const summary =
-        "Ann's dinner picks\n\nKeep:\n" + keptLines +
-        "\n\nSkip:\n" + skipLines;
+    function buildGrocery(selected) {
+      const bag = new Map();
+      selected.forEach(({ meal: m }) => {
+        (m.ingredients || []).forEach((line) => {
+          const key = line.toLowerCase();
+          if (!bag.has(key)) bag.set(key, line);
+        });
+      });
+      return [...bag.values()].sort((a, b) => a.localeCompare(b));
+    }
 
-      localStorage.setItem("mealPlanPicks", JSON.stringify({ kept, skipped, at: new Date().toISOString() }));
+    function fillPrintSheet(selected, empties) {
+      let html = `<h1>This week's dinners</h1>
+        <div class="sub">Week of Sep 27, 2026 · Healthier lineup · Generated locally</div>`;
 
-      const subject = encodeURIComponent("Dinner picks for this week");
-      const body = encodeURIComponent(summary + "\n\n— Ann");
-      const mailto = "mailto:mitch.enderle@gmail.com?subject=" + subject + "&body=" + body;
+      html += `<h2>Keep list</h2>`;
+      if (!selected.length) {
+        html += `<p class="empty-note">No meals selected.</p>`;
+      } else {
+        html += `<ul>` + selected.map(({ day, meal: m, protein }) =>
+          `<li><strong>${day}</strong> — ${m.name} (${protein})</li>`).join("") + `</ul>`;
+      }
+      if (empties.length) {
+        html += `<p class="empty-note">Empty slots: ${empties.join(", ")}</p>`;
+      }
 
-      result.textContent = summary + "\n\nOpening your email so Mitch gets this…";
-      result.classList.add("show");
-      window.location.href = mailto;
+      html += `<h2>Grocery list</h2>`;
+      const groceries = buildGrocery(selected);
+      if (!groceries.length) {
+        html += `<p class="empty-note">No ingredients (no meals kept).</p>`;
+      } else {
+        html += `<ul>` + groceries.map((g) => `<li>${g}</li>`).join("") + `</ul>`;
+      }
+
+      html += `<h2>Recipes</h2>`;
+      selected.forEach(({ day, meal: m }) => {
+        html += `<div class="meal-block">
+          <h3>${day} — ${m.name}</h3>
+          <div class="sub">${m.source} · ${m.time} · <a href="${m.url}">${m.url}</a></div>
+          <p>${m.pitch}</p>
+          <strong>Ingredients</strong>
+          <ul>${(m.ingredients || []).map((i) => `<li>${i}</li>`).join("")}</ul>
+          <strong>Steps</strong>
+          <ol>${(m.steps || []).map((s) => `<li>${s}</li>`).join("")}</ol>
+        </div>`;
+      });
+
+      html += `<p class="sub">Tip: use your browser’s Print → Save as PDF if the download button is blocked.</p>`;
+      printSheet.innerHTML = html;
+    }
+
+    async function downloadPdf() {
+      const selected = selectedMeals();
+      const empties = emptySlots();
+      fillPrintSheet(selected, empties);
+
+      const summaryLines = [
+        "Keep:",
+        ...(selected.length
+          ? selected.map(({ day, meal: m, protein }) => `• ${day} — ${m.shortName} (${protein})`)
+          : ["• (none)"]),
+        "",
+        "Empty slots:",
+        empties.length ? empties.map((d) => `• ${d}`).join("\n") : "• (none)"
+      ].join("\n");
+
+      try {
+        if (typeof html2pdf === "undefined") throw new Error("html2pdf unavailable");
+        const opt = {
+          margin: 0.5,
+          filename: "weekly-meal-plan.pdf",
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: "in", format: "letter", orientation: "portrait" }
+        };
+        await html2pdf().set(opt).from(printSheet).save();
+        result.textContent = summaryLines + "\n\nPDF downloaded: weekly-meal-plan.pdf";
+        result.classList.add("show");
+      } catch (err) {
+        // Fallback: open print dialog (Save as PDF)
+        result.textContent = summaryLines + "\n\nOpening print dialog — choose “Save as PDF”.";
+        result.classList.add("show");
+        window.print();
+      }
+
+      try {
+        localStorage.setItem("mealPlanPicks", JSON.stringify({
+          kept: selected.map(({ day, meal: m, protein }) => ({ day, name: m.name, protein, id: m.id })),
+          empty: empties,
+          at: new Date().toISOString()
+        }));
+      } catch (_) {}
+    }
+
+    document.getElementById("submit").addEventListener("click", () => {
+      downloadPdf();
     });
+
+    render();
   </script>
 </body>
 </html>
