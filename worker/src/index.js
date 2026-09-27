@@ -4,13 +4,14 @@
  * POST /match  { beef, chicken, salmon, vegetarian, healthyOnly, servings, avoid[], customAvoid[] }
  * GET  /health
  *
- * Fetches HelloFresh public API (SSR bearer) + Blue Apron public JSON-LD pages.
- * Returns structured kit-style recipes (paraphrased steps) + proposed week slots.
+ * Fetches HelloFresh, Blue Apron, and TheMealDB public recipe data.
+ * Returns structured recipes (paraphrased kit steps) + proposed week slots.
  */
 
 import { fetchHelloFreshPool } from "./hf.js";
 import { fetchBlueApronPool } from "./ba.js";
-import { normalizeHelloFreshItem, normalizeJsonLdRecipe } from "./normalize.js";
+import { fetchTheMealDbPool } from "./tmdb.js";
+import { normalizeHelloFreshItem, normalizeJsonLdRecipe, cheapScoreFor } from "./normalize.js";
 import { buildPlanFromCandidates } from "./plan.js";
 
 function corsHeaders(origin, allowedRaw) {
@@ -43,6 +44,19 @@ function json(data, status, extraHeaders) {
   });
 }
 
+export function isHomeChefMeal(m, id) {
+  const blob = [m && m.source, m && m.url, m && m.fetchedFrom, m && m.id, id]
+    .filter(Boolean)
+    .join(" ");
+  return /home\s*chef|homechef\.com/i.test(blob);
+}
+
+function acceptMeal(candidates, meal) {
+  if (!meal || isHomeChefMeal(meal, meal.id)) return;
+  if (meal.cheapScore == null) meal.cheapScore = cheapScoreFor(meal.ingredients);
+  if (!candidates[meal.id]) candidates[meal.id] = meal;
+}
+
 async function handleMatch(prefs, env) {
   const proteinsNeeded = [];
   for (const p of ["beef", "chicken", "salmon", "vegetarian"]) {
@@ -64,7 +78,7 @@ async function handleMatch(prefs, env) {
       // Strict: only accept the protein we searched for on that query path
       // (prevents fish/chicken leaking into vegetarian searches).
       if (norm.protein !== wantProtein) continue;
-      if (!candidates[norm.id]) candidates[norm.id] = norm;
+      acceptMeal(candidates, norm);
     }
   } catch (err) {
     errors.push("HelloFresh: " + (err.message || String(err)));
@@ -77,10 +91,22 @@ async function handleMatch(prefs, env) {
       const norm = normalizeJsonLdRecipe(ld, "Blue Apron", url);
       if (!norm) continue;
       if (!proteinsNeeded.includes(norm.protein)) continue;
-      if (!candidates[norm.id]) candidates[norm.id] = norm;
+      acceptMeal(candidates, norm);
     }
   } catch (err) {
     errors.push("Blue Apron: " + (err.message || String(err)));
+  }
+
+  // --- TheMealDB public filter + lookup ---
+  try {
+    const tmdb = await fetchTheMealDbPool(proteinsNeeded);
+    for (const norm of tmdb) acceptMeal(candidates, norm);
+  } catch (err) {
+    errors.push("TheMealDB: " + (err.message || String(err)));
+  }
+
+  for (const id of Object.keys(candidates)) {
+    if (isHomeChefMeal(candidates[id], id)) delete candidates[id];
   }
 
   const count = Object.keys(candidates).length;
@@ -105,6 +131,8 @@ async function handleMatch(prefs, env) {
     providerNotes: {
       helloFresh: "public gw.hellofresh.com search via SSR bearer",
       blueApron: "public recipe pages JSON-LD (seed URL discovery, live fetch)",
+      themealDB: "free public API (no key) — filter + lookup",
+      cheapBias: "When cheapBias=true, prefer higher cheapScore (staples / shorter lists; not store prices)",
       copyright: "Steps paraphrased; temps/times retained",
     },
     errors: errors.length ? errors : undefined,

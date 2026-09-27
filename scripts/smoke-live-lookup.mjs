@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Local smoke test of the live lookup Worker logic (no Cloudflare account needed).
- * Runs handleMatch against real HelloFresh/Blue Apron public endpoints.
+ * Runs handleMatch against real HelloFresh, Blue Apron, and TheMealDB public endpoints.
  */
 import { handleMatch } from "../worker/src/index.js";
 
