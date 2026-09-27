@@ -6,5 +6,7 @@ compatibility_date = "2026-09-01"
 # to https://weekly-meal-plan-live.<your-subdomain>.workers.dev
 
 [vars]
-# Comma-separated Origins allowed to call this Worker (CORS).
-ALLOWED_ORIGINS = "https://mlenderle.github.io,http://localhost:4173,http://127.0.0.1:4173,http://localhost:8080,http://127.0.0.1:8080,null"
+# Exact browser Origins. The Worker ignores "*" and "null" even if they are added here.
+# Do not put secrets in this file. A Slack webhook, if you add alerts later, is a Worker secret:
+#   npx wrangler secret put SLACK_WEBHOOK_URL
+ALLOWED_ORIGINS = "https://mlenderle.github.io,http://localhost:4173,http://127.0.0.1:4173,http://localhost:8080,http://127.0.0.1:8080"

@@ -8,9 +8,7 @@ A public preference-driven weekly meal planner. Choose beef, chicken, salmon, an
 
 GitHub Pages is static, so the browser cannot call HelloFresh or Blue Apron directly (CORS). The Worker in `worker/` fetches public recipe data server-side and returns kit cards to `index.html`.
 
-**Find matching recipes** posts your preferences to `LIVE_API_URL/match`. That URL is left unset in the page until the Worker is deployed on Cloudflare — no placeholder host is baked in. After deploy, open the site with `?liveApi=https://<your-worker>.workers.dev` (saved in this browser) or paste the origin into `LIVE_API_URL` in `index.html`. Steps are in [DEPLOY-LIVE-LOOKUP.md](DEPLOY-LIVE-LOOKUP.md).
-
-Until that deploy happens, the status line says the Live API is not configured, and **Find matching recipes** explains that live lookup needs a Worker URL.
+**Find matching recipes** posts your preferences to the Worker at `https://weekly-meal-plan-live.mitch-enderle.workers.dev/match`. The page only accepts that host, or `http://127.0.0.1:8787` / `http://localhost:8787` for a local Worker. A `?liveApi=` value pointing anywhere else is ignored. Steps are in [DEPLOY-LIVE-LOOKUP.md](DEPLOY-LIVE-LOOKUP.md).
 
 ## Offline demo
 
