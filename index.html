@@ -1517,8 +1517,19 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
         blocks.push({ type: "banner", titleLines, bannerH, titleLead, afterBanner });
         h += bannerH + afterBanner;
 
-        blocks.push({ type: "line", text: "", size: profile.meta, role: "meta", advance: profile.meta + 6 });
-        h += profile.meta + 6;
+        const metaBits = [
+          m.source || "",
+          m.time || "",
+          (m.servings || prefs.servings) + " servings",
+          m.spiceLevel ? ("Spice: " + m.spiceLevel) : "",
+          m.calories ? ("~" + m.calories + " kcal") : "",
+          m.difficulty || "",
+          m.healthy ? "Healthier" : "Comfort"
+        ].filter(Boolean).join("  ·  ");
+        const metaLead = profile.meta + 3;
+        const metaLines = recipeClamp(metaBits, profile.meta, contentW, "normal", 2);
+        blocks.push({ type: "wrap", lines: metaLines, size: profile.meta, style: "normal", color: muted, lead: metaLead, gap: 4 });
+        h += metaLines.length * metaLead + 4;
 
         if (profile.pitchMax && m.pitch) {
           const lines = recipeClamp(m.pitch, profile.pitch, contentW, "italic", profile.pitchMax);
@@ -1671,15 +1682,6 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
           }
         }
 
-        const metaBits = [
-          m.source || "",
-          m.time || "",
-          (m.servings || prefs.servings) + " servings",
-          m.spiceLevel ? ("Spice: " + m.spiceLevel) : "",
-          m.calories ? ("~" + m.calories + " kcal") : "",
-          m.difficulty || "",
-          m.healthy ? "Healthier" : "Comfort"
-        ].filter(Boolean).join("  ·  ");
         const kicker = entry.day.toUpperCase() + "   ·   " + entry.protein.toUpperCase() + "   ·   DINNER " + (idx + 1);
 
         let y = top;
@@ -1698,12 +1700,6 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
               doc.text(line, left + 12, y + 22 + chosen.profile.title + i * block.titleLead);
             });
             y += block.bannerH + (block.afterBanner || 8);
-          } else if (block.type === "line" && block.role === "meta") {
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(block.size);
-            doc.setTextColor(...muted);
-            doc.text(recipeFitLine(metaBits, block.size, contentW, "normal"), left, y);
-            y += block.advance;
           } else if (block.type === "line") {
             const adv = block.advance || (block.size + 4);
             if (stop(adv)) return;
