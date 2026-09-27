@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>This week's dinners</title>
+  <style>
+    :root {
+      --bg: #f6f1ea;
+      --card: #fffdf9;
+      --ink: #1f1a17;
+      --muted: #6b625c;
+      --accent: #c45c26;
+      --accent-soft: #f3e0d4;
+      --border: #e6ddd4;
+      --ok: #2f6b4f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #f8e7d8 0%, transparent 55%),
+        radial-gradient(900px 500px at 110% 10%, #e7efe8 0%, transparent 50%),
+        var(--bg);
+      color: var(--ink);
+      line-height: 1.45;
+      min-height: 100vh;
+    }
+    main {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 28px 18px 48px;
+    }
+    header h1 {
+      font-size: 1.55rem;
+      margin: 0 0 6px;
+      letter-spacing: -0.02em;
+    }
+    header p {
+      margin: 0 0 22px;
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+    .week {
+      display: inline-block;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+    }
+    form {
+      display: grid;
+      gap: 12px;
+    }
+    .meal {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      align-items: start;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 14px 14px 12px;
+      box-shadow: 0 1px 0 rgba(31,26,23,0.03);
+      transition: border-color 0.15s, opacity 0.15s;
+    }
+    .meal:has(input:not(:checked)) {
+      opacity: 0.55;
+      border-style: dashed;
+    }
+    .meal input {
+      width: 22px;
+      height: 22px;
+      margin-top: 2px;
+      accent-color: var(--accent);
+    }
+    .meal label {
+      cursor: pointer;
+      display: block;
+    }
+    .day {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      margin-bottom: 2px;
+    }
+    .name {
+      font-weight: 650;
+      font-size: 1.02rem;
+      margin-bottom: 4px;
+    }
+    .meta {
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+    .actions {
+      margin-top: 10px;
+      display: grid;
+      gap: 10px;
+    }
+    button {
+      appearance: none;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 1rem;
+      font-weight: 650;
+      cursor: pointer;
+    }
+    button.primary {
+      background: var(--accent);
+      color: white;
+    }
+    button.secondary {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .result {
+      display: none;
+      margin-top: 18px;
+      background: #eaf5ef;
+      border: 1px solid #cfe3d7;
+      color: var(--ok);
+      border-radius: 14px;
+      padding: 14px 16px;
+      white-space: pre-wrap;
+      font-size: 0.95rem;
+    }
+    .result.show { display: block; }
+    footer {
+      margin-top: 22px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="week">Week of Sep 27</div>
+      <h1>This week's dinners</h1>
+      <p>Uncheck anything you don't want. Keep the ones that sound good, then hit submit.</p>
+    </header>
+
+    <form id="plan" novalidate>
+      <div class="meal">
+        <input type="checkbox" id="m1" name="meals" value="1" checked />
+        <label for="m1">
+          <div class="day">Mon · Beef</div>
+          <div class="name">Sesame Soy Beef Bowls</div>
+          <div class="meta">HelloFresh · ~25 min · rice, cabbage mix, Sriracha mayo</div>
+        </label>
+      </div>
+      <div class="meal">
+        <input type="checkbox" id="m2" name="meals" value="2" checked />
+        <label for="m2">
+          <div class="day">Tue · Chicken</div>
+          <div class="name">Garlic Herb Chicken + grape salad</div>
+          <div class="meta">HelloFresh · ~30 min · Parmesan frico, honey Dijon dressing</div>
+        </label>
+      </div>
+      <div class="meal">
+        <input type="checkbox" id="m3" name="meals" value="3" checked />
+        <label for="m3">
+          <div class="day">Wed · Chicken</div>
+          <div class="name">Thai Coconut Curry Chicken</div>
+          <div class="meta">HelloFresh · ~30 min · cilantro lime rice</div>
+        </label>
+      </div>
+      <div class="meal">
+        <input type="checkbox" id="m4" name="meals" value="4" checked />
+        <label for="m4">
+          <div class="day">Thu · Beef</div>
+          <div class="name">Oven-Baked Harissa Beef Pitas</div>
+          <div class="meta">Blue Apron · ~25 min · tzatziki, feta, mint</div>
+        </label>
+      </div>
+      <div class="meal">
+        <input type="checkbox" id="m5" name="meals" value="5" checked />
+        <label for="m5">
+          <div class="day">Fri · Salmon</div>
+          <div class="name">Salmon in Creamy Dijon Chive Sauce</div>
+          <div class="meta">HelloFresh · ~35 min · potato wedges, lemony zucchini</div>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="primary">Submit picks</button>
+        <button type="button" class="secondary" id="selectAll">Select all</button>
+      </div>
+    </form>
+
+    <div class="result" id="result" role="status" aria-live="polite"></div>
+    <footer>Picks stay on this device until you submit. Mitch gets your choices when you submit.</footer>
+  </main>
+
+  <script>
+    const MEALS = {
+      "1": "Mon — Sesame Soy Beef Bowls",
+      "2": "Tue — Garlic Herb Chicken + grape salad",
+      "3": "Wed — Thai Coconut Curry Chicken",
+      "4": "Thu — Oven-Baked Harissa Beef Pitas",
+      "5": "Fri — Salmon in Creamy Dijon Chive Sauce"
+    };
+
+    const form = document.getElementById("plan");
+    const result = document.getElementById("result");
+    const selectAll = document.getElementById("selectAll");
+
+    selectAll.addEventListener("click", () => {
+      form.querySelectorAll('input[name="meals"]').forEach((el) => { el.checked = true; });
+    });
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const kept = [...form.querySelectorAll('input[name="meals"]:checked')].map((el) => el.value);
+      const skipped = Object.keys(MEALS).filter((id) => !kept.includes(id));
+
+      const keptLines = kept.length
+        ? kept.map((id) => "• " + MEALS[id]).join("\n")
+        : "(none — please pick at least one)";
+      const skipLines = skipped.length
+        ? skipped.map((id) => "• " + MEALS[id]).join("\n")
+        : "(none)";
+
+      const summary =
+        "Ann's dinner picks\n\nKeep:\n" + keptLines +
+        "\n\nSkip:\n" + skipLines;
+
+      localStorage.setItem("mealPlanPicks", JSON.stringify({ kept, skipped, at: new Date().toISOString() }));
+
+      const subject = encodeURIComponent("Dinner picks for this week");
+      const body = encodeURIComponent(summary + "\n\n— Ann");
+      const mailto = "mailto:mitch.enderle@gmail.com?subject=" + subject + "&body=" + body;
+
+      result.textContent = summary + "\n\nOpening your email so Mitch gets this…";
+      result.classList.add("show");
+      window.location.href = mailto;
+    });
+  </script>
+</body>
+</html>
