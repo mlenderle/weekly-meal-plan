@@ -264,7 +264,7 @@
       <header>
         <div class="badge">Public planner · no account</div>
         <h1>Plan your week of dinners</h1>
-        <p>Set protein counts, healthy bias, servings, and ingredients to avoid. <strong>Find matching recipes</strong> queries HelloFresh, Blue Apron, and TheMealDB dinners <em>live</em> (via a small Worker API), then lets you swap before downloading a PDF.</p>
+        <p>Set protein counts, healthy bias, servings, and ingredients to avoid. <strong>Find matching recipes</strong> queries HelloFresh and Blue Apron dinners <em>live</em> (via a small Worker API), then lets you swap before downloading a PDF.</p>
       </header>
 
       <div class="card">
@@ -370,7 +370,7 @@
         <div class="spinner" aria-hidden="true"></div>
         <div>
           <div><strong>Finding matching recipes…</strong></div>
-          <div class="live-meta">Live lookup against HelloFresh, Blue Apron, and TheMealDB public recipe data. Usually a few seconds.</div>
+          <div class="live-meta">Live lookup against HelloFresh and Blue Apron public recipe data. Usually a few seconds.</div>
         </div>
       </div>
       <p class="live-meta" id="live-api-status"></p>
@@ -508,7 +508,7 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
     function isExcludedPreparedSource(m) {
       if (!m || typeof m !== "object") return false;
       const blob = [m.source, m.fetchedFrom, m.url, m.id].filter(Boolean).join(" ");
-      return /home\s*chef|homechef\.com/i.test(blob);
+      return /home\s*chef|homechef\.com|themealdb|the\s*meal\s*db|(?:^|[\s/])tmdb-/i.test(blob);
     }
 
     function catalogWithoutExcluded(candidates) {
