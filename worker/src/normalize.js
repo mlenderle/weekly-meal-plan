@@ -312,6 +312,20 @@ export function normalizeJsonLdRecipe(ld, sourceLabel, url) {
   };
 }
 
+const SPECIALTY = /truffle|saffron|gochujang|miso|tahini|halloumi|prosciutto|pancetta|cr[eè]me fra[iî]che|pecan|pistachio|pomegranate|harissa|za'?atar|yuzu|edamame|quinoa|gnocchi|ciabatta/i;
+const STAPLE = /\b(salt|pepper|oil|butter|onion|garlic|rice|potato|carrot|broth|stock|flour|sugar|egg|milk|tomato|bean|lentil|pasta|noodle)\b/i;
+
+/** Higher means more pantry staples and a shorter list. Not a store price. */
+export function cheapScoreFor(ingredients) {
+  const lines = ingredients || [];
+  let score = 90 - Math.min(36, lines.length * 2);
+  for (const line of lines) {
+    if (SPECIALTY.test(line)) score -= 4;
+    else if (STAPLE.test(line)) score += 1;
+  }
+  return Math.max(20, Math.min(95, score));
+}
+
 export function recipeHitsAvoid(m, avoidSet, customAvoid) {
   const tags = (m.avoidTags || []).map((t) => t.toLowerCase());
   for (const a of avoidSet) {

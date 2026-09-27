@@ -71,8 +71,10 @@ export function buildPlanFromCandidates(candidates, prefs) {
       });
       return;
     }
-    const shuffled = shuffle(pool);
-    const primary = shuffled[0];
+    const ranked = prefs.cheapBias
+      ? pool.slice().sort((a, b) => (b.cheapScore || 0) - (a.cheapScore || 0) || String(a.name).localeCompare(String(b.name)))
+      : shuffle(pool);
+    const primary = ranked[0];
     used.add(primary.id);
     slots.push({
       day: labels[idx],
@@ -80,17 +82,17 @@ export function buildPlanFromCandidates(candidates, prefs) {
       mealId: primary.id,
       kept: true,
       swapOpen: false,
-      alternateIds: shuffled.slice(1, 4).map((m) => m.id),
+      alternateIds: ranked.slice(1, 4).map((m) => m.id),
     });
   });
 
   slots.forEach((s) => {
     if (!s.mealId) return;
-    s.alternateIds = shuffle(
-      eligible(s.protein)
-        .filter((m) => m.id !== s.mealId)
-        .map((m) => m.id)
-    ).slice(0, 3);
+    const altPool = eligible(s.protein).filter((m) => m.id !== s.mealId);
+    const altRanked = prefs.cheapBias
+      ? altPool.slice().sort((a, b) => (b.cheapScore || 0) - (a.cheapScore || 0) || String(a.name).localeCompare(String(b.name)))
+      : shuffle(altPool);
+    s.alternateIds = altRanked.slice(0, 3).map((m) => m.id);
   });
 
   return { slots, shortages, total, counts };

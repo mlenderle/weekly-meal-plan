@@ -1,8 +1,8 @@
-# Deploy: Live HelloFresh / Blue Apron recipe lookup
+# Deploy: Live HelloFresh / Blue Apron / TheMealDB recipe lookup
 
 **Repo:** https://github.com/mlenderle/weekly-meal-plan  
 **Pages:** https://mlenderle.github.io/weekly-meal-plan/  
-**Why a Worker:** GitHub Pages is static. Browsers cannot call HelloFresh/Blue Apron directly (CORS). A tiny Cloudflare Worker (free) fetches live recipe data server-side and returns structured kit cards to the frontend.
+**Why a Worker:** GitHub Pages is static. Browsers cannot call HelloFresh, Blue Apron, or TheMealDB directly (CORS). A tiny Cloudflare Worker (free) fetches live recipe data server-side and returns structured recipe cards to the frontend. Home Chef is not a source: those kits are par-prepared.
 
 ## Architecture
 
@@ -10,7 +10,8 @@
 [Browser: index.html]
    POST prefs JSON ──► [Cloudflare Worker /match]
                           ├─ HelloFresh public SSR token + gw.hellofresh.com search
-                          └─ Blue Apron public recipe pages (JSON-LD)
+                          ├─ Blue Apron public recipe pages (JSON-LD)
+                          └─ TheMealDB public filter + lookup (no API key)
                        ◄── candidates{} + week slots[] (paraphrased steps)
    picker / swap / jsPDF (unchanged)
 ```
@@ -133,6 +134,8 @@ node /workspace/scripts/local-live-api.mjs
 | Cloudflare account + `wrangler login` | **Required from Mitch** — cannot deploy Worker from this agent without his CF credentials |
 | HelloFresh unofficial public gateway | Works today via SSR bearer on `/recipes/search`; if HF changes SSR shape, Worker token scrape breaks (error surfaces; last-good cache remains) |
 | Blue Apron | No public search API found; Worker live-fetches JSON-LD from rotating public recipe URLs (discovery seeds, not a fixed kit dump) |
+| TheMealDB | Free public API, no key. Category filter (beef, chicken, vegetarian) or salmon search, then lookup |
+| Home Chef | Not used. Do not add it back; the Worker drops any meal whose source or URL is Home Chef |
 | Old fixed catalog | Remains embedded only for **explicit offline demo** / reference JSON — not silent primary when live is configured |
 
 ## Success criteria
