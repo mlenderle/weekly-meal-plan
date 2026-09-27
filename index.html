@@ -1300,24 +1300,6 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
         return y + gap;
       }
 
-      // Section title with underline BELOW the text (clear gap; never through glyphs)
-      // pdf-section-underline-fix
-      function writeSectionHead(title, y) {
-        const size = 13;
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(size);
-        doc.setTextColor(...accent);
-        if (y + size + 14 > pageH - margin) y = newPageFresh();
-        doc.text(title, margin, y);
-        // underlineY clearly below baseline so descenders (g,y,p) never collide
-        const underlineY = y + 6;
-        doc.setDrawColor(...accent);
-        doc.setLineWidth(1.5);
-        const tw = doc.getTextWidth(title);
-        doc.line(margin, underlineY, margin + Math.max(tw, 48), underlineY);
-        return underlineY + 12; // gap before body content
-      }
-
       // ===== Cover =====
       doc.setFillColor(243, 246, 242);
       doc.rect(0, 0, pageW, pageH, "F");
@@ -1398,71 +1380,276 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
         });
       }
 
-      // ===== Recipes =====
-      selected.forEach(({ day, meal: m, protein }, idx) => {
-        y = newPageFresh();
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(16);
-        const titleLines = doc.splitTextToSize(m.name, maxW - 28);
-        const bannerH = 40 + titleLines.length * 18;
-        doc.setFillColor(...accent);
-        doc.roundedRect(margin, y - 6, maxW, bannerH, 8, 8, "F");
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(11);
-        doc.text(day.toUpperCase() + "  ·  " + protein.toUpperCase() + "  ·  DINNER " + (idx + 1), margin + 14, y + 14);
-        doc.setFontSize(16);
-        titleLines.forEach((tl, ti) => {
-          doc.text(tl, margin + 14, y + 36 + ti * 18);
+      // ===== Recipes: exactly one letter page each =====
+      function recipeClamp(text, size, width, style, maxLines) {
+        doc.setFont("helvetica", style || "normal");
+        doc.setFontSize(size);
+        const lines = doc.splitTextToSize(String(text || ""), width);
+        if (lines.length <= maxLines) return lines;
+        const kept = lines.slice(0, maxLines);
+        const ell = "...";
+        let last = String(kept[maxLines - 1] || "").replace(/\s+\S*$/, "").replace(/[.,;:–-]+$/, "");
+        if (last.length < 4) last = String(lines[maxLines - 1] || "").slice(0, 24);
+        while (last.length > 3 && doc.getTextWidth(last + ell) > width) last = last.slice(0, -1);
+        kept[maxLines - 1] = last + ell;
+        return kept;
+      }
+
+      function recipeFitLine(text, size, width, style) {
+        doc.setFont("helvetica", style || "normal");
+        doc.setFontSize(size);
+        const full = String(text || "");
+        if (doc.getTextWidth(full) <= width) return full;
+        const ell = "...";
+        let s = full;
+        while (s.length > 6 && doc.getTextWidth(s + ell) > width) s = s.slice(0, -1);
+        return s + ell;
+      }
+
+      function composeRecipe(m, profile, stepCount, contentW) {
+        const ingredients = m.ingredients || [];
+        const steps = m.steps || [];
+        const blocks = [];
+        let h = 0;
+        const titleLines = recipeClamp(m.name, profile.title, contentW - 24, "bold", 2);
+        const titleLead = profile.title + 2;
+        const bannerH = 22 + titleLines.length * titleLead + 8;
+        blocks.push({ type: "banner", titleLines, bannerH, titleLead });
+        h += bannerH + 8;
+
+        blocks.push({ type: "line", text: "", size: profile.meta, role: "meta", advance: profile.meta + 6 });
+        h += profile.meta + 6;
+
+        if (profile.pitchMax && m.pitch) {
+          const lines = recipeClamp(m.pitch, profile.pitch, contentW, "italic", profile.pitchMax);
+          const lead = profile.pitch + 2;
+          blocks.push({ type: "wrap", lines, size: profile.pitch, style: "italic", color: ink, lead, gap: 6 });
+          h += lines.length * lead + 6;
+        }
+        if (profile.utensils && m.utensils && m.utensils.length) {
+          const advance = profile.body + 5;
+          blocks.push({
+            type: "line",
+            text: recipeFitLine("Utensils: " + m.utensils.join(", "), profile.body, contentW, "normal"),
+            size: profile.body,
+            role: "muted",
+            advance
+          });
+          h += advance;
+        }
+
+        blocks.push({ type: "head", text: "Ingredients", size: profile.head });
+        h += 12;
+
+        const colGap = 12;
+        const colW = (contentW - colGap) / 2;
+        const lead = profile.body + 1.5;
+        const rows = [];
+        const ingSource = ingredients.length ? ingredients : ["No ingredients listed."];
+        for (let i = 0; i < ingSource.length; i += 2) {
+          const L = recipeClamp("•  " + ingSource[i], profile.body, colW, "normal", profile.ingMax);
+          const R = ingSource[i + 1]
+            ? recipeClamp("•  " + ingSource[i + 1], profile.body, colW, "normal", profile.ingMax)
+            : [];
+          const rowH = Math.max(L.length, R.length || 1) * lead;
+          rows.push({ L, R, rowH });
+          h += rowH;
+        }
+        blocks.push({ type: "ings", rows, colW, colGap, lead, size: profile.body });
+        h += 8;
+
+        blocks.push({ type: "head", text: "Steps", size: profile.head });
+        h += 12;
+
+        const shown = (steps.length ? steps : ["No steps listed."]).slice(0, stepCount);
+        const stepBlocks = [];
+        shown.forEach((s, i) => {
+          const lines = recipeClamp(s, profile.body, contentW - 18, "normal", profile.stepMax);
+          const blockH = lines.length * profile.lead + profile.gap;
+          stepBlocks.push({ n: String(i + 1), lines, blockH });
+          h += blockH;
         });
-        y += bannerH + 16;
+        blocks.push({ type: "steps", stepBlocks, size: profile.body, lead: profile.lead });
+
+        const hidden = Math.max(0, steps.length - stepCount);
+        if (hidden) {
+          const note = hidden + " more step" + (hidden === 1 ? "" : "s") + " on the recipe card.";
+          blocks.push({ type: "line", text: note, size: profile.body, role: "note", advance: profile.lead });
+          h += profile.lead;
+        }
+        if (m.url) {
+          blocks.push({
+            type: "line",
+            text: recipeFitLine(m.url, 8, contentW, "normal"),
+            size: 8,
+            role: "url",
+            advance: 12
+          });
+          h += 12;
+        }
+        return { blocks, height: h };
+      }
+
+      function drawRecipePage(entry, idx) {
+        const m = entry.meal;
+        newPageFresh();
+        const left = 36;
+        const contentW = pageW - left * 2;
+        const top = 46;
+        const bottom = pageH - 22;
+        const budget = bottom - top;
+        const profiles = [
+          { title: 15, meta: 9, pitch: 10, head: 12, body: 10, lead: 13, gap: 7, pitchMax: 2, ingMax: 2, utensils: true },
+          { title: 14, meta: 9, pitch: 9.5, head: 11, body: 9.5, lead: 12, gap: 6, pitchMax: 2, ingMax: 2, utensils: false },
+          { title: 13, meta: 8.5, pitch: 9, head: 11, body: 9, lead: 11.5, gap: 5, pitchMax: 2, ingMax: 1, utensils: false },
+          { title: 12, meta: 8, pitch: 8.5, head: 10, body: 8.5, lead: 10.5, gap: 4, pitchMax: 1, ingMax: 1, utensils: false },
+          { title: 12, meta: 8, pitch: 8, head: 10, body: 8, lead: 10, gap: 3, pitchMax: 1, ingMax: 1, utensils: false }
+        ];
+        const stepTotal = (m.steps || []).length || 1;
+        function fitAll(profile, stepMax) {
+          const trial = { ...profile, stepMax };
+          const composed = composeRecipe(m, trial, stepTotal, contentW);
+          if (composed.height <= budget) return { profile: trial, stepCount: stepTotal, composed };
+          return null;
+        }
+        // Largest type that can keep every step, then as many lines per step as the page allows.
+        // A two-line clamp is only kept when a roomier size cannot show three lines.
+        let chosen = null;
+        let twoLineFallback = null;
+        for (const profile of profiles) {
+          let bestAtSize = null;
+          for (let stepMax = 8; stepMax >= 2; stepMax--) {
+            bestAtSize = fitAll(profile, stepMax);
+            if (bestAtSize) break;
+          }
+          if (!bestAtSize) continue;
+          if (bestAtSize.profile.stepMax >= 3) {
+            chosen = bestAtSize;
+            break;
+          }
+          if (!twoLineFallback) twoLineFallback = bestAtSize;
+        }
+        if (!chosen) chosen = twoLineFallback;
+        if (!chosen) {
+          const profile = { ...profiles[profiles.length - 1], stepMax: 3 };
+          let stepCount = stepTotal;
+          let composed = composeRecipe(m, profile, stepCount, contentW);
+          while (stepCount > 1 && composed.height > budget) {
+            stepCount -= 1;
+            composed = composeRecipe(m, profile, stepCount, contentW);
+          }
+          if (composed.height > budget) {
+            const tighter = { ...profile, stepMax: 2 };
+            stepCount = stepTotal;
+            composed = composeRecipe(m, tighter, stepCount, contentW);
+            while (stepCount > 1 && composed.height > budget) {
+              stepCount -= 1;
+              composed = composeRecipe(m, tighter, stepCount, contentW);
+            }
+            chosen = { profile: tighter, stepCount, composed };
+          } else {
+            chosen = { profile, stepCount, composed };
+          }
+        }
 
         const metaBits = [
           m.source || "",
           m.time || "",
-          m.servings + " servings",
+          (m.servings || prefs.servings) + " servings",
           m.spiceLevel ? ("Spice: " + m.spiceLevel) : "",
           m.calories ? ("~" + m.calories + " kcal") : "",
           m.difficulty || "",
           m.healthy ? "Healthier" : "Comfort"
-        ].filter(Boolean).join(" · ");
-        y = writeWrapped(metaBits, margin, y, { size: 10, color: muted, gap: 6 });
-        if (m.pitch) y = writeWrapped(m.pitch, margin, y, { size: 11, style: "italic", color: ink, gap: 10 });
-        if (m.utensils && m.utensils.length) {
-          y = writeWrapped("Utensils: " + m.utensils.join(", "), margin, y, { size: 9, color: muted, gap: 10 });
-        } else {
-          y += 4;
-        }
+        ].filter(Boolean).join("  ·  ");
+        const kicker = entry.day.toUpperCase() + "   ·   " + entry.protein.toUpperCase() + "   ·   DINNER " + (idx + 1);
 
-        if (y > pageH - margin - 80) y = newPageFresh();
-        y = writeSectionHead("Ingredients", y);
-        (m.ingredients || []).forEach((i) => {
-          if (y > pageH - margin - 24) y = newPageFresh();
-          y = writeWrapped("•  " + i, margin + 4, y, { size: 10, color: ink, gap: 4, width: maxW - 8 });
+        let y = top;
+        function stop(next) { return y + next > bottom + 1; }
+
+        chosen.composed.blocks.forEach((block) => {
+          if (block.type === "banner") {
+            doc.setFillColor(...accent);
+            doc.roundedRect(left, y, contentW, block.bannerH, 6, 6, "F");
+            doc.setTextColor(255, 255, 255);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(8);
+            doc.text(recipeFitLine(kicker, 8, contentW - 24, "bold"), left + 12, y + 14);
+            doc.setFontSize(chosen.profile.title);
+            block.titleLines.forEach((line, i) => {
+              doc.text(line, left + 12, y + 22 + chosen.profile.title + i * block.titleLead);
+            });
+            y += block.bannerH + 8;
+          } else if (block.type === "line" && block.role === "meta") {
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(block.size);
+            doc.setTextColor(...muted);
+            doc.text(recipeFitLine(metaBits, block.size, contentW, "normal"), left, y);
+            y += block.advance;
+          } else if (block.type === "line") {
+            const adv = block.advance || (block.size + 4);
+            if (stop(adv)) return;
+            doc.setFont("helvetica", block.role === "note" ? "italic" : "normal");
+            doc.setFontSize(block.size);
+            doc.setTextColor(...muted);
+            doc.text(block.text, left, y);
+            y += adv;
+          } else if (block.type === "wrap") {
+            doc.setFont("helvetica", block.style || "normal");
+            doc.setFontSize(block.size);
+            doc.setTextColor(...(block.color || ink));
+            block.lines.forEach((line) => {
+              if (stop(block.lead)) return;
+              doc.text(line, left, y);
+              y += block.lead;
+            });
+            y += block.gap || 0;
+          } else if (block.type === "head") {
+            if (stop(block.size + 8)) return;
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(block.size);
+            doc.setTextColor(...accent);
+            doc.text(block.text, left, y);
+            const underlineY = y + 3;
+            doc.setDrawColor(...accent);
+            doc.setLineWidth(0.8);
+            doc.line(left, underlineY, left + doc.getTextWidth(block.text), underlineY);
+            y = underlineY + 9;
+          } else if (block.type === "ings") {
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(block.size);
+            doc.setTextColor(...ink);
+            block.rows.forEach((row) => {
+              const rowTop = y;
+              row.L.forEach((line, i) => {
+                if (rowTop + (i + 1) * block.lead > bottom) return;
+                doc.text(line, left, rowTop + i * block.lead);
+              });
+              row.R.forEach((line, i) => {
+                if (rowTop + (i + 1) * block.lead > bottom) return;
+                doc.text(line, left + block.colW + block.colGap, rowTop + i * block.lead);
+              });
+              y += row.rowH;
+            });
+            y += 8;
+          } else if (block.type === "steps") {
+            block.stepBlocks.forEach((step) => {
+              if (stop(step.blockH)) return;
+              doc.setFont("helvetica", "bold");
+              doc.setFontSize(block.size);
+              doc.setTextColor(...accent);
+              doc.text(step.n + ".", left, y);
+              doc.setFont("helvetica", "normal");
+              doc.setTextColor(...ink);
+              step.lines.forEach((line, i) => {
+                doc.text(line, left + 18, y + i * block.lead);
+              });
+              y += step.blockH;
+            });
+          }
         });
-        y += 12;
+      }
 
-        if (y > pageH - margin - 60) y = newPageFresh();
-        y = writeSectionHead("Steps", y);
-        (m.steps || []).forEach((s, i) => {
-          if (y > pageH - margin - 50) y = newPageFresh();
-          const n = String(i + 1);
-          const cx = margin + 11;
-          const cy = y - 2;
-          doc.setFillColor(...accent);
-          doc.circle(cx, cy, 9, "F");
-          doc.setTextColor(255, 255, 255);
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(9);
-          const nw = doc.getTextWidth(n);
-          doc.text(n, cx - nw / 2, cy + 3);
-          y = writeWrapped(s, margin + 28, y, { size: 10.5, color: ink, gap: 14, width: maxW - 28 });
-        });
-
-        if (m.url) {
-          y += 6;
-          y = writeWrapped("Recipe card: " + m.url, margin, y, { size: 8, color: muted, gap: 2 });
-        }
-      });
+      selected.forEach((entry, idx) => drawRecipePage(entry, idx));
 
       doc.save("weekly-meal-plan.pdf");
       result.textContent = summaryLines + "\n\nPDF downloaded: weekly-meal-plan.pdf";
