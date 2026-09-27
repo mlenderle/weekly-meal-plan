@@ -782,59 +782,153 @@ const DATA = {
       const pageH = doc.internal.pageSize.getHeight();
       const margin = 48;
       const maxW = pageW - margin * 2;
-      let y = margin;
+      const accent = [47, 107, 79];
+      const warm = [196, 92, 38];
+      const ink = [26, 34, 28];
+      const muted = [95, 107, 99];
 
-      function ensureSpace(h) {
-        if (y + h > pageH - margin) {
-          doc.addPage();
-          y = margin;
-        }
+      function newPageFresh() {
+        doc.addPage();
+        // soft header bar
+        doc.setFillColor(226, 239, 231);
+        doc.rect(0, 0, pageW, 28, "F");
+        doc.setFillColor(...accent);
+        doc.rect(0, 28, pageW, 4, "F");
+        return margin + 24;
       }
-      function writeLine(text, opts) {
+
+      function writeWrapped(text, x, y, opts) {
         const size = (opts && opts.size) || 11;
         const style = (opts && opts.style) || "normal";
+        const color = (opts && opts.color) || ink;
+        const width = (opts && opts.width) || maxW;
         const gap = (opts && opts.gap) != null ? opts.gap : 4;
         doc.setFont("helvetica", style);
         doc.setFontSize(size);
-        const lines = doc.splitTextToSize(String(text || ""), maxW);
+        doc.setTextColor(...color);
+        const lines = doc.splitTextToSize(String(text || ""), width);
         lines.forEach((line) => {
-          ensureSpace(size + 4);
-          doc.text(line, margin, y);
+          if (y + size + 4 > pageH - margin) y = newPageFresh();
+          doc.text(line, x, y);
           y += size + 3;
         });
-        y += gap;
-      }
-      function writeHeading(text) {
-        y += 6;
-        writeLine(text, { size: 14, style: "bold", gap: 6 });
+        return y + gap;
       }
 
-      writeLine("This week's dinners", { size: 18, style: "bold", gap: 2 });
-      writeLine("Week of Sep 27, 2026 · Healthier lineup", { size: 10, style: "normal", gap: 10 });
+      // ===== Cover / overview page =====
+      doc.setFillColor(243, 246, 242);
+      doc.rect(0, 0, pageW, pageH, "F");
+      doc.setFillColor(...accent);
+      doc.rect(0, 0, pageW, 90, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(26);
+      doc.text("This week's dinners", margin, 48);
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.text("Healthier lineup · recipes + grocery list", margin, 70);
 
-      writeHeading("Keep list");
-      if (!selected.length) writeLine("No meals selected.");
-      else selected.forEach(({ day, meal: m, protein }) => {
-        writeLine(day + " — " + m.name + " (" + protein + ")", { style: "bold", gap: 2 });
-      });
-      if (empties.length) writeLine("Empty slots: " + empties.join(", "), { size: 10 });
+      let y = 120;
+      y = writeWrapped("Week of Sep 27, 2026", margin, y, { size: 12, color: muted, gap: 12 });
 
-      writeHeading("Grocery list");
+      y = writeWrapped("On the menu", margin, y, { size: 16, style: "bold", color: accent, gap: 8 });
+      if (!selected.length) {
+        y = writeWrapped("No meals selected yet.", margin, y, { size: 11, color: muted });
+      } else {
+        selected.forEach(({ day, meal: m, protein }, i) => {
+          if (y > pageH - 80) y = newPageFresh();
+          doc.setFillColor(255, 254, 249);
+          doc.setDrawColor(217, 227, 219);
+          doc.roundedRect(margin, y - 4, maxW, 46, 6, 6, "FD");
+          doc.setFillColor(...(protein === "beef" ? warm : protein === "salmon" ? [56, 102, 140] : accent));
+          doc.circle(margin + 16, y + 18, 8, "F");
+          doc.setTextColor(255, 255, 255);
+          doc.setFontSize(8);
+          doc.setFont("helvetica", "bold");
+          doc.text(String(i + 1), margin + 13.5, y + 21);
+          y = writeWrapped(day + " · " + protein.toUpperCase(), margin + 34, y + 6, {
+            size: 9, style: "bold", color: muted, gap: 1, width: maxW - 44
+          });
+          y = writeWrapped(m.name, margin + 34, y, {
+            size: 12, style: "bold", color: ink, gap: 14, width: maxW - 44
+          });
+        });
+      }
+      if (empties.length) {
+        y = writeWrapped("Empty slots: " + empties.join(", "), margin, y + 4, { size: 10, color: muted });
+      }
+
+      // ===== Grocery page =====
+      y = newPageFresh();
+      doc.setFillColor(...warm);
+      doc.roundedRect(margin, y - 8, 8, 22, 2, 2, "F");
+      y = writeWrapped("Grocery list", margin + 16, y, { size: 18, style: "bold", color: accent, gap: 4 });
+      y = writeWrapped("Everything for the dinners you kept — check your pantry first for oil, salt, pepper, and butter.", margin, y, { size: 10, color: muted, gap: 12 });
       const groceries = buildGrocery(selected);
-      if (!groceries.length) writeLine("No ingredients (no meals kept).");
-      else groceries.forEach((g) => writeLine("• " + g, { size: 10, gap: 1 }));
+      if (!groceries.length) {
+        y = writeWrapped("No ingredients (no meals kept).", margin, y, { size: 11, color: muted });
+      } else {
+        groceries.forEach((g, idx) => {
+          if (y > pageH - margin - 20) y = newPageFresh();
+          const bg = idx % 2 === 0 ? [255, 254, 249] : [232, 242, 234];
+          doc.setFillColor(...bg);
+          doc.roundedRect(margin, y - 10, maxW, 18, 3, 3, "F");
+          y = writeWrapped("•  " + g, margin + 8, y, { size: 10, color: ink, gap: 6, width: maxW - 16 });
+        });
+      }
 
-      writeHeading("Recipes");
-      selected.forEach(({ day, meal: m }) => {
-        writeLine(day + " — " + m.name, { size: 13, style: "bold", gap: 2 });
-        writeLine((m.source || "") + " · " + (m.time || ""), { size: 10, gap: 2 });
-        if (m.pitch) writeLine(m.pitch, { size: 10, gap: 4 });
-        writeLine("Ingredients", { style: "bold", size: 11, gap: 2 });
-        (m.ingredients || []).forEach((i) => writeLine("• " + i, { size: 10, gap: 1 }));
-        y += 4;
-        writeLine("Steps", { style: "bold", size: 11, gap: 2 });
-        (m.steps || []).forEach((s, i) => writeLine((i + 1) + ". " + s, { size: 10, gap: 2 }));
-        y += 8;
+      // ===== One recipe per page (overflow continues on following pages) =====
+      selected.forEach(({ day, meal: m, protein }, idx) => {
+        y = newPageFresh();
+        // Day banner
+        doc.setFillColor(...accent);
+        doc.roundedRect(margin, y - 6, maxW, 56, 8, 8, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(11);
+        doc.text(day.toUpperCase() + "  ·  " + protein.toUpperCase() + "  ·  DINNER " + (idx + 1), margin + 14, y + 14);
+        doc.setFontSize(16);
+        const titleLines = doc.splitTextToSize(m.name, maxW - 28);
+        doc.text(titleLines[0], margin + 14, y + 36);
+        y += 70;
+        if (titleLines.length > 1) {
+          y = writeWrapped(titleLines.slice(1).join(" "), margin, y, { size: 14, style: "bold", color: ink, gap: 6 });
+        }
+
+        y = writeWrapped((m.source || "") + " · " + (m.time || "") + " · ~2 servings", margin, y, { size: 10, color: muted, gap: 6 });
+        if (m.pitch) y = writeWrapped(m.pitch, margin, y, { size: 11, style: "italic", color: ink, gap: 12 });
+
+        // Ingredients card
+        doc.setDrawColor(217, 227, 219);
+        doc.setFillColor(255, 254, 249);
+        const ingStart = y;
+        y = writeWrapped("Ingredients", margin + 10, y + 8, { size: 13, style: "bold", color: accent, gap: 6, width: maxW - 20 });
+        (m.ingredients || []).forEach((i) => {
+          y = writeWrapped("•  " + i, margin + 10, y, { size: 10, color: ink, gap: 2, width: maxW - 20 });
+        });
+        const ingH = Math.max(40, y - ingStart + 8);
+        // redraw card behind is hard after text; skip box, use divider instead
+        doc.setDrawColor(...accent);
+        doc.setLineWidth(1.5);
+        doc.line(margin, ingStart - 4, margin + 40, ingStart - 4);
+        y += 10;
+
+        y = writeWrapped("Steps", margin, y, { size: 13, style: "bold", color: accent, gap: 8 });
+        (m.steps || []).forEach((s, i) => {
+          if (y > pageH - margin - 40) y = newPageFresh();
+          doc.setFillColor(...accent);
+          doc.circle(margin + 10, y - 3, 9, "F");
+          doc.setTextColor(255, 255, 255);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(9);
+          doc.text(String(i + 1), margin + (i + 1 > 9 ? 5 : 7.5), y);
+          y = writeWrapped(s, margin + 28, y - 4, { size: 11, color: ink, gap: 10, width: maxW - 28 });
+        });
+
+        if (m.url) {
+          y += 6;
+          y = writeWrapped("Recipe card: " + m.url, margin, y, { size: 8, color: muted, gap: 2 });
+        }
       });
 
       doc.save("weekly-meal-plan.pdf");
