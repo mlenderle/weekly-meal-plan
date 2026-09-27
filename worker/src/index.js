@@ -1,7 +1,8 @@
 /**
  * Weekly Meal Planner — live recipe match Worker
  *
- * POST /match  { beef, chicken, salmon, vegetarian, healthyOnly, servings, avoid[], customAvoid[] }
+ * POST /match  { beef, chicken, salmon, vegetarian, healthyOnly, cheapBias, avoid[], customAvoid[] }
+ * Plans are always 4 servings. A client servings value is ignored.
  * GET  /health
  *
  * Fetches HelloFresh and Blue Apron public recipe data.
@@ -144,7 +145,7 @@ export function sanitizeMatchPrefs(raw) {
     vegetarian: clampCount(raw.vegetarian),
     healthyOnly: raw.healthyOnly === true || raw.healthyOnly === "true",
     cheapBias: raw.cheapBias === true || raw.cheapBias === "true",
-    servings: Number(raw.servings) === 4 ? 4 : 2,
+    servings: 4,
     avoid: [],
     customAvoid: [],
   };
@@ -273,7 +274,7 @@ async function handleMatch(prefs, env) {
     slots: plan.slots,
     shortages: plan.shortages,
     total: plan.total,
-    servings: prefs.servings === 4 ? 4 : 2,
+    servings: 4,
   };
 }
 

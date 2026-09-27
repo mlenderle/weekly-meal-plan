@@ -98,7 +98,7 @@ curl -sS -X POST https://weekly-meal-plan-live.<subdomain>.workers.dev/match \
   -d '{"beef":2,"chicken":2,"salmon":1,"vegetarian":0,"healthyOnly":true,"servings":4,"avoid":["dairy"],"customAvoid":[]}'
 ```
 
-Expect `{"ok":true,"candidateCount":…,"slots":[…]}`.
+Expect `{"ok":true,"candidateCount":…,"slots":[…]}`. The Worker always plans for 4 servings; a `servings` value of 2 in the body is ignored.
 
 ## 2) Point the Pages frontend at the Worker
 

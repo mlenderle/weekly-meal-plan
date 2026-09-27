@@ -1667,7 +1667,7 @@
   "notes": {
     "pii": "Public site — no names, emails, or mailto.",
     "pdfOnSubmit": "Client-side jsPDF: cover, grocery, one recipe per page.",
-    "servings": "Recipes authored for 2; scale x2 when servings=4.",
-    "vegetarian": "Vegetarian catalog includes plant-forward and dairy/egg-containing meatless kit cards; all recipes serve 2 and scale on submit."
+    "servings": "Plans are always 4 servings. Kit cards are authored for 2 and scaled x2.",
+    "vegetarian": "Vegetarian catalog includes plant-forward and dairy/egg-containing meatless kit cards; kit cards are authored for 2 and scaled to 4 on submit."
   }
 }

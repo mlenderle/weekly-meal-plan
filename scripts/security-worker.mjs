@@ -102,7 +102,15 @@ const okPrefs = sanitizeMatchPrefs({
   customAvoid: ["Cilantro!", "<b>soy</b>"],
 });
 assert.equal(okPrefs.prefs.beef, 2);
-assert.equal(okPrefs.prefs.servings, 2);
+assert.equal(okPrefs.prefs.servings, 4);
+const forcedFour = sanitizeMatchPrefs({
+  beef: 1,
+  chicken: 0,
+  salmon: 0,
+  vegetarian: 0,
+  servings: 2,
+});
+assert.equal(forcedFour.prefs.servings, 4);
 assert.deepEqual(okPrefs.prefs.avoid, ["nuts"]);
 assert.deepEqual(okPrefs.prefs.customAvoid, ["cilantro", "bsoyb"]);
 const cleaned = sanitizeMatchPrefs({
