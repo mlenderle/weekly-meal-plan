@@ -1365,80 +1365,109 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
       // ===== Cover =====
       doc.setFillColor(243, 246, 242);
       doc.rect(0, 0, pageW, pageH, "F");
-      doc.setFillColor(...accent);
-      doc.rect(0, 0, pageW, 90, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(26);
-      doc.text("Weekly meal plan", margin, 48);
-      doc.setFontSize(12);
       doc.setFont("helvetica", "normal");
+      doc.setFontSize(13);
       const coverSub = (prefs.healthyOnly ? "Healthier picks" : "Anything-goes picks") +
         (prefs.cheapBias ? " · Cheaper-grocery bias" : "") +
         " · " + prefs.servings + " servings · recipes + grocery list";
-      doc.text(coverSub, margin, 70);
+      const subLines = doc.splitTextToSize(coverSub, maxW);
+      const barH = 78 + subLines.length * 16;
+      doc.setFillColor(...accent);
+      doc.rect(0, 0, pageW, barH, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(28);
+      doc.text("Weekly meal plan", margin, 48);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(13);
+      subLines.forEach((line, i) => doc.text(line, margin, 76 + i * 16));
 
-      let y = 120;
+      let y = barH + 28;
       const today = new Date();
       const dateStr = today.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-      y = writeWrapped("Generated " + dateStr, margin, y, { size: 12, color: muted, gap: 12 });
-      y = writeWrapped("On the menu", margin, y, { size: 16, style: "bold", color: accent, gap: 8 });
+      y = writeWrapped("Generated " + dateStr, margin, y, { size: 13, color: muted, gap: 12 });
+      y = writeWrapped("On the menu", margin, y, { size: 18, style: "bold", color: accent, gap: 10 });
 
       if (!selected.length) {
-        y = writeWrapped("No meals selected yet.", margin, y, { size: 11, color: muted });
+        y = writeWrapped("No meals selected yet.", margin, y, { size: 13, color: muted });
       } else {
         selected.forEach(({ day, meal: m, protein }, i) => {
-          if (y > pageH - 90) y = newPageFresh();
+          const nameSize = 14;
+          const labelSize = 11;
+          const textW = maxW - 56;
           doc.setFont("helvetica", "bold");
-          doc.setFontSize(12);
-          const nameLines = doc.splitTextToSize(m.name, maxW - 44);
-          const cardH = 28 + nameLines.length * 14;
+          doc.setFontSize(labelSize);
+          const labelLines = doc.splitTextToSize(day + "  ·  " + String(protein || "").toUpperCase(), textW);
+          doc.setFontSize(nameSize);
+          const nameLines = doc.splitTextToSize(m.name, textW);
+          const labelH = labelLines.length * (labelSize + 3);
+          const nameH = nameLines.length * (nameSize + 4);
+          const cardH = labelH + nameH + 30;
+          if (y + cardH > pageH - margin) y = newPageFresh();
           doc.setFillColor(255, 254, 249);
           doc.setDrawColor(217, 227, 219);
-          doc.roundedRect(margin, y - 4, maxW, cardH, 6, 6, "FD");
-          doc.setFillColor(...(protein === "beef" ? warm : protein === "salmon" ? [56, 102, 140] : protein === "vegetarian" ? [138, 109, 59] : accent));
-          doc.circle(margin + 16, y + 14, 8, "F");
+          doc.roundedRect(margin, y, maxW, cardH, 6, 6, "FD");
+          const proteinColor = protein === "beef" ? warm : protein === "salmon" ? [56, 102, 140] : protein === "vegetarian" ? [138, 109, 59] : accent;
+          const cy = y + cardH / 2;
+          doc.setFillColor(...proteinColor);
+          doc.circle(margin + 20, cy, 12, "F");
           doc.setTextColor(255, 255, 255);
-          doc.setFontSize(8);
           doc.setFont("helvetica", "bold");
+          doc.setFontSize(11);
           const num = String(i + 1);
-          const numW = doc.getTextWidth(num);
-          doc.text(num, margin + 16 - numW / 2, y + 17);
-          y = writeWrapped(day + " · " + protein.toUpperCase(), margin + 34, y + 6, {
-            size: 9, style: "bold", color: muted, gap: 1, width: maxW - 44
+          doc.text(num, margin + 20 - doc.getTextWidth(num) / 2, cy + 3.6);
+          let ty = y + 18;
+          doc.setFontSize(labelSize);
+          doc.setTextColor(...muted);
+          labelLines.forEach((line) => {
+            doc.text(line, margin + 42, ty);
+            ty += labelSize + 3;
           });
-          y = writeWrapped(m.name, margin + 34, y, {
-            size: 12, style: "bold", color: ink, gap: 14, width: maxW - 44
+          ty += 2;
+          doc.setFontSize(nameSize);
+          doc.setTextColor(...ink);
+          nameLines.forEach((line) => {
+            doc.text(line, margin + 42, ty);
+            ty += nameSize + 4;
           });
+          y += cardH + 8;
         });
       }
       if (empties.length) {
-        y = writeWrapped("Empty slots: " + empties.join(", "), margin, y + 4, { size: 10, color: muted });
+        y = writeWrapped("Empty slots: " + empties.join(", "), margin, y + 6, { size: 12, color: muted });
       }
 
       // ===== Grocery =====
       y = newPageFresh();
       doc.setFillColor(...warm);
-      doc.roundedRect(margin, y - 8, 8, 22, 2, 2, "F");
-      y = writeWrapped("Grocery list", margin + 16, y, { size: 18, style: "bold", color: accent, gap: 4 });
+      doc.roundedRect(margin, y - 16, 8, 22, 2, 2, "F");
+      y = writeWrapped("Grocery list", margin + 16, y, { size: 22, style: "bold", color: accent, gap: 6 });
       y = writeWrapped(
         "Scaled for " + prefs.servings + " servings. Check your pantry for oil, salt, pepper, and butter.",
-        margin, y, { size: 10, color: muted, gap: 12 }
+        margin, y, { size: 12, color: muted, gap: 12 }
       );
       const groceries = buildGrocery(selected);
       if (!groceries.length) {
-        y = writeWrapped("No ingredients (no meals kept).", margin, y, { size: 11, color: muted });
+        y = writeWrapped("No ingredients (no meals kept).", margin, y, { size: 12, color: muted });
       } else {
+        const itemSize = 12;
+        const lineH = itemSize + 4;
         groceries.forEach((g, idx) => {
-          if (y > pageH - margin - 24) y = newPageFresh();
-          const bg = idx % 2 === 0 ? [255, 254, 249] : [232, 242, 234];
           doc.setFont("helvetica", "normal");
-          doc.setFontSize(10);
-          const gLines = doc.splitTextToSize("•  " + g, maxW - 16);
-          const rowH = Math.max(18, gLines.length * 13 + 6);
+          doc.setFontSize(itemSize);
+          const gLines = doc.splitTextToSize("•  " + g, maxW - 22);
+          const rowH = gLines.length * lineH + 10;
+          if (y + rowH > pageH - margin) y = newPageFresh();
+          const bg = idx % 2 === 0 ? [255, 254, 249] : [232, 242, 234];
           doc.setFillColor(...bg);
-          doc.roundedRect(margin, y - 11, maxW, rowH, 3, 3, "F");
-          y = writeWrapped("•  " + g, margin + 8, y, { size: 10, color: ink, gap: 8, width: maxW - 16 });
+          doc.roundedRect(margin, y - itemSize * 0.92, maxW, rowH, 3, 3, "F");
+          doc.setTextColor(...ink);
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(itemSize);
+          gLines.forEach((line, li) => {
+            doc.text(line, margin + 10, y + li * lineH);
+          });
+          y += rowH + 4;
         });
       }
 
@@ -1468,6 +1497,14 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
         return s + ell;
       }
 
+      // Room under a section title so the rule stays clear of descenders (g, y, p).
+      function sectionHeadBox(size) {
+        const underline = Math.max(5, size * 0.42);
+        // `after` is the gap from the rule down to the next baseline, enough for 12pt caps.
+        const after = 12;
+        return { underline, after, advance: underline + after };
+      }
+
       function composeRecipe(m, profile, stepCount, contentW) {
         const ingredients = m.ingredients || [];
         const steps = m.steps || [];
@@ -1476,8 +1513,9 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
         const titleLines = recipeClamp(m.name, profile.title, contentW - 24, "bold", 2);
         const titleLead = profile.title + 2;
         const bannerH = 22 + titleLines.length * titleLead + 8;
-        blocks.push({ type: "banner", titleLines, bannerH, titleLead });
-        h += bannerH + 8;
+        const afterBanner = Math.max(12, profile.meta + 4);
+        blocks.push({ type: "banner", titleLines, bannerH, titleLead, afterBanner });
+        h += bannerH + afterBanner;
 
         blocks.push({ type: "line", text: "", size: profile.meta, role: "meta", advance: profile.meta + 6 });
         h += profile.meta + 6;
@@ -1500,12 +1538,19 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
           h += advance;
         }
 
-        blocks.push({ type: "head", text: "Ingredients", size: profile.head });
-        h += 12;
+        const headBox = sectionHeadBox(profile.head);
+        blocks.push({
+          type: "head",
+          text: "Ingredients",
+          size: profile.head,
+          underline: headBox.underline,
+          after: headBox.after
+        });
+        h += headBox.advance;
 
         const colGap = 12;
         const colW = (contentW - colGap) / 2;
-        const lead = profile.body + 1.5;
+        const lead = profile.body + 3;
         const rows = [];
         const ingSource = ingredients.length ? ingredients : ["No ingredients listed."];
         for (let i = 0; i < ingSource.length; i += 2) {
@@ -1520,18 +1565,25 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
         blocks.push({ type: "ings", rows, colW, colGap, lead, size: profile.body });
         h += 8;
 
-        blocks.push({ type: "head", text: "Steps", size: profile.head });
-        h += 12;
+        blocks.push({
+          type: "head",
+          text: "Steps",
+          size: profile.head,
+          underline: headBox.underline,
+          after: headBox.after
+        });
+        h += headBox.advance;
 
         const shown = (steps.length ? steps : ["No steps listed."]).slice(0, stepCount);
         const stepBlocks = [];
+        const stepIndent = 22;
         shown.forEach((s, i) => {
-          const lines = recipeClamp(s, profile.body, contentW - 18, "normal", profile.stepMax);
+          const lines = recipeClamp(s, profile.body, contentW - stepIndent, "normal", profile.stepMax);
           const blockH = lines.length * profile.lead + profile.gap;
           stepBlocks.push({ n: String(i + 1), lines, blockH });
           h += blockH;
         });
-        blocks.push({ type: "steps", stepBlocks, size: profile.body, lead: profile.lead });
+        blocks.push({ type: "steps", stepBlocks, size: profile.body, lead: profile.lead, stepIndent });
 
         const hidden = Math.max(0, steps.length - stepCount);
         if (hidden) {
@@ -1542,12 +1594,12 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
         if (m.url) {
           blocks.push({
             type: "line",
-            text: recipeFitLine(m.url, 8, contentW, "normal"),
-            size: 8,
+            text: recipeFitLine(m.url, 9.5, contentW, "normal"),
+            size: 9.5,
             role: "url",
-            advance: 12
+            advance: 14
           });
-          h += 12;
+          h += 14;
         }
         return { blocks, height: h };
       }
@@ -1560,7 +1612,12 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
         const top = 46;
         const bottom = pageH - 22;
         const budget = bottom - top;
+        // Prefer ~12pt ingredients and steps. Smaller profiles are only for a long live card
+        // that would otherwise leave the page. Every recipe is still exactly one page.
         const profiles = [
+          { title: 18, meta: 11, pitch: 12, head: 14, body: 12, lead: 15.5, gap: 8, pitchMax: 3, ingMax: 3, utensils: true },
+          { title: 17, meta: 11, pitch: 11.5, head: 13, body: 11.5, lead: 14.8, gap: 7, pitchMax: 3, ingMax: 3, utensils: true },
+          { title: 16, meta: 10.5, pitch: 11, head: 13, body: 11, lead: 14.2, gap: 6, pitchMax: 3, ingMax: 2, utensils: true },
           { title: 15, meta: 9, pitch: 10, head: 12, body: 10, lead: 13, gap: 7, pitchMax: 2, ingMax: 2, utensils: true },
           { title: 14, meta: 9, pitch: 9.5, head: 11, body: 9.5, lead: 12, gap: 6, pitchMax: 2, ingMax: 2, utensils: false },
           { title: 13, meta: 8.5, pitch: 9, head: 11, body: 9, lead: 11.5, gap: 5, pitchMax: 2, ingMax: 1, utensils: false },
@@ -1634,13 +1691,13 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
             doc.roundedRect(left, y, contentW, block.bannerH, 6, 6, "F");
             doc.setTextColor(255, 255, 255);
             doc.setFont("helvetica", "bold");
-            doc.setFontSize(8);
-            doc.text(recipeFitLine(kicker, 8, contentW - 24, "bold"), left + 12, y + 14);
+            doc.setFontSize(11);
+            doc.text(recipeFitLine(kicker, 11, contentW - 24, "bold"), left + 12, y + 16);
             doc.setFontSize(chosen.profile.title);
             block.titleLines.forEach((line, i) => {
               doc.text(line, left + 12, y + 22 + chosen.profile.title + i * block.titleLead);
             });
-            y += block.bannerH + 8;
+            y += block.bannerH + (block.afterBanner || 8);
           } else if (block.type === "line" && block.role === "meta") {
             doc.setFont("helvetica", "normal");
             doc.setFontSize(block.size);
@@ -1671,11 +1728,11 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
             doc.setFontSize(block.size);
             doc.setTextColor(...accent);
             doc.text(block.text, left, y);
-            const underlineY = y + 3;
+            const underlineY = y + (block.underline != null ? block.underline : Math.max(5, block.size * 0.42));
             doc.setDrawColor(...accent);
-            doc.setLineWidth(0.8);
+            doc.setLineWidth(1.15);
             doc.line(left, underlineY, left + doc.getTextWidth(block.text), underlineY);
-            y = underlineY + 9;
+            y = underlineY + (block.after != null ? block.after : 9);
           } else if (block.type === "ings") {
             doc.setFont("helvetica", "normal");
             doc.setFontSize(block.size);
@@ -1703,7 +1760,7 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
               doc.setFont("helvetica", "normal");
               doc.setTextColor(...ink);
               step.lines.forEach((line, i) => {
-                doc.text(line, left + 18, y + i * block.lead);
+                doc.text(line, left + (block.stepIndent || 22), y + i * block.lead);
               });
               y += step.blockH;
             });
