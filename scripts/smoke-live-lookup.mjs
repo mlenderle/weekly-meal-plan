@@ -18,9 +18,7 @@ const prefs = {
 
 console.log("Smoke: live match with prefs", prefs);
 const t0 = Date.now();
-const result = await handleMatch(prefs, {
-  ALLOWED_ORIGINS: "*",
-});
+const result = await handleMatch(prefs, {});
 const ms = Date.now() - t0;
 
 console.log("ok:", result.ok);

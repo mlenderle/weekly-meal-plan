@@ -48,16 +48,47 @@ Wrangler prints a URL like:
 
 `https://weekly-meal-plan-live.<your-subdomain>.workers.dev`
 
-**Optional:** bind a custom route later; workers.dev is enough.
+**Optional later:** a custom domain is not part of this deploy. workers.dev is enough. Do not buy or configure a domain for this step.
 
 ### CORS
 
-`wrangler.toml` already allows:
+The Worker echoes `Access-Control-Allow-Origin` only when the request `Origin` is an exact allowlist entry. It never reflects an arbitrary Origin and never sends `*`. `*` and `null` in `ALLOWED_ORIGINS` are ignored. A browser origin that is not on the list gets **403** with no `Access-Control-Allow-Origin` header (not the first allowlist entry).
+
+`wrangler.toml` allows:
 
 - `https://mlenderle.github.io`
-- localhost ports used for local preview
+- `http://localhost:4173` and `http://127.0.0.1:4173`
+- `http://localhost:8080` and `http://127.0.0.1:8080`
 
-Edit `ALLOWED_ORIGINS` if you add another host.
+`curl` with no `Origin` still works. Do not add a custom domain here until you actually have one.
+
+### Rate limit and request size
+
+`POST /match` is limited per `CF-Connecting-IP` to 10 requests a minute and 40 an hour (in-isolate; free tier, no extra Cloudflare product). Over the limit the Worker returns **429** and `Retry-After` with `{ "ok": false, "error": "Too many recipe lookups..." }`. `GET /health` has a lighter cap (60 a minute). Bodies over 4 KB are **413**. Protein counts are clamped to 0–7 with a week total of 7, and avoid lists are shortened to known tags plus a few short custom phrases.
+
+### Health
+
+`GET /health` returns `{ "ok": true }` only. It does not list routes or provider details.
+
+### Secrets
+
+Nothing secret belongs in `index.html` or `wrangler.toml`. The HelloFresh token is scraped at request time from their public page; it is not stored in the repo. There is no Slack webhook. If you add an alert later, set it only with `npx wrangler secret put SLACK_WEBHOOK_URL` and do not return that URL from the Worker.
+
+### Pages response headers (later, when a domain sits behind Cloudflare)
+
+GitHub Pages cannot set response headers. The site ships a `<meta>` Content-Security-Policy that allows the inline app script, inline styles, and jsPDF from `cdnjs.cloudflare.com`, and `connect-src` only to the Worker above plus local port 8787. `frame-ancestors` and `X-Content-Type-Options` are ignored in a meta tag.
+
+When you later proxy a hostname through Cloudflare (do not buy or configure that domain as part of this change), add a Response Header Transform Rule on that hostname:
+
+| Header | Value |
+| --- | --- |
+| Content-Security-Policy | `default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://weekly-meal-plan-live.mitch-enderle.workers.dev; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-src 'none'; frame-ancestors 'none'` |
+| X-Content-Type-Options | `nosniff` |
+| X-Frame-Options | `DENY` |
+| Referrer-Policy | `strict-origin-when-cross-origin` |
+| Permissions-Policy | `camera=(), microphone=(), geolocation=()` |
+
+`'unsafe-inline'` stays until the page script is no longer inline. The Worker JSON responses already send `nosniff`, `DENY`, and `frame-ancestors 'none'`.
 
 ### Verify Worker
 
@@ -72,24 +103,9 @@ Expect `{"ok":true,"candidateCount":…,"slots":[…]}`.
 
 ## 2) Point the Pages frontend at the Worker
 
-After deploy, either:
+`index.html` already calls `https://weekly-meal-plan-live.mitch-enderle.workers.dev`. That host is the only public origin the page will use. `?liveApi=` is accepted only for that host or for `http://127.0.0.1:8787` / `http://localhost:8787`. Any other value is ignored and not stored.
 
-**A. One-time URL param (easiest)**  
-Open:
-
-`https://mlenderle.github.io/weekly-meal-plan/?liveApi=https://weekly-meal-plan-live.<subdomain>.workers.dev`
-
-The page stores that in `localStorage` as `mealPlanLiveApiUrl`.
-
-**B. Hardcode in `index.html`**  
-Find:
-
-```js
-  // After Mitch deploys the Worker, paste the workers.dev URL here:
-  return "";
-```
-
-Replace `""` with your Worker origin (no trailing slash), commit, merge to `main`.
+After you change the Worker URL, update both `LIVE_API_ALLOW` in `index.html` and the `connect-src` meta CSP together.
 
 ## 3) Deploy Pages files
 
@@ -104,7 +120,7 @@ Suggested branch: `feature/live-recipe-lookup` → PR → merge `main`.
 
 ### Verify live Pages
 
-1. Open Pages URL (with `?liveApi=…` if not hardcoded).
+1. Open the Pages URL.
 2. Confirm footer / status line shows the Worker URL.
 3. Prefs: Beef 2 · Chicken 2 · Salmon 1 · Healthier · Servings 4 · Avoid Dairy (+ Nuts optional).
 4. Click **Find matching recipes** → loading spinner → picker fills with **Live** badge and live match count.

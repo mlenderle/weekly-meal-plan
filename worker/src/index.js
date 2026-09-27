@@ -14,22 +14,105 @@ import { fetchTheMealDbPool } from "./tmdb.js";
 import { normalizeHelloFreshItem, normalizeJsonLdRecipe, cheapScoreFor } from "./normalize.js";
 import { buildPlanFromCandidates } from "./plan.js";
 
-function corsHeaders(origin, allowedRaw) {
-  const allowed = String(allowedRaw || "")
+/** Exact browser origins. `*` and the string "null" are never honored. */
+export const DEFAULT_ALLOWED_ORIGINS = [
+  "https://mlenderle.github.io",
+  "http://localhost:4173",
+  "http://127.0.0.1:4173",
+  "http://localhost:8080",
+  "http://127.0.0.1:8080",
+];
+
+export const LIMITS = {
+  matchPerMinute: 10,
+  matchPerHour: 40,
+  readPerMinute: 60,
+};
+
+export const MAX_BODY_BYTES = 4096;
+
+const AVOID_IDS = new Set([
+  "dairy", "nuts", "soy", "gluten", "spicy", "mushrooms", "sesame", "egg", "mustard", "shellfish",
+]);
+
+const buckets = new Map();
+
+export function allowedOrigins(raw) {
+  const fromEnv = String(raw || "")
     .split(",")
     .map((s) => s.trim())
-    .filter(Boolean);
-  const ok =
-    !origin ||
-    allowed.includes("*") ||
-    allowed.includes(origin) ||
-    allowed.includes("null");
+    .filter((s) => s && s !== "*" && s.toLowerCase() !== "null");
+  return fromEnv.length ? fromEnv : DEFAULT_ALLOWED_ORIGINS.slice();
+}
+
+export function resetRateLimits() {
+  buckets.clear();
+}
+
+function hitBucket(key, limit, windowMs, now) {
+  let bucket = buckets.get(key);
+  if (!bucket || now - bucket.start >= windowMs) {
+    bucket = { start: now, count: 0 };
+    buckets.set(key, bucket);
+  }
+  bucket.count += 1;
+  if (buckets.size > 4000) {
+    for (const [k, v] of buckets) {
+      if (now - v.start > 3_600_000) buckets.delete(k);
+    }
+  }
+  if (bucket.count > limit) {
+    return {
+      ok: false,
+      retryAfter: Math.max(1, Math.ceil((bucket.start + windowMs - now) / 1000)),
+    };
+  }
+  return { ok: true, retryAfter: 0 };
+}
+
+/** Per-isolate fixed windows. Cloudflare sets CF-Connecting-IP; missing IPs share one bucket. */
+export function consumeRateLimit(ip, kind, now = Date.now()) {
+  const safeIp = String(ip || "unknown").slice(0, 80);
+  if (kind === "match") {
+    const minute = hitBucket(safeIp + ":match:m", LIMITS.matchPerMinute, 60_000, now);
+    if (!minute.ok) return minute;
+    const hour = hitBucket(safeIp + ":match:h", LIMITS.matchPerHour, 3_600_000, now);
+    if (!hour.ok) return hour;
+    return { ok: true, retryAfter: 0 };
+  }
+  return hitBucket(safeIp + ":read", LIMITS.readPerMinute, 60_000, now);
+}
+
+function clientIp(request) {
+  const ip = String(request.headers.get("CF-Connecting-IP") || "").trim();
+  if (ip && ip.length <= 80 && !/[\s,]/.test(ip)) return ip;
+  return "unknown";
+}
+
+export function originDecision(origin, allowedRaw) {
+  const list = allowedOrigins(allowedRaw);
+  if (!origin) return { allow: true, cors: { Vary: "Origin" } };
+  if (list.includes(origin)) {
+    return {
+      allow: true,
+      cors: {
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Max-Age": "86400",
+        Vary: "Origin",
+      },
+    };
+  }
+  return { allow: false, cors: { Vary: "Origin" } };
+}
+
+function securityHeaders() {
   return {
-    "Access-Control-Allow-Origin": ok ? origin || "*" : allowed[0] || "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Max-Age": "86400",
-    Vary: "Origin",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "no-referrer",
+    "X-Frame-Options": "DENY",
+    "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
   };
 }
 
@@ -39,9 +122,61 @@ function json(data, status, extraHeaders) {
     headers: {
       "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": "no-store",
+      ...securityHeaders(),
       ...extraHeaders,
     },
   });
+}
+
+function clampCount(n) {
+  const x = Math.floor(Number(n));
+  if (!Number.isFinite(x)) return 0;
+  return Math.max(0, Math.min(7, x));
+}
+
+export function sanitizeMatchPrefs(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return { error: "Invalid JSON body" };
+  }
+  const prefs = {
+    beef: clampCount(raw.beef),
+    chicken: clampCount(raw.chicken),
+    salmon: clampCount(raw.salmon),
+    vegetarian: clampCount(raw.vegetarian),
+    healthyOnly: raw.healthyOnly === true || raw.healthyOnly === "true",
+    cheapBias: raw.cheapBias === true || raw.cheapBias === "true",
+    servings: Number(raw.servings) === 4 ? 4 : 2,
+    avoid: [],
+    customAvoid: [],
+  };
+  const total = prefs.beef + prefs.chicken + prefs.salmon + prefs.vegetarian;
+  if (total < 1) return { error: "Pick at least one dinner." };
+  if (total > 7) return { error: "Cap dinners at 7 (one week)." };
+
+  const avoidIn = Array.isArray(raw.avoid) ? raw.avoid : [];
+  const seen = new Set();
+  for (const item of avoidIn) {
+    if (prefs.avoid.length >= 12) break;
+    const id = String(item || "").trim().toLowerCase().slice(0, 32);
+    if (!AVOID_IDS.has(id) || seen.has(id)) continue;
+    seen.add(id);
+    prefs.avoid.push(id);
+  }
+
+  const customIn = Array.isArray(raw.customAvoid) ? raw.customAvoid : [];
+  const customSeen = new Set();
+  for (const item of customIn) {
+    if (prefs.customAvoid.length >= 8) break;
+    const tag = String(item || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9 .,'-]/g, "")
+      .trim()
+      .slice(0, 40);
+    if (tag.length < 2 || customSeen.has(tag)) continue;
+    customSeen.add(tag);
+    prefs.customAvoid.push(tag);
+  }
+  return { prefs };
 }
 
 export function isHomeChefMeal(m, id) {
@@ -129,9 +264,9 @@ async function handleMatch(prefs, env) {
     source: "live",
     fetchedAt: new Date().toISOString(),
     providerNotes: {
-      helloFresh: "public gw.hellofresh.com search via SSR bearer",
-      blueApron: "public recipe pages JSON-LD (seed URL discovery, live fetch)",
-      themealDB: "free public API (no key) — filter + lookup",
+      helloFresh: "public recipe search",
+      blueApron: "public recipe pages",
+      themealDB: "public recipe API",
       cheapBias: "When cheapBias=true, prefer higher cheapScore (staples / shorter lists; not store prices)",
       copyright: "Steps paraphrased; temps/times retained",
     },
@@ -145,48 +280,91 @@ async function handleMatch(prefs, env) {
   };
 }
 
+async function readJsonLimited(request) {
+  const declared = Number(request.headers.get("Content-Length") || "");
+  if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) {
+    return { error: "Request body is too large.", status: 413 };
+  }
+  const text = await request.text();
+  if (text.length > MAX_BODY_BYTES) {
+    return { error: "Request body is too large.", status: 413 };
+  }
+  if (!text.trim()) return { value: {} };
+  try {
+    return { value: JSON.parse(text) };
+  } catch (_) {
+    return { error: "Invalid JSON body", status: 400 };
+  }
+}
+
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
-    const cors = corsHeaders(origin, env.ALLOWED_ORIGINS);
+    const decision = originDecision(origin, env && env.ALLOWED_ORIGINS);
     const url = new URL(request.url);
+    const ip = clientIp(request);
+
+    if (!decision.allow) {
+      return json({ ok: false, error: "Origin not allowed" }, 403, decision.cors);
+    }
 
     if (request.method === "OPTIONS") {
-      return new Response(null, { status: 204, headers: cors });
+      const limited = consumeRateLimit(ip, "read");
+      if (!limited.ok) {
+        return json(
+          { ok: false, error: "Too many requests." },
+          429,
+          { ...decision.cors, "Retry-After": String(limited.retryAfter) }
+        );
+      }
+      return new Response(null, { status: 204, headers: { ...securityHeaders(), ...decision.cors } });
     }
 
     if (url.pathname === "/health" || url.pathname === "/") {
-      return json(
-        {
-          ok: true,
-          service: "weekly-meal-plan-live",
-          endpoints: ["GET /health", "POST /match"],
-        },
-        200,
-        cors
-      );
+      const limited = consumeRateLimit(ip, "read");
+      if (!limited.ok) {
+        return json(
+          { ok: false, error: "Too many requests." },
+          429,
+          { ...decision.cors, "Retry-After": String(limited.retryAfter) }
+        );
+      }
+      if (request.method !== "GET" && request.method !== "HEAD") {
+        return json({ ok: false, error: "Not found" }, 404, decision.cors);
+      }
+      return json({ ok: true }, 200, decision.cors);
     }
 
     if (url.pathname === "/match" && request.method === "POST") {
-      let prefs;
-      try {
-        prefs = await request.json();
-      } catch (_) {
-        return json({ ok: false, error: "Invalid JSON body" }, 400, cors);
+      const limited = consumeRateLimit(ip, "match");
+      if (!limited.ok) {
+        return json(
+          {
+            ok: false,
+            error: "Too many recipe lookups from this network. Wait and try again.",
+            retryAfterSeconds: limited.retryAfter,
+          },
+          429,
+          { ...decision.cors, "Retry-After": String(limited.retryAfter) }
+        );
       }
+      const body = await readJsonLimited(request);
+      if (body.error) return json({ ok: false, error: body.error }, body.status, decision.cors);
+      const sanitized = sanitizeMatchPrefs(body.value);
+      if (sanitized.error) return json({ ok: false, error: sanitized.error }, 400, decision.cors);
       try {
-        const result = await handleMatch(prefs || {}, env);
-        return json(result, result.ok ? 200 : 502, cors);
+        const result = await handleMatch(sanitized.prefs, env);
+        return json(result, result.ok ? 200 : 502, decision.cors);
       } catch (err) {
         return json(
           { ok: false, error: err.message || String(err), source: "live" },
           502,
-          cors
+          decision.cors
         );
       }
     }
 
-    return json({ ok: false, error: "Not found" }, 404, cors);
+    return json({ ok: false, error: "Not found" }, 404, decision.cors);
   },
 };
 
