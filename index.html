@@ -60,7 +60,20 @@
       box-shadow: 0 1px 0 rgba(26,34,28,0.03);
       transition: opacity 0.15s, border-color 0.15s;
     }
-    .meal.empty { opacity: 0.72; border-style: dashed; }
+    .meal.empty { opacity: 1; border-style: dashed; border-color: var(--warn); background: #fffaf3; }
+    .meal.show-swap { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+    .swap-btn {
+      margin-top: 8px;
+      appearance: none;
+      border: 1px solid var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 0.88rem;
+      font-weight: 650;
+      cursor: pointer;
+    }
     .meal-top { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; }
     .meal input[type="checkbox"] {
       width: 22px; height: 22px; margin-top: 2px; accent-color: var(--accent);
@@ -86,6 +99,11 @@
       margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em;
     }
     .alt {
+      display: block;
+      width: 100%;
+      text-align: left;
+      font: inherit;
+      color: inherit;
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 10px 12px;
@@ -149,7 +167,7 @@
     <header>
       <div class="week">Week of Sep 27 · Healthier picks</div>
       <h1>This week's dinners</h1>
-      <p>Uncheck a meal to see healthier same-protein swaps. Pick an alternate or leave the slot empty, then submit to download a PDF of recipes and a grocery list.</p>
+      <p>Tap “Swap this meal” (or uncheck) to pick a healthier same-protein alternate. Then submit to download a PDF of recipes and a grocery list.</p>
     </header>
     <div class="bias">Bias: lean proteins · lots of vegetables · grilled / baked / sautéed · lighter sauces</div>
     <div id="slots"></div>
@@ -531,6 +549,7 @@ const DATA = {
       protein: slot.protein,
       mealId: slot.primary,
       kept: true,
+      swapOpen: false,
       alternateIds: slot.alternates.slice()
     }));
 
@@ -544,41 +563,47 @@ const DATA = {
       slotsEl.innerHTML = "";
       state.forEach((s, idx) => {
         const card = document.createElement("div");
-        card.className = "meal" + (s.kept ? "" : " empty") + (s.kept ? "" : " show-swap");
+        const showSwap = !s.kept || s.swapOpen;
+        card.className = "meal" + (s.kept ? "" : " empty") + (showSwap ? " show-swap" : "");
         card.dataset.idx = String(idx);
 
-        if (s.kept && s.mealId) {
-          const m = meal(s.mealId);
-          card.innerHTML = `
-            <div class="meal-top">
-              <input type="checkbox" id="c${idx}" checked />
-              <label for="c${idx}">
-                <div class="day">${s.day} · ${proteinLabel(s.protein)}</div>
+        const titleBlock = (s.kept && s.mealId)
+          ? (() => {
+              const m = meal(s.mealId);
+              return `<div class="day">${s.day} · ${proteinLabel(s.protein)}</div>
                 <div class="name">${m.shortName}</div>
                 <div class="meta">${m.source} · ${m.time} · ${proteinLabel(m.protein)}</div>
                 <div class="pitch">${m.pitch}</div>
                 <div class="link"><a href="${m.url}" target="_blank" rel="noopener">Recipe card</a></div>
-              </label>
-            </div>
-            <div class="swap-panel"></div>`;
-        } else {
-          card.innerHTML = `
+                <button type="button" class="swap-btn" data-swap="${idx}">Swap this meal</button>`;
+            })()
+          : `<div class="day">${s.day} · ${proteinLabel(s.protein)}</div>
+                <div class="name">${s.mealId ? meal(s.mealId).shortName + " — pick a swap" : "Empty slot — pick a swap"}</div>
+                <div class="meta">Tap an option below (same protein), or leave empty</div>`;
+
+        card.innerHTML = `
             <div class="meal-top">
-              <input type="checkbox" id="c${idx}" />
-              <label for="c${idx}">
-                <div class="day">${s.day} · ${proteinLabel(s.protein)}</div>
-                <div class="name">${s.mealId ? meal(s.mealId).shortName + " (unchecked)" : "Empty slot"}</div>
-                <div class="meta">Choose a ${s.protein} alternate below, or leave empty</div>
-              </label>
+              <input type="checkbox" id="c${idx}" ${s.kept && s.mealId ? "checked" : ""} />
+              <label for="c${idx}">${titleBlock}</label>
             </div>
             <div class="swap-panel"></div>`;
-        }
+
+        // Buttons inside label shouldn't toggle checkbox oddly on all browsers
+        card.querySelectorAll("button.swap-btn").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            s.kept = false;
+            s.swapOpen = true;
+            render();
+            const panel = document.querySelector(`.meal[data-idx="${idx}"] .swap-panel`);
+            if (panel) panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          });
+        });
 
         const panel = card.querySelector(".swap-panel");
-        if (!s.kept) {
-          panel.innerHTML = `<div class="swap-title">Same-protein swaps (${s.protein})</div>`;
-          const opts = s.alternateIds.filter((id) => id !== s.mealId);
-          // also allow original primary back in if swapped away
+        if (showSwap) {
+          panel.innerHTML = `<div class="swap-title">Choose a ${s.protein} option</div>`;
           const primaryId = DATA.slots[idx].primary;
           const pool = [];
           const seen = new Set();
@@ -587,13 +612,19 @@ const DATA = {
           }
           pool.forEach((id) => {
             const m = meal(id);
-            const alt = document.createElement("div");
+            if (!m) return;
+            const alt = document.createElement("button");
+            alt.type = "button";
             alt.className = "alt";
-            alt.innerHTML = `<div class="aname">${m.shortName}</div>
+            alt.setAttribute("aria-label", "Choose " + m.shortName);
+            alt.innerHTML = `<div class="aname">${m.shortName}${id === s.mealId ? " (current)" : ""}</div>
               <div class="ameta">${m.source} · ${m.time} · ${m.pitch}</div>`;
-            alt.addEventListener("click", () => {
+            alt.addEventListener("click", (e) => {
+              e.preventDefault();
+              e.stopPropagation();
               s.mealId = id;
               s.kept = true;
+              s.swapOpen = false;
               render();
             });
             panel.appendChild(alt);
@@ -602,9 +633,12 @@ const DATA = {
           leave.type = "button";
           leave.className = "leave-empty";
           leave.textContent = "Leave this day empty";
-          leave.addEventListener("click", () => {
+          leave.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             s.mealId = null;
             s.kept = false;
+            s.swapOpen = true;
             render();
           });
           panel.appendChild(leave);
@@ -613,16 +647,20 @@ const DATA = {
         const checkbox = card.querySelector('input[type="checkbox"]');
         checkbox.addEventListener("change", () => {
           if (checkbox.checked) {
-            // re-check without a meal → restore primary
             if (!s.mealId) s.mealId = DATA.slots[idx].primary;
             s.kept = true;
+            s.swapOpen = false;
           } else {
             s.kept = false;
+            s.swapOpen = true;
           }
           render();
+          if (!s.kept) {
+            const p = document.querySelector(`.meal[data-idx="${idx}"] .swap-panel`);
+            if (p) p.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          }
         });
 
-        // prevent recipe link click from toggling checkbox oddly
         card.querySelectorAll("a").forEach((a) => {
           a.addEventListener("click", (e) => e.stopPropagation());
         });
