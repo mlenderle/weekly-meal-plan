@@ -195,8 +195,8 @@
 
   <div id="print-sheet" aria-hidden="true"></div>
 
-  <!-- html2pdf via CDN for client-side PDF download -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <!-- jsPDF for reliable text PDF (no html2canvas blank pages) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script>
 const DATA = {
   "weekOf": "2026-09-27",
@@ -752,17 +752,7 @@ const DATA = {
       printSheet.innerHTML = html;
     }
 
-    function waitFrames(n) {
-      return new Promise((resolve) => {
-        const step = () => {
-          if (n <= 0) resolve();
-          else { n -= 1; requestAnimationFrame(step); }
-        };
-        step();
-      });
-    }
-
-    async function downloadPdf() {
+    function downloadPdf() {
       const selected = selectedMeals();
       const empties = emptySlots();
       fillPrintSheet(selected, empties);
@@ -777,40 +767,79 @@ const DATA = {
         empties.length ? empties.map((d) => `• ${d}`).join("\n") : "• (none)"
       ].join("\n");
 
-      // Bring sheet on-screen for capture (off-screen -9999px yields blank PDFs)
-      printSheet.classList.add("capturing");
-      await waitFrames(3);
-
-      let saved = false;
-      try {
-        if (typeof html2pdf === "undefined") throw new Error("html2pdf unavailable");
-        const opt = {
-          margin: [0.5, 0.5, 0.5, 0.5],
-          filename: "weekly-meal-plan.pdf",
-          image: { type: "jpeg", quality: 0.98 },
-          pagebreak: { mode: ["css", "legacy"] },
-          html2canvas: {
-            scale: 2,
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: "#ffffff",
-            logging: false,
-            windowWidth: printSheet.scrollWidth,
-            windowHeight: printSheet.scrollHeight
-          },
-          jsPDF: { unit: "in", format: "letter", orientation: "portrait" }
-        };
-        await html2pdf().set(opt).from(printSheet).save();
-        saved = true;
-        result.textContent = summaryLines + "\n\nPDF downloaded: weekly-meal-plan.pdf";
-        result.classList.add("show");
-      } catch (err) {
+      const JsPDF = window.jspdf && window.jspdf.jsPDF;
+      if (!JsPDF) {
         result.textContent = summaryLines + "\n\nOpening print dialog — choose “Save as PDF”.";
         result.classList.add("show");
+        printSheet.classList.add("capturing");
         window.print();
-      } finally {
         printSheet.classList.remove("capturing");
+        return;
       }
+
+      const doc = new JsPDF({ unit: "pt", format: "letter" });
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      const margin = 48;
+      const maxW = pageW - margin * 2;
+      let y = margin;
+
+      function ensureSpace(h) {
+        if (y + h > pageH - margin) {
+          doc.addPage();
+          y = margin;
+        }
+      }
+      function writeLine(text, opts) {
+        const size = (opts && opts.size) || 11;
+        const style = (opts && opts.style) || "normal";
+        const gap = (opts && opts.gap) != null ? opts.gap : 4;
+        doc.setFont("helvetica", style);
+        doc.setFontSize(size);
+        const lines = doc.splitTextToSize(String(text || ""), maxW);
+        lines.forEach((line) => {
+          ensureSpace(size + 4);
+          doc.text(line, margin, y);
+          y += size + 3;
+        });
+        y += gap;
+      }
+      function writeHeading(text) {
+        y += 6;
+        writeLine(text, { size: 14, style: "bold", gap: 6 });
+      }
+
+      writeLine("This week's dinners", { size: 18, style: "bold", gap: 2 });
+      writeLine("Week of Sep 27, 2026 · Healthier lineup", { size: 10, style: "normal", gap: 10 });
+
+      writeHeading("Keep list");
+      if (!selected.length) writeLine("No meals selected.");
+      else selected.forEach(({ day, meal: m, protein }) => {
+        writeLine(day + " — " + m.name + " (" + protein + ")", { style: "bold", gap: 2 });
+      });
+      if (empties.length) writeLine("Empty slots: " + empties.join(", "), { size: 10 });
+
+      writeHeading("Grocery list");
+      const groceries = buildGrocery(selected);
+      if (!groceries.length) writeLine("No ingredients (no meals kept).");
+      else groceries.forEach((g) => writeLine("• " + g, { size: 10, gap: 1 }));
+
+      writeHeading("Recipes");
+      selected.forEach(({ day, meal: m }) => {
+        writeLine(day + " — " + m.name, { size: 13, style: "bold", gap: 2 });
+        writeLine((m.source || "") + " · " + (m.time || ""), { size: 10, gap: 2 });
+        if (m.pitch) writeLine(m.pitch, { size: 10, gap: 4 });
+        writeLine("Ingredients", { style: "bold", size: 11, gap: 2 });
+        (m.ingredients || []).forEach((i) => writeLine("• " + i, { size: 10, gap: 1 }));
+        y += 4;
+        writeLine("Steps", { style: "bold", size: 11, gap: 2 });
+        (m.steps || []).forEach((s, i) => writeLine((i + 1) + ". " + s, { size: 10, gap: 2 }));
+        y += 8;
+      });
+
+      doc.save("weekly-meal-plan.pdf");
+      result.textContent = summaryLines + "\n\nPDF downloaded: weekly-meal-plan.pdf";
+      result.classList.add("show");
 
       try {
         localStorage.setItem("mealPlanPicks", JSON.stringify({
