@@ -235,6 +235,10 @@
       padding: 28px; line-height: 1.4; z-index: 2147483646;
       box-sizing: border-box; visibility: hidden; pointer-events: none;
     }
+    #print-sheet h2 { margin: 18px 0 8px; }
+    #print-sheet h3 { margin: 14px 0 4px; font-size: 1.05rem; }
+    #print-sheet h3.staples { color: #8a4b12; }
+    #print-sheet .staple-note { color: #5c675f; font-style: italic; margin: 0 0 6px; }
     @media print {
       body > main { display: none !important; }
       #print-sheet { position: static !important; visibility: visible !important; padding: 0 !important; }
@@ -1265,15 +1269,305 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
       return state.filter((s) => !s.kept || !s.mealId).map((s) => s.day);
     }
 
+    // Longer phrases are matched first. Labels are the shopper-facing staple names.
+    const STAPLE_LABELS = {
+      "freshly ground black pepper": "Black pepper",
+      "ground black pepper": "Black pepper",
+      "crushed red pepper flakes": "Red pepper flakes",
+      "extra virgin olive oil": "Olive oil",
+      "light brown sugar": "Light brown sugar",
+      "dark brown sugar": "Dark brown sugar",
+      "all purpose flour": "All-purpose flour",
+      "herbes de provence": "Herbes de Provence",
+      "granulated sugar": "Sugar",
+      "confectioners sugar": "Powdered sugar",
+      "powdered sugar": "Powdered sugar",
+      "red pepper flakes": "Red pepper flakes",
+      "crushed red pepper": "Red pepper flakes",
+      "italian seasoning": "Italian seasoning",
+      "garlic powder": "Garlic powder",
+      "onion powder": "Onion powder",
+      "chili powder": "Chili powder",
+      "smoked paprika": "Smoked paprika",
+      "mustard powder": "Mustard powder",
+      "ground mustard": "Mustard powder",
+      "dry mustard": "Mustard powder",
+      "ground ginger": "Ground ginger",
+      "ground cumin": "Cumin",
+      "ground coriander": "Coriander",
+      "cayenne pepper": "Cayenne",
+      "black pepper": "Black pepper",
+      "white pepper": "White pepper",
+      "cracked pepper": "Black pepper",
+      "ground pepper": "Black pepper",
+      "peppercorns": "Black pepper",
+      "brown sugar": "Brown sugar",
+      "cane sugar": "Sugar",
+      "white sugar": "Sugar",
+      "caster sugar": "Sugar",
+      "cooking oil": "Cooking oil",
+      "vegetable oil": "Vegetable oil",
+      "canola oil": "Canola oil",
+      "avocado oil": "Avocado oil",
+      "neutral oil": "Neutral oil",
+      "grapeseed oil": "Grapeseed oil",
+      "sunflower oil": "Sunflower oil",
+      "peanut oil": "Peanut oil",
+      "corn oil": "Corn oil",
+      "coconut oil": "Coconut oil",
+      "salad oil": "Salad oil",
+      "olive oil": "Olive oil",
+      "unsalted butter": "Butter",
+      "salted butter": "Butter",
+      "kosher salt": "Salt",
+      "garlic salt": "Garlic salt",
+      "onion salt": "Onion salt",
+      "seasoned salt": "Seasoned salt",
+      "celery salt": "Celery salt",
+      "sea salt": "Salt",
+      "table salt": "Salt",
+      "dried oregano": "Oregano",
+      "dried thyme": "Thyme",
+      "dried rosemary": "Rosemary",
+      "dried basil": "Dried basil",
+      "dried parsley": "Dried parsley",
+      "dried dill": "Dried dill",
+      "dried sage": "Sage",
+      "bay leaves": "Bay leaves",
+      "bay leaf": "Bay leaves",
+      "chili flakes": "Red pepper flakes",
+      "pepper flakes": "Red pepper flakes",
+      "curry powder": "Curry powder",
+      "paprika": "Paprika",
+      "cayenne": "Cayenne",
+      "cumin": "Cumin",
+      "coriander": "Coriander",
+      "oregano": "Oregano",
+      "thyme": "Thyme",
+      "rosemary": "Rosemary",
+      "turmeric": "Turmeric",
+      "cinnamon": "Cinnamon",
+      "nutmeg": "Nutmeg",
+      "allspice": "Allspice",
+      "cardamom": "Cardamom",
+      "ground cloves": "Cloves",
+      "cloves": "Cloves",
+      "butter": "Butter",
+      "flour": "Flour",
+      "sugar": "Sugar",
+      "salt": "Salt",
+      "pepper": "Black pepper",
+      "oil": "Oil"
+    };
+    const STAPLE_PHRASES = Object.keys(STAPLE_LABELS).sort((a, b) => b.length - a.length);
+    const STAPLE_FILLERS = new Set([
+      "and", "or", "with", "plus", "more", "for", "the", "a", "an", "of", "to", "from", "pan", "sheet",
+      "optional", "taste", "pantry", "extra", "lightly", "virgin", "unsalted", "salted", "granulated",
+      "powdered", "plain", "white", "brown", "light", "dark", "dried", "ground", "smoked", "freshly",
+      "cracked", "kosher", "sea", "table", "all", "purpose", "leaf", "leaves", "red", "black", "flakes",
+      "flake", "powder", "crushed", "pure", "organic", "neutral", "fine", "coarse", "flaky", "about",
+      "approximately", "approx", "drizzle", "splash", "knob", "pat", "pats", "stick", "sticks", "cold",
+      "room", "temperature", "melted", "softened", "divided", "large", "small", "medium", "nonstick",
+      "spray", "scale", "servings", "serving", "mild", "whole", "iodized", "diamond", "crystal"
+    ]);
+
+    function escapeRegExp(s) {
+      return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    function groceryMatchText(line) {
+      return String(line || "")
+        .toLowerCase()
+        .replace(/['’]/g, "")
+        .replace(/\(scale to taste for [^)]*\)/g, " ")
+        .replace(/\([^)]*\)/g, " ")
+        .replace(/[½¼¾⅓⅔⅛⅜⅝⅞]/g, " ")
+        .replace(/[–—]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function stapleWorkText(line) {
+      return groceryMatchText(line).replace(/[-/]/g, " ");
+    }
+
+    function stripStaplePhrases(text) {
+      let s = text;
+      let stripped = false;
+      const labels = [];
+      const seen = new Set();
+      STAPLE_PHRASES.forEach((phrase) => {
+        const re = new RegExp("\\b" + escapeRegExp(phrase) + "\\b", "gi");
+        const next = s.replace(re, " ");
+        if (next === s) return;
+        const label = STAPLE_LABELS[phrase];
+        if (label && !seen.has(label)) {
+          seen.add(label);
+          labels.push(label);
+        }
+        stripped = true;
+        s = next;
+      });
+      return { text: s, stripped, labels };
+    }
+
+    function stapleResidueWords(text) {
+      let s = text.replace(/\d+(?:\.\d+)?/g, " ");
+      s = s.replace(/\b(tbsp|tablespoons?|tsp|teaspoons?|cups?|oz|ounces?|lb|lbs|pounds?|kg|ml|grams?)\b/g, " ");
+      return s.replace(/[^a-z\s]/g, " ").split(/\s+/).filter((w) => w && !STAPLE_FILLERS.has(w));
+    }
+
+    function isPureStaple(line) {
+      const hit = stripStaplePhrases(stapleWorkText(line));
+      if (!hit.stripped) return false;
+      return stapleResidueWords(hit.text).length === 0;
+    }
+
+    function stapleLabelsFromText(line) {
+      return stripStaplePhrases(stapleWorkText(line)).labels;
+    }
+
+    function isPrepOnly(line) {
+      let s = stapleWorkText(line).replace(/\d+(?:\.\d+)?/g, " ");
+      s = s.replace(/\b(tbsp|tablespoons?|tsp|teaspoons?|cups?|oz|ounces?|lb|lbs|pounds?|kg|ml|grams?)\b/g, " ");
+      const words = s.replace(/[^a-z\s]/g, " ").split(/\s+/).filter(Boolean);
+      if (!words.length) return true;
+      const prep = new Set([
+        "drained", "rinsed", "and", "diced", "minced", "chopped", "sliced", "thinly", "roughly", "finely",
+        "optional", "thawed", "packed", "divided", "melted", "softened", "halved", "quartered", "peeled",
+        "seeded", "trimmed", "washed", "patted", "dry", "to", "taste", "from", "pantry", "for", "the", "a",
+        "an", "of", "with", "more", "plus", "about", "approximately", "approx", "into", "pieces", "piece",
+        "small", "medium", "large", "extra", "very", "well", "lightly", "freshly", "room", "temperature",
+        "grated", "shredded", "torn", "crumbled", "julienned", "ground", "lengthwise", "crosswise", "widthwise",
+        "bite", "size", "serving", "servings", "scale", "use", "half", "or", "in", "on", "at", "as",
+        "needed", "per", "each", "side", "warm", "cold", "hot", "beaten", "whisked", "cubed", "cut",
+        "desired", "preferred", "together", "remaining", "reserved", "loosely", "firmly", "gently"
+      ]);
+      return words.every((w) => prep.has(w));
+    }
+
+    function isProteinLine(line) {
+      const s = groceryMatchText(line);
+      if (/\b(broth|stock|bouillon|demi-?glace|concentrate|base|sauce|glaze|dressing|powder|seasoning)\b/.test(s)) return false;
+      if (/\bchickpeas?\b/.test(s)) return false;
+      return /\b(chicken|beef|steak|sirloin|bavette|brisket|flank|skirt|pork|bacon|sausage|turkey|lamb|salmon|shrimp|prawns?|cod|tilapia|tuna|tofu|tempeh|seitan)\b/.test(s);
+    }
+
+    function isDairyLine(line) {
+      const s = groceryMatchText(line);
+      if (/\b(dressing|vinaigrette|sauce|glaze|mayo|mayonnaise|noodles?)\b/.test(s)) return false;
+      if (/\b(coconut|almond|oat|soy|rice)\s+milk\b/.test(s)) return false;
+      if (/\bbutter lettuce\b/.test(s)) return false;
+      if (/\b(peanut|almond|sunflower|apple|cookie)\s+butter\b/.test(s)) return false;
+      if (/\beggplant\b/.test(s)) return false;
+      if (/\b(garlic herb butter|herb butter|compound butter)\b/.test(s)) return true;
+      return /\b(buttermilk|whole milk|milk|cream cheese|sour cream|heavy cream|whipping cream|half and half|creme fraiche|yogurt|yoghurt|cheddar|parmesan|parmigiano|mozzarella|feta|halloumi|ricotta|gouda|brie|swiss|provolone|cotija|paneer|cheese|cream|eggs?)\b/.test(s);
+    }
+
+    function isProduceLine(line) {
+      const s = groceryMatchText(line);
+      if (/\b(paste|pesto|sauce|powder|vinegar|broth|stock|juice|jam|jelly|gnocchi|tortillas?|breadcrumb|panko|noodles?|pasta|rice|flour|syrup|honey|dressing|glaze|oil|seasoning|spice blend|bread|baguette|rolls?|buns?)\b/.test(s)) return false;
+      if (/\b(sun-?dried|canned|pickled)\b/.test(s)) return false;
+      if (/\b(fried|crispy)\s+onions?\b/.test(s)) return false;
+      if (/\bdried\b/.test(s) && !/\bfresh\b/.test(s)) return false;
+      return /\b(avocados?|arugula|asparagus|broccolini|baby broccoli|broccoli|brussels sprouts?|cabbages?|carrots?|celery|cilantro|coleslaw|cucumbers?|dill|edamame|eggplants?|garlic|ginger|kale|leeks?|lemons?|limes?|lettuces?|mango(?:es)?|mushrooms?|onions?|scallions?|shallots?|green onions?|spinach|squash|zucchinis?|apples?|oranges?|pears?|peach(?:es)?|pineapples?|watermelons?|melons?|grapes?|blueberries|strawberries|blackberries|raspberries|berries|green beans?|snap peas?|snow peas?|sugar snaps?|mixed greens|salad greens|romaine|potato(?:es)?|sweet potato(?:es)?|yams?|tomato(?:es)?|bell peppers?|jalapeños?|jalapenos?|poblanos?|serranos?|chiles?|chilis?|chives?|parsley|basil|mint|sage|radishes?|beets?|turnips?|parsnips?|fennel|bok choy|cauliflower|corn|peas|pea|slaw)\b/.test(s);
+    }
+
+    function classifyGroceryText(line) {
+      if (isPureStaple(line)) return "staples";
+      if (isProteinLine(line)) return "proteins";
+      if (isDairyLine(line)) return "dairy";
+      if (isProduceLine(line)) return "produce";
+      return "pantry";
+    }
+
+    function splitOutsideParens(line) {
+      const parts = [];
+      let buf = "";
+      let depth = 0;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === "(") depth++;
+        else if (ch === ")" && depth) depth--;
+        if (depth === 0 && (ch === "," || ch === "+" || ch === ";")) {
+          if (buf.trim()) parts.push(buf.trim());
+          buf = "";
+          continue;
+        }
+        buf += ch;
+      }
+      if (buf.trim()) parts.push(buf.trim());
+      return parts.length ? parts : [String(line || "").trim()].filter(Boolean);
+    }
+
+    function entriesFromGroceryLine(line) {
+      const original = String(line || "").trim();
+      if (!original) return [];
+      const parts = splitOutsideParens(original);
+      const chunks = [];
+      parts.forEach((part) => {
+        if (isPrepOnly(part)) {
+          if (chunks.length) chunks[chunks.length - 1].text += ", " + part;
+          else chunks.push({ text: part, prep: true });
+        } else if (chunks.length && chunks[chunks.length - 1].prep) {
+          const prep = chunks.pop();
+          chunks.push({ text: prep.text + ", " + part, prep: false });
+        } else chunks.push({ text: part, prep: false });
+      });
+      const foods = chunks.filter((c) => !c.prep);
+      if (!foods.length) return [{ section: "pantry", text: original }];
+      const tagged = foods.map((c) => ({ section: classifyGroceryText(c.text), text: c.text }));
+      const ids = new Set(tagged.map((t) => t.section));
+      if (ids.size === 1 && !ids.has("staples")) return [{ section: tagged[0].section, text: original }];
+      const out = [];
+      tagged.forEach((entry) => {
+        if (entry.section !== "staples") {
+          out.push(entry);
+          return;
+        }
+        const labels = stapleLabelsFromText(entry.text);
+        if (!labels.length) out.push({ section: "staples", text: entry.text });
+        else labels.forEach((text) => out.push({ section: "staples", text }));
+      });
+      return out;
+    }
+
+    function grocerySectionTitle(id, items) {
+      if (id === "produce") return "Produce";
+      if (id === "proteins") return "Proteins";
+      if (id === "dairy") {
+        const isEgg = (item) => /\beggs?\b/i.test(item) && !/\beggplant/i.test(item);
+        const egg = items.some(isEgg);
+        const other = items.some((item) => !isEgg(item));
+        if (egg && other) return "Dairy & eggs";
+        if (egg) return "Eggs";
+        return "Dairy";
+      }
+      if (id === "staples") return "Pantry staples / likely already have";
+      return "Pantry & other";
+    }
+
     function buildGrocery(selected) {
-      const bag = new Map();
+      const groups = {
+        produce: new Map(),
+        proteins: new Map(),
+        dairy: new Map(),
+        pantry: new Map(),
+        staples: new Map()
+      };
       selected.forEach(({ meal: m }) => {
         (m.ingredients || []).forEach((line) => {
-          const key = line.toLowerCase();
-          if (!bag.has(key)) bag.set(key, line);
+          entriesFromGroceryLine(line).forEach(({ section, text }) => {
+            const key = text.toLowerCase().replace(/\s+/g, " ").trim();
+            if (!key || !groups[section] || groups[section].has(key)) return;
+            groups[section].set(key, text);
+          });
         });
       });
-      return [...bag.values()].sort((a, b) => a.localeCompare(b));
+      return ["produce", "proteins", "dairy", "pantry", "staples"].map((id) => {
+        const items = [...groups[id].values()].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+        return { id, title: grocerySectionTitle(id, items), items };
+      }).filter((section) => section.items.length);
     }
 
     function fillPrintSheet(selected, empties) {
@@ -1284,8 +1578,15 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
       else html += `<ul>` + selected.map(({ day, meal: m, protein }) =>
         `<li><strong>${escapeHtml(day)}</strong> — ${escapeHtml(m.name)} (${escapeHtml(protein)})</li>`).join("") + `</ul>`;
       if (empties.length) html += `<p>Empty slots: ${escapeHtml(empties.join(", "))}</p>`;
-      html += `<h2>Grocery list</h2><ul>` +
-        buildGrocery(selected).map((g) => `<li>${escapeHtml(g)}</li>`).join("") + `</ul>`;
+      html += `<h2>Grocery list</h2>`;
+      const grocerySections = buildGrocery(selected);
+      if (!grocerySections.length) html += `<p>No ingredients (no meals kept).</p>`;
+      else grocerySections.forEach((section) => {
+        const staple = section.id === "staples";
+        html += `<h3${staple ? " class=\"staples\"" : ""}>${escapeHtml(section.title)}</h3>`;
+        if (staple) html += `<p class="staple-note">Skip these if you already keep them in the kitchen.</p>`;
+        html += `<ul>` + section.items.map((g) => `<li>${escapeHtml(g)}</li>`).join("") + `</ul>`;
+      });
       selected.forEach(({ day, meal: m }) => {
         html += `<div class="meal-block"><h3>${escapeHtml(day)} — ${escapeHtml(m.name)}</h3>
           <strong>Ingredients</strong><ul>${(m.ingredients||[]).map(i=>`<li>${escapeHtml(i)}</li>`).join("")}</ul>
@@ -1435,8 +1736,8 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
       doc.roundedRect(margin, y - 16, 8, 22, 2, 2, "F");
       y = writeWrapped("Grocery list", margin + 16, y, { size: 22, style: "bold", color: accent, gap: 6 });
       y = writeWrapped(
-        "Scaled for " + prefs.servings + " servings. Check your pantry for oil, salt, pepper, and butter.",
-        margin, y, { size: 12, color: muted, gap: 12 }
+        "Scaled for " + prefs.servings + " servings. Grouped for the store. Pantry staples you may already have are listed last.",
+        margin, y, { size: 12, color: muted, gap: 14 }
       );
       const groceries = buildGrocery(selected);
       if (!groceries.length) {
@@ -1444,22 +1745,101 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
       } else {
         const itemSize = 12;
         const lineH = itemSize + 4;
-        groceries.forEach((g, idx) => {
+        const bottom = pageH - margin;
+
+        function measureItem(text) {
           doc.setFont("helvetica", "normal");
           doc.setFontSize(itemSize);
-          const gLines = doc.splitTextToSize("•  " + g, maxW - 22);
-          const rowH = gLines.length * lineH + 10;
-          if (y + rowH > pageH - margin) y = newPageFresh();
-          const bg = idx % 2 === 0 ? [255, 254, 249] : [232, 242, 234];
+          const gLines = doc.splitTextToSize("•  " + text, maxW - 22);
+          return { gLines, rowH: gLines.length * lineH + 10 };
+        }
+
+        function drawItem(text, idx, isStaples) {
+          const measured = measureItem(text);
+          const bg = isStaples
+            ? (idx % 2 === 0 ? [255, 250, 242] : [255, 243, 224])
+            : (idx % 2 === 0 ? [255, 254, 249] : [232, 242, 234]);
           doc.setFillColor(...bg);
-          doc.roundedRect(margin, y - itemSize * 0.92, maxW, rowH, 3, 3, "F");
+          doc.roundedRect(margin, y - itemSize * 0.92, maxW, measured.rowH, 3, 3, "F");
           doc.setTextColor(...ink);
           doc.setFont("helvetica", "normal");
           doc.setFontSize(itemSize);
-          gLines.forEach((line, li) => {
+          measured.gLines.forEach((line, li) => {
             doc.text(line, margin + 10, y + li * lineH);
           });
-          y += rowH + 4;
+          y += measured.rowH + 4;
+        }
+
+        groceries.forEach((section) => {
+          const isStaples = section.id === "staples";
+          const headSize = 14;
+          const titleLead = headSize + 3;
+          const note = isStaples ? "Skip these if you already keep them in the kitchen." : "";
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(headSize);
+          const titleLines = doc.splitTextToSize(section.title, maxW - 20);
+          doc.setFont("helvetica", "italic");
+          doc.setFontSize(11);
+          const noteLines = note ? doc.splitTextToSize(note, maxW - 20) : [];
+          const noteLead = 14;
+          const headerH = 24 + titleLines.length * titleLead + (noteLines.length ? 10 + noteLines.length * noteLead : 0) + 12;
+          const firstItem = measureItem(section.items[0]);
+
+          function paintHeader(continued) {
+            const title = continued ? section.title + " (continued)" : section.title;
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(headSize);
+            const lines = doc.splitTextToSize(title, maxW - 20);
+            const noteDraw = continued ? [] : noteLines;
+            const lastBasePreview = y + (lines.length - 1) * titleLead;
+            const underline = Math.max(6, headSize * 0.42);
+            let cursor = lastBasePreview + (isStaples ? 18 : underline + 14);
+            if (noteDraw.length) cursor += noteDraw.length * noteLead + 4;
+            const blockBottom = cursor + 4;
+            if (isStaples) {
+              doc.setFillColor(255, 244, 230);
+              doc.roundedRect(margin, y - 14, maxW, blockBottom - (y - 14), 5, 5, "F");
+            }
+            doc.setFillColor(...(isStaples ? warm : accent));
+            doc.roundedRect(margin + 8, y - 12, 6, 16, 1, 1, "F");
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(headSize);
+            doc.setTextColor(...(isStaples ? warm : accent));
+            lines.forEach((line, i) => {
+              doc.text(line, margin + 20, y + i * titleLead);
+            });
+            const lastBase = y + (lines.length - 1) * titleLead;
+            let next = lastBase + 18;
+            if (!isStaples) {
+              doc.setDrawColor(...accent);
+              doc.setLineWidth(1.1);
+              const ruleY = lastBase + underline;
+              doc.line(margin + 20, ruleY, margin + 20 + Math.min(doc.getTextWidth(lines[lines.length - 1]), maxW - 28), ruleY);
+              next = ruleY + 14;
+            }
+            if (noteDraw.length) {
+              doc.setFont("helvetica", "italic");
+              doc.setFontSize(11);
+              doc.setTextColor(...muted);
+              noteDraw.forEach((line, i) => {
+                doc.text(line, margin + 20, next + i * noteLead);
+              });
+              next += noteDraw.length * noteLead + 4;
+            }
+            y = next + 8;
+          }
+
+          if (y + headerH + firstItem.rowH > bottom) y = newPageFresh();
+          paintHeader(false);
+          section.items.forEach((item, idx) => {
+            const measured = measureItem(item);
+            if (y + measured.rowH > bottom) {
+              y = newPageFresh();
+              paintHeader(true);
+            }
+            drawItem(item, idx, isStaples);
+          });
+          y += 16;
         });
       }
 
