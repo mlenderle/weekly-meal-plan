@@ -1,0 +1,16 @@
+{
+  "name": "weekly-meal-plan-live",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Cloudflare Worker: live HelloFresh/Blue Apron–style recipe match for the weekly meal planner",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev src/index.js --local",
+    "deploy": "wrangler deploy",
+    "smoke": "node ../scripts/smoke-live-lookup.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4.34.0"
+  }
+}
