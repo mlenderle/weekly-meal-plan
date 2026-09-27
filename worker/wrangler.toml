@@ -1,0 +1,10 @@
+name = "weekly-meal-plan-live"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+# Free tier Workers are enough. After deploy, set the Pages frontend LIVE_API_URL
+# to https://weekly-meal-plan-live.<your-subdomain>.workers.dev
+
+[vars]
+# Comma-separated Origins allowed to call this Worker (CORS).
+ALLOWED_ORIGINS = "https://mlenderle.github.io,http://localhost:4173,http://127.0.0.1:4173,http://localhost:8080,http://127.0.0.1:8080,null"
