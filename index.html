@@ -71,12 +71,33 @@
     .row:last-child { margin-bottom: 0; }
     .row label { font-weight: 600; font-size: 0.95rem; }
     .row .hint { display: block; font-weight: 400; color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
-    select, input[type="number"], input[type="text"] {
+    select, input[type="text"] {
       font: inherit; padding: 8px 12px; border-radius: 10px;
       border: 1px solid var(--border); background: #fff; min-width: 88px;
       color: var(--ink);
     }
-    input[type="number"] { width: 72px; text-align: center; }
+    select.count-select {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 4.75rem;
+      min-width: 4.75rem;
+      padding: 8px 28px 8px 10px;
+      text-align: center;
+      text-align-last: center;
+      font-weight: 650;
+      cursor: pointer;
+      background-color: #fff;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='none' stroke='%235f6b63' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M2.2 4.4 6 8.1 9.8 4.4'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      background-size: 12px 12px;
+    }
+    select.count-select:hover { border-color: var(--accent); }
+    select.count-select:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+      border-color: var(--accent);
+    }
     .seg {
       display: inline-flex; border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
     }
@@ -246,20 +267,56 @@
       <div class="card">
         <h2>How many dinners of each?</h2>
         <div class="row">
-          <label>Beef <span class="hint">Steaks, bowls, fajitas…</span></label>
-          <input type="number" id="pref-beef" min="0" max="7" value="2" />
+          <label for="pref-beef">Beef <span class="hint">Steaks, bowls, fajitas…</span></label>
+          <select id="pref-beef" class="count-select" aria-label="Beef dinners">
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2" selected>2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+          </select>
         </div>
         <div class="row">
-          <label>Chicken <span class="hint">Cutlets, salads, stir-fries…</span></label>
-          <input type="number" id="pref-chicken" min="0" max="7" value="2" />
+          <label for="pref-chicken">Chicken <span class="hint">Cutlets, salads, stir-fries…</span></label>
+          <select id="pref-chicken" class="count-select" aria-label="Chicken dinners">
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2" selected>2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+          </select>
         </div>
         <div class="row">
-          <label>Salmon <span class="hint">Roasted, glazed, tacos…</span></label>
-          <input type="number" id="pref-salmon" min="0" max="7" value="1" />
+          <label for="pref-salmon">Salmon <span class="hint">Roasted, glazed, tacos…</span></label>
+          <select id="pref-salmon" class="count-select" aria-label="Salmon dinners">
+            <option value="0">0</option>
+            <option value="1" selected>1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+          </select>
         </div>
         <div class="row">
-          <label>Vegetarian <span class="hint">Beans, tofu, cheese, vegetables…</span></label>
-          <input type="number" id="pref-vegetarian" min="0" max="7" value="0" />
+          <label for="pref-vegetarian">Vegetarian <span class="hint">Beans, tofu, cheese, vegetables…</span></label>
+          <select id="pref-vegetarian" class="count-select" aria-label="Vegetarian dinners">
+            <option value="0" selected>0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+          </select>
         </div>
         <p class="total-hint" id="pref-total">Total dinners: 5</p>
       </div>
