@@ -1738,7 +1738,11 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
       y = newPageFresh();
       y = drawUnderlinedHeading("Grocery list", margin, y, 22, maxW);
       y = writeWrapped(
-        "Scaled for " + prefs.servings + " servings. Grouped for the store. Check off each line. Pantry staples are labeled SKIP IF YOU HAVE.",
+        "Scaled for " + prefs.servings + " servings. Grouped for the store. Check off each line.",
+        margin, y, { size: 12, gap: 3 }
+      );
+      y = writeWrapped(
+        "Pantry staples are labeled SKIP IF YOU HAVE.",
         margin, y, { size: 12, gap: 16 }
       );
       const groceries = buildGrocery(selected);
@@ -1887,7 +1891,7 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
         let h = 0;
         const titleLines = recipeClamp(m.name, profile.title, contentW, "bold", 2);
         const titleLead = profile.title + 2;
-        const kickerAdvance = 16;
+        const kickerAdvance = 22;
         const underlineGap = Math.max(5, profile.title * 0.42);
         const afterRule = Math.max(10, profile.meta + 2);
         blocks.push({
