@@ -139,9 +139,23 @@
 
     /* Printable / PDF sheet (off-screen until print/PDF) */
     #print-sheet {
-      position: absolute; left: -9999px; top: 0; width: 800px;
-      background: white; color: #111; font-family: Georgia, "Times New Roman", serif;
-      padding: 28px; line-height: 1.4;
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 8.5in;
+      max-width: 100%;
+      background: white;
+      color: #111;
+      font-family: Georgia, "Times New Roman", serif;
+      padding: 28px;
+      line-height: 1.4;
+      z-index: 2147483646;
+      box-sizing: border-box;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    #print-sheet.capturing {
+      visibility: visible;
     }
     #print-sheet h1 { font-size: 1.4rem; margin: 0 0 4px; }
     #print-sheet .sub { color: #555; margin-bottom: 18px; font-size: 0.95rem; }
@@ -186,7 +200,7 @@
   <script>
 const DATA = {
   "weekOf": "2026-09-27",
-  "timezone": "America/Boise",
+  "timezone": "local",
   "bias": "healthier \u2014 lean proteins, vegetables, grilled/baked/saut\u00e9ed over fried/creamy-heavy",
   "proteinMix": {
     "beef": 2,
@@ -535,7 +549,7 @@ const DATA = {
   "notes": {
     "pii": "Site UI must remain generic \u2014 no household names or emails in the page.",
     "pdfOnSubmit": "Client-side printable PDF of selected meals (recipes + grocery list).",
-    "nightlyEmail": "Static Pages cannot send email. Scheduled nightly email needs a bot routine + Gmail (human-in-the-loop) or a backend; this data file is the source of truth for that automation."
+    "nightlyEmail": "Email automation is handled outside this static page."
   }
 };
 
@@ -738,6 +752,16 @@ const DATA = {
       printSheet.innerHTML = html;
     }
 
+    function waitFrames(n) {
+      return new Promise((resolve) => {
+        const step = () => {
+          if (n <= 0) resolve();
+          else { n -= 1; requestAnimationFrame(step); }
+        };
+        step();
+      });
+    }
+
     async function downloadPdf() {
       const selected = selectedMeals();
       const empties = emptySlots();
@@ -753,23 +777,39 @@ const DATA = {
         empties.length ? empties.map((d) => `• ${d}`).join("\n") : "• (none)"
       ].join("\n");
 
+      // Bring sheet on-screen for capture (off-screen -9999px yields blank PDFs)
+      printSheet.classList.add("capturing");
+      await waitFrames(3);
+
+      let saved = false;
       try {
         if (typeof html2pdf === "undefined") throw new Error("html2pdf unavailable");
         const opt = {
-          margin: 0.5,
+          margin: [0.5, 0.5, 0.5, 0.5],
           filename: "weekly-meal-plan.pdf",
           image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true },
+          pagebreak: { mode: ["css", "legacy"] },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: "#ffffff",
+            logging: false,
+            windowWidth: printSheet.scrollWidth,
+            windowHeight: printSheet.scrollHeight
+          },
           jsPDF: { unit: "in", format: "letter", orientation: "portrait" }
         };
         await html2pdf().set(opt).from(printSheet).save();
+        saved = true;
         result.textContent = summaryLines + "\n\nPDF downloaded: weekly-meal-plan.pdf";
         result.classList.add("show");
       } catch (err) {
-        // Fallback: open print dialog (Save as PDF)
         result.textContent = summaryLines + "\n\nOpening print dialog — choose “Save as PDF”.";
         result.classList.add("show");
         window.print();
+      } finally {
+        printSheet.classList.remove("capturing");
       }
 
       try {
