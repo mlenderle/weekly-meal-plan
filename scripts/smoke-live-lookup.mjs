@@ -4,6 +4,7 @@
  * Runs handleMatch against real HelloFresh and Blue Apron public endpoints.
  */
 import { handleMatch } from "../worker/src/index.js";
+import { recipeIssues } from "../worker/src/protein.js";
 
 const prefs = {
   beef: 2,
@@ -44,5 +45,12 @@ for (const m of Object.values(result.candidates)) byP[m.protein] = (byP[m.protei
 console.log("pool by protein:", byP);
 if (byP.beef < 1 || byP.chicken < 1 || byP.salmon < 1) {
   console.warn("WARN: thin pool for some proteins — still ok if slots filled");
+}
+for (const [id, m] of Object.entries(result.candidates || {})) {
+  const issues = recipeIssues(m);
+  if (issues.length) {
+    console.error("PROTEIN MISMATCH", id, m.name, m.protein, issues);
+    process.exit(1);
+  }
 }
 console.log("SMOKE OK");

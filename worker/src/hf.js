@@ -3,6 +3,8 @@
  * No user account. Token scraped from the public recipes search page.
  */
 
+import { makeRng, shuffle } from "./random.js";
+
 const HF_SEARCH_PAGE = "https://www.hellofresh.com/recipes/search?q=dinner";
 const HF_API = "https://gw.hellofresh.com/api/recipes/search";
 
@@ -40,6 +42,8 @@ export async function getHelloFreshToken(fetchImpl = fetch) {
       "User-Agent": "WeeklyMealPlanner/1.0 (+https://mlenderle.github.io/weekly-meal-plan/)",
       Accept: "text/html",
     },
+    cache: "no-store",
+    cf: { cacheTtl: 0 },
   });
   if (!res.ok) throw new Error(`HF token page HTTP ${res.status}`);
   const html = await res.text();
@@ -53,48 +57,68 @@ export async function getHelloFreshToken(fetchImpl = fetch) {
   return token;
 }
 
-async function searchOnce(token, q, limit, fetchImpl, extra = "") {
+const HF_ORDERS = ["-date", "-rating", "date"];
+
+/**
+ * Which queries, sorts, and pages to ask for. Different seeds walk different
+ * slices of the catalog instead of always taking the top-rated first page.
+ */
+export function helloFreshSearchPlan(protein, seed) {
+  const rng = makeRng(`${seed}|hf|${protein}`);
+  const queries = PROTEIN_QUERIES[protein] || [protein];
+  const extras = PROTEIN_EXTRAS[protein] || [""];
+  const jobs = [];
+  for (const q of queries) {
+    for (const extra of extras) jobs.push({ q, extra });
+  }
+  return shuffle(jobs, rng).slice(0, 4).map((job) => ({
+    q: job.q,
+    extra: job.extra,
+    order: HF_ORDERS[Math.floor(rng() * HF_ORDERS.length)],
+    skip: Math.floor(rng() * 12),
+    limit: 8,
+  }));
+}
+
+async function searchOnce(token, job, fetchImpl) {
   const url =
-    `${HF_API}?country=us&locale=en-US&limit=${limit}&order=-rating&q=` +
-    encodeURIComponent(q) +
-    (extra || "");
+    `${HF_API}?country=us&locale=en-US&limit=${job.limit}&take=${job.limit}&skip=${job.skip}&order=${encodeURIComponent(job.order)}&q=` +
+    encodeURIComponent(job.q) +
+    (job.extra || "");
   const res = await fetchImpl(url, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: "application/json",
       "User-Agent": "WeeklyMealPlanner/1.0",
     },
+    cache: "no-store",
+    cf: { cacheTtl: 0 },
   });
-  if (!res.ok) throw new Error(`HF search HTTP ${res.status} for q=${q}`);
+  if (!res.ok) throw new Error(`HF search HTTP ${res.status} for q=${job.q}`);
   return res.json();
 }
 
-export async function searchHelloFreshForProtein(protein, { limit = 12, fetchImpl = fetch } = {}) {
+export async function searchHelloFreshForProtein(protein, { fetchImpl = fetch, seed = "" } = {}) {
   const token = await getHelloFreshToken(fetchImpl);
-  const queries = PROTEIN_QUERIES[protein] || [protein];
-  const extras = PROTEIN_EXTRAS[protein] || [""];
+  const plan = helloFreshSearchPlan(protein, seed);
   const byId = new Map();
-  for (const q of queries) {
-    for (const extra of extras) {
-      try {
-        const data = await searchOnce(token, q, limit, fetchImpl, extra);
-        for (const item of data.items || []) {
-          if (item?.id) byId.set(item.id, item);
-        }
-      } catch (err) {
-        console.log("hf query fail", q, extra, String(err));
+  for (const job of plan) {
+    try {
+      const data = await searchOnce(token, job, fetchImpl);
+      for (const item of data.items || []) {
+        if (item?.id) byId.set(item.id, item);
       }
-      if (byId.size >= limit * 2) break;
+    } catch (err) {
+      console.log("hf query fail", job.q, job.extra, String(err));
     }
-    if (byId.size >= limit * 2) break;
   }
   return [...byId.values()];
 }
 
-export async function fetchHelloFreshPool(proteinsNeeded, fetchImpl = fetch) {
+export async function fetchHelloFreshPool(proteinsNeeded, fetchImpl = fetch, seed = "") {
   const out = [];
   for (const protein of proteinsNeeded) {
-    const items = await searchHelloFreshForProtein(protein, { limit: 14, fetchImpl });
+    const items = await searchHelloFreshForProtein(protein, { fetchImpl, seed });
     out.push(...items.map((item) => ({ item, wantProtein: protein })));
   }
   return out;

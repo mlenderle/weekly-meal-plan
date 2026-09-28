@@ -1,4 +1,5 @@
 import { paraphraseSteps } from "./paraphrase.js";
+import { alignMeal, inferProtein } from "./protein.js";
 
 const ALLERGEN_MAP = {
   milk: "dairy",
@@ -74,38 +75,14 @@ function spiceFromTags(tags, name) {
 
 function detectProtein(item) {
   const cat = (item.category?.type || item.category?.slug || item.category?.name || "").toLowerCase();
-  const name = (item.name || "").toLowerCase();
-  const tags = (item.tags || []).map((t) => (t.slug || t.type || t.name || "").toLowerCase());
-  const ing = (item.ingredients || []).map((i) => (i.name || "").toLowerCase()).join(" ");
-  const blob = `${cat} ${name} ${tags.join(" ")} ${ing}`;
-
-  const hasAnimal = /\b(chicken|beef|steak|pork|salmon|shrimp|bacon|sausage|turkey|barramundi|cod|tilapia|tuna|lamb|duck|fish|seafood|prawn|anchovy)\b/.test(
-    blob
-  );
-
-  // Meat / fish first (name+ingredients win over a stray "veggie" side tag)
-  if (/\bsalmon\b/.test(blob)) return "salmon";
-  if (/\b(chicken|poultry)\b/.test(blob) || cat.includes("poultry")) return "chicken";
-  if (
-    /\b(beef|steak|sirloin|bavette|tenderloin)\b/.test(blob) ||
-    (cat.includes("meat") && /\bbeef\b/.test(blob))
-  ) {
-    return "beef";
-  }
-  if (cat.includes("seafood") || /\b(fish|shrimp|cod|tilapia|tuna|barramundi)\b/.test(blob)) {
-    // Non-salmon seafood is out of scope for this planner
-    return null;
-  }
-
-  if (
-    tags.includes("vegan") ||
-    tags.includes("vegetarian") ||
-    cat.includes("veg") ||
-    /\b(tofu|chickpea|halloumi|lentil|black bean|veggie|vegetarian)\b/.test(name)
-  ) {
-    if (!hasAnimal) return "vegetarian";
-  }
-  return null;
+  const tags = item.tags || [];
+  // Title + real protein ingredient. Chicken stock and "cauliflower steak" do not decide the slot.
+  return inferProtein({
+    name: item.name,
+    ingredients: item.ingredients,
+    tags,
+    category: cat,
+  });
 }
 
 function isHealthy(item, calories) {
@@ -207,7 +184,9 @@ export function normalizeHelloFreshItem(item) {
 
   const calories = caloriesOf(item);
   const totalMins = parseIsoDuration(item.totalTime) || parseIsoDuration(item.prepTime);
-  const id = slugify(item.slug || name) || item.id;
+  // HelloFresh reuses slugs across versions. Key by the card id so a later
+  // fetch cannot replace this card's ingredients under the same slug.
+  const id = slugify(item.id || item.uuid || item.slug || name) || String(item.id || item.slug || "");
   const ingredients = buildIngredientLines(item);
   if (ingredients.length < 3) return null;
 
@@ -218,7 +197,7 @@ export function normalizeHelloFreshItem(item) {
     .trim()
     .slice(0, 220);
 
-  return {
+  return finishMeal({
     id,
     name,
     shortName,
@@ -238,7 +217,11 @@ export function normalizeHelloFreshItem(item) {
     avoidTags: avoidTagsFor(item, protein),
     live: true,
     fetchedFrom: "hellofresh-api",
-  };
+  });
+}
+
+function finishMeal(meal) {
+  return alignMeal(meal);
 }
 
 export function normalizeJsonLdRecipe(ld, sourceLabel, url) {
@@ -281,7 +264,7 @@ export function normalizeJsonLdRecipe(ld, sourceLabel, url) {
   const mins = parseIsoDuration(ld.totalTime) || parseIsoDuration(ld.cookTime);
   const id = slugify(name) + "-" + slugify(sourceLabel);
 
-  return {
+  return finishMeal({
     id,
     name,
     shortName: name.length > 42 ? name.slice(0, 40).trim() + "…" : name,
@@ -309,7 +292,7 @@ export function normalizeJsonLdRecipe(ld, sourceLabel, url) {
     ),
     live: true,
     fetchedFrom: "json-ld",
-  };
+  });
 }
 
 const SPECIALTY = /truffle|saffron|gochujang|miso|tahini|halloumi|prosciutto|pancetta|cr[eè]me fra[iî]che|pecan|pistachio|pomegranate|harissa|za'?atar|yuzu|edamame|quinoa|gnocchi|ciabatta/i;

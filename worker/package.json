@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "wrangler dev src/index.js --local",
     "deploy": "wrangler deploy",
+    "test": "node ../scripts/protein-coherence.mjs && node ../scripts/security-worker.mjs",
     "smoke": "node ../scripts/smoke-live-lookup.mjs"
   },
   "devDependencies": {
