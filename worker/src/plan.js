@@ -1,12 +1,11 @@
 import { recipeHitsAvoid } from "./normalize.js";
+import { makeRng, shuffle } from "./random.js";
 
-function shuffle(arr) {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
+function rankPool(pool, prefs, rng) {
+  const shuffled = shuffle(pool, rng);
+  if (!prefs.cheapBias) return shuffled;
+  // Prefer cheaper-grocery bands, but shuffle inside a band so ties are not sticky.
+  return shuffled.sort((a, b) => Math.floor((b.cheapScore || 0) / 10) - Math.floor((a.cheapScore || 0) / 10));
 }
 
 export function buildPlanFromCandidates(candidates, prefs) {
@@ -52,13 +51,32 @@ export function buildPlanFromCandidates(candidates, prefs) {
   }
 
   const used = new Set();
+  const usedTitles = new Set();
   const slots = [];
   const shortages = [];
   const labels = dayLabels.slice(0, total);
+  const rng = makeRng(`${prefs.seed || "meal"}|plan`);
+  const exclude = new Set((prefs.excludeIds || []).map((id) => String(id)));
+
+  function titleKey(m) {
+    return String(m.name || "")
+      .toLowerCase()
+      .replace(/[’']/g, "")
+      .replace(/\b2x\b/g, " ")
+      .replace(/[^a-z0-9]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function choose(pool) {
+    const fresh = pool.filter((m) => !exclude.has(m.id));
+    return rankPool(fresh.length ? fresh : pool, prefs, rng);
+  }
 
   ordered.forEach((protein, idx) => {
-    let pool = eligible(protein).filter((m) => !used.has(m.id));
-    if (!pool.length) pool = eligible(protein);
+    const base = eligible(protein).filter((m) => !used.has(m.id));
+    let pool = base.filter((m) => !usedTitles.has(titleKey(m)));
+    if (!pool.length) pool = base.length ? base : eligible(protein);
     if (!pool.length) {
       shortages.push(protein);
       slots.push({
@@ -71,11 +89,10 @@ export function buildPlanFromCandidates(candidates, prefs) {
       });
       return;
     }
-    const ranked = prefs.cheapBias
-      ? pool.slice().sort((a, b) => (b.cheapScore || 0) - (a.cheapScore || 0) || String(a.name).localeCompare(String(b.name)))
-      : shuffle(pool);
+    const ranked = choose(pool);
     const primary = ranked[0];
     used.add(primary.id);
+    usedTitles.add(titleKey(primary));
     slots.push({
       day: labels[idx],
       protein,
@@ -88,11 +105,12 @@ export function buildPlanFromCandidates(candidates, prefs) {
 
   slots.forEach((s) => {
     if (!s.mealId) return;
-    const altPool = eligible(s.protein).filter((m) => m.id !== s.mealId);
-    const altRanked = prefs.cheapBias
-      ? altPool.slice().sort((a, b) => (b.cheapScore || 0) - (a.cheapScore || 0) || String(a.name).localeCompare(String(b.name)))
-      : shuffle(altPool);
-    s.alternateIds = altRanked.slice(0, 3).map((m) => m.id);
+    const current = list.find((m) => m.id === s.mealId);
+    const differentTitle = eligible(s.protein).filter((m) => m.id !== s.mealId && titleKey(m) !== titleKey(current || {}));
+    const altPool = differentTitle.length
+      ? differentTitle
+      : eligible(s.protein).filter((m) => m.id !== s.mealId);
+    s.alternateIds = choose(altPool).slice(0, 3).map((m) => m.id);
   });
 
   return { slots, shortages, total, counts };

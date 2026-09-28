@@ -13,6 +13,7 @@ import { fetchHelloFreshPool } from "./hf.js";
 import { fetchBlueApronPool } from "./ba.js";
 import { normalizeHelloFreshItem, normalizeJsonLdRecipe, cheapScoreFor } from "./normalize.js";
 import { buildPlanFromCandidates } from "./plan.js";
+import { alignMeal } from "./protein.js";
 
 /** Exact browser origins. `*` and the string "null" are never honored. */
 export const DEFAULT_ALLOWED_ORIGINS = [
@@ -176,6 +177,21 @@ export function sanitizeMatchPrefs(raw) {
     customSeen.add(tag);
     prefs.customAvoid.push(tag);
   }
+
+  prefs.seed = String(raw.seed || "")
+    .replace(/[^a-zA-Z0-9_-]/g, "")
+    .slice(0, 64);
+
+  const excludeIn = Array.isArray(raw.excludeIds) ? raw.excludeIds : [];
+  const excludeSeen = new Set();
+  prefs.excludeIds = [];
+  for (const item of excludeIn) {
+    if (prefs.excludeIds.length >= 24) break;
+    const id = String(item || "").trim().toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 80);
+    if (id.length < 4 || excludeSeen.has(id)) continue;
+    excludeSeen.add(id);
+    prefs.excludeIds.push(id);
+  }
   return { prefs };
 }
 
@@ -194,9 +210,10 @@ export function isTheMealDbMeal(m, id) {
 }
 
 function acceptMeal(candidates, meal) {
-  if (!meal || isHomeChefMeal(meal, meal.id) || isTheMealDbMeal(meal, meal.id)) return;
-  if (meal.cheapScore == null) meal.cheapScore = cheapScoreFor(meal.ingredients);
-  if (!candidates[meal.id]) candidates[meal.id] = meal;
+  const aligned = alignMeal(meal);
+  if (!aligned || isHomeChefMeal(aligned, aligned.id) || isTheMealDbMeal(aligned, aligned.id)) return;
+  if (aligned.cheapScore == null) aligned.cheapScore = cheapScoreFor(aligned.ingredients);
+  if (!candidates[aligned.id]) candidates[aligned.id] = aligned;
 }
 
 async function handleMatch(prefs, env) {
@@ -207,13 +224,16 @@ async function handleMatch(prefs, env) {
   if (!proteinsNeeded.length) {
     return { ok: false, error: "Pick at least one dinner." };
   }
+  if (!prefs.seed) {
+    prefs.seed = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  }
 
   const errors = [];
   const candidates = {};
 
   // --- HelloFresh live ---
   try {
-    const pool = await fetchHelloFreshPool(proteinsNeeded);
+    const pool = await fetchHelloFreshPool(proteinsNeeded, fetch, prefs.seed);
     for (const { item, wantProtein } of pool) {
       const norm = normalizeHelloFreshItem(item);
       if (!norm) continue;
@@ -228,7 +248,7 @@ async function handleMatch(prefs, env) {
 
   // --- Blue Apron live JSON-LD ---
   try {
-    const ba = await fetchBlueApronPool();
+    const ba = await fetchBlueApronPool(fetch, prefs.seed);
     for (const { ld, url } of ba) {
       const norm = normalizeJsonLdRecipe(ld, "Blue Apron", url);
       if (!norm) continue;
@@ -262,6 +282,7 @@ async function handleMatch(prefs, env) {
     ok: true,
     source: "live",
     fetchedAt: new Date().toISOString(),
+    seed: prefs.seed,
     providerNotes: {
       helloFresh: "public recipe search",
       blueApron: "public recipe pages",

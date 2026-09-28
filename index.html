@@ -518,9 +518,25 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
       return /home\s*chef|homechef\.com|themealdb|the\s*meal\s*db|(?:^|[\s/])tmdb-/i.test(blob);
     }
 
-    function catalogWithoutExcluded(candidates) {
+    let proteinMod = null;
+    function loadProtein() {
+      if (proteinMod) return Promise.resolve(proteinMod);
+      if (window.MealProtein && window.MealProtein.alignMeal) {
+        proteinMod = window.MealProtein;
+        return Promise.resolve(proteinMod);
+      }
+      return import("./worker/src/protein.js").then((mod) => {
+        proteinMod = mod;
+        window.MealProtein = mod;
+        return mod;
+      }).catch(() => null);
+    }
+
+    function catalogWithoutExcluded(candidates, align) {
       const out = {};
-      Object.entries(candidates || {}).forEach(([id, m]) => {
+      Object.entries(candidates || {}).forEach(([id, raw]) => {
+        if (!raw || isExcludedPreparedSource(raw)) return;
+        const m = align ? align(raw) : raw;
         if (!m || isExcludedPreparedSource(m)) return;
         out[m.id || id] = m;
       });
@@ -529,10 +545,14 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
 
     function slotsWithoutExcluded(slots, candidates) {
       return (slots || []).map((s) => {
-        const alternateIds = (s.alternateIds || []).filter((id) => candidates[id]);
-        let mealId = s.mealId && candidates[s.mealId] ? s.mealId : null;
+        const sameProtein = (id) => {
+          const m = candidates[id];
+          return !!(m && m.protein === s.protein);
+        };
+        const alternateIds = (s.alternateIds || []).filter(sameProtein);
+        let mealId = s.mealId && sameProtein(s.mealId) ? s.mealId : null;
         if (!mealId) {
-          mealId = alternateIds.find((id) => candidates[id] && candidates[id].protein === s.protein) || null;
+          mealId = alternateIds.find(sameProtein) || null;
         }
         return {
           ...s,
@@ -546,12 +566,43 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
 
     function meal(id) {
       if (!id) return null;
+      // A live catalog must not fall through to the embedded demo under the same id.
       let found = null;
-      if (liveCatalog && liveCatalog[id]) found = liveCatalog[id];
-      else if (offlineDemoArmed && DATA.candidates[id]) found = DATA.candidates[id];
-      else found = (liveCatalog && liveCatalog[id]) || DATA.candidates[id] || null;
-      if (isExcludedPreparedSource(found)) return null;
+      if (liveCatalog) found = liveCatalog[id] || null;
+      else if (offlineDemoArmed) found = DATA.candidates[id] || null;
+      if (!found || isExcludedPreparedSource(found)) return null;
       return found;
+    }
+
+    const RECENT_IDS_KEY = "mealPlanRecentRecipeIds";
+
+    function recentExcludeIds() {
+      const ids = [];
+      const push = (id) => {
+        const clean = String(id || "").trim();
+        if (!clean || ids.includes(clean) || ids.length >= 24) return;
+        ids.push(clean);
+      };
+      try {
+        const saved = JSON.parse(localStorage.getItem(RECENT_IDS_KEY) || "[]");
+        if (Array.isArray(saved)) saved.forEach(push);
+      } catch (_) {}
+      Object.keys(liveCatalog || {}).forEach(push);
+      return ids;
+    }
+
+    function rememberRecipeIds(ids) {
+      try {
+        const out = [];
+        const push = (id) => {
+          const clean = String(id || "").trim();
+          if (!clean || out.includes(clean) || out.length >= 24) return;
+          out.push(clean);
+        };
+        (ids || []).forEach(push);
+        recentExcludeIds().forEach(push);
+        localStorage.setItem(RECENT_IDS_KEY, JSON.stringify(out));
+      } catch (_) {}
     }
 
     function updateLiveApiStatus() {
@@ -584,8 +635,10 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
       } catch (_) { return null; }
     }
 
-    function applyLivePayload(payload, badgeNote) {
-      const candidates = catalogWithoutExcluded(payload.candidates);
+    async function applyLivePayload(payload, badgeNote) {
+      const protein = await loadProtein();
+      const candidates = catalogWithoutExcluded(payload.candidates, protein && protein.alignMeal);
+      rememberRecipeIds(Object.keys(candidates));
       liveCatalog = candidates;
       liveMeta = {
         fetchedAt: payload.fetchedAt,
@@ -665,23 +718,23 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
       if (opts && opts.showRetry) addAction("btn-retry-live", "primary", "Retry live lookup");
       if (actions.childElementCount) warn.appendChild(actions);
       const lg = $("btn-last-good");
-      if (lg) lg.addEventListener("click", () => {
+      if (lg) lg.addEventListener("click", async () => {
         const cached = loadLastGood();
         if (!cached || !cached.candidates) {
           warn.textContent = "No last-good live cache on this device yet.";
           return;
         }
-        applyLivePayload(cached, "Last-good cache");
+        await applyLivePayload(cached, "Last-good cache");
       });
       const od = $("btn-offline-demo");
-      if (od) od.addEventListener("click", () => {
+      if (od) od.addEventListener("click", async () => {
         offlineDemoArmed = true;
         liveCatalog = null;
         const plan = buildPlanFromEmbedded();
         if (!plan) return;
         // Present embedded as explicit offline demo — never silent primary.
         const candidates = DATA.candidates;
-        applyLivePayload({
+        await applyLivePayload({
           candidates,
           slots: plan.slots,
           shortages: plan.shortages,
@@ -710,6 +763,8 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
         servings: prefs.servings,
         avoid: [...prefs.avoid],
         customAvoid: prefs.customAvoid.slice(),
+        seed: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+        excludeIds: recentExcludeIds(),
         ...(overrides || {})
       };
       const ctrl = new AbortController();
@@ -730,7 +785,8 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
           err.payload = data;
           throw err;
         }
-        const candidates = catalogWithoutExcluded(data.candidates);
+        const protein = await loadProtein();
+        const candidates = catalogWithoutExcluded(data.candidates, protein && protein.alignMeal);
         return {
           ...data,
           candidates,
@@ -971,7 +1027,7 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
         }
         const data = await fetchLiveMatch();
         saveLastGood(data);
-        applyLivePayload(data, "Live");
+        await applyLivePayload(data, "Live");
       } catch (err) {
         const cached = loadLastGood();
         const msg = (err && err.code === "NO_API")
@@ -1005,7 +1061,8 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
       render();
       try {
         const payload = await fetchLiveMatch(scope, true);
-        const incoming = catalogWithoutExcluded(payload.candidates);
+        const protein = await loadProtein();
+        const incoming = catalogWithoutExcluded(payload.candidates, protein && protein.alignMeal);
         const before = new Set(Object.keys(liveCatalog || {}));
         liveCatalog = { ...(liveCatalog || {}), ...incoming };
         offlineDemoArmed = false;
@@ -1022,9 +1079,8 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
           .filter(({ meal, id }) => id && meal && meal.protein === s.protein)
           .map(({ id }) => id);
         const mergedIds = [...freshIds, ...eligiblePool(s.protein).map((m) => m.id)];
-        s.alternateIds = [...new Set(mergedIds)]
-          .filter((id) => id !== s.mealId)
-          .slice(0, 12);
+        s.alternateIds = shuffle([...new Set(mergedIds)].filter((id) => id !== s.mealId)).slice(0, 12);
+        rememberRecipeIds(Object.keys(liveCatalog));
         renderPickerSummary("Live");
         render();
         const added = [...new Set(freshIds)].filter((id) => !before.has(id)).length;
@@ -1165,13 +1221,19 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
         const panel = card.querySelector(".swap-panel");
         if (showSwap) {
           panel.innerHTML = `<div class="swap-title">Choose a ${escapeHtml(protein || "matching")} option</div>`;
-          const pool = [];
           const seen = new Set();
+          const extras = [];
           const candidates = [s.mealId, ...s.alternateIds]
             .concat(eligiblePool(s.protein).map((m) => m.id));
           for (const id of candidates) {
-            if (id && !seen.has(id)) { seen.add(id); pool.push(id); }
+            if (!id || seen.has(id) || id === s.mealId) {
+              if (id) seen.add(id);
+              continue;
+            }
+            seen.add(id);
+            extras.push(id);
           }
+          const pool = (s.mealId ? [s.mealId] : []).concat(shuffle(extras));
           pool.slice(0, 6).forEach((id) => {
             const m = meal(id);
             if (!m) return;
@@ -1190,6 +1252,8 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
             alt.addEventListener("click", (e) => {
               e.preventDefault();
               e.stopPropagation();
+              const picked = meal(id);
+              if (!picked || picked.protein !== s.protein) return;
               s.mealId = id;
               s.kept = true;
               s.swapOpen = false;
@@ -1270,9 +1334,18 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
     });
 
     function selectedMeals() {
+      const align = proteinMod && proteinMod.alignMeal;
+      const fits = proteinMod && proteinMod.recipeFitsSlot;
       return state
         .filter((s) => s.kept && s.mealId && meal(s.mealId))
-        .map((s) => ({ day: s.day, protein: s.protein, meal: scaledMeal(meal(s.mealId)) }));
+        .map((s) => {
+          const raw = meal(s.mealId);
+          const m = align ? align(raw) : raw;
+          if (!m || m.protein !== s.protein) return null;
+          if (fits && !fits(m, s.protein)) return null;
+          return { day: s.day, protein: m.protein, meal: scaledMeal(m) };
+        })
+        .filter(Boolean);
     }
 
     function emptySlots() {
@@ -1606,7 +1679,8 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
       document.getElementById("print-sheet").innerHTML = html;
     }
 
-    function downloadPdf() {
+    async function downloadPdf() {
+      await loadProtein();
       const selected = selectedMeals();
       const empties = emptySlots();
       fillPrintSheet(selected, empties);

@@ -3,6 +3,8 @@
  * Seed URLs are discovery only — ingredients/steps always come from the live page.
  */
 
+import { makeRng, shuffle } from "./random.js";
+
 export const BA_SEED_URLS = [
   "https://www.blueapron.com/recipes/standard-meal-kit/sheet-pan-cajun-salmon-with-asparagus-sweet-potato-spiced-sour-cream",
   "https://www.blueapron.com/recipes/seared-steaks-chimichurri-sauce",
@@ -18,15 +20,10 @@ export const BA_SEED_URLS = [
   "https://www.blueapron.com/recipes/chipotle-chicken-burritos",
 ];
 
-function pickSeeds(count) {
-  // Rotate by day so live results vary without a fixed catalog.
-  const day = Math.floor(Date.now() / 86400000);
-  const start = day % BA_SEED_URLS.length;
-  const out = [];
-  for (let i = 0; i < Math.min(count, BA_SEED_URLS.length); i++) {
-    out.push(BA_SEED_URLS[(start + i) % BA_SEED_URLS.length]);
-  }
-  return out;
+/** Different seeds pick a different subset. The same seed stays stable. */
+export function blueApronSeedPlan(seed, count = 8) {
+  const rng = makeRng(`${seed}|ba`);
+  return shuffle(BA_SEED_URLS, rng).slice(0, Math.min(count, BA_SEED_URLS.length));
 }
 
 export async function fetchBlueApronJsonLd(urls, fetchImpl = fetch) {
@@ -40,6 +37,8 @@ export async function fetchBlueApronJsonLd(urls, fetchImpl = fetch) {
             Accept: "text/html",
           },
           redirect: "follow",
+          cache: "no-store",
+          cf: { cacheTtl: 0 },
         });
         if (!res.ok) return;
         const html = await res.text();
@@ -61,6 +60,6 @@ export async function fetchBlueApronJsonLd(urls, fetchImpl = fetch) {
   return results;
 }
 
-export async function fetchBlueApronPool(fetchImpl = fetch) {
-  return fetchBlueApronJsonLd(pickSeeds(8), fetchImpl);
+export async function fetchBlueApronPool(fetchImpl = fetch, seed = "") {
+  return fetchBlueApronJsonLd(blueApronSeedPlan(seed, 8), fetchImpl);
 }
