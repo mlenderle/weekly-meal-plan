@@ -1,0 +1,195 @@
+{
+  "id": "5bad3e93ae08b539a76a5182",
+  "name": "Southwestern Beef Tacos",
+  "slug": "southwestern-beef-tacos",
+  "websiteUrl": "https://www.hellofresh.com/recipes/southwestern-beef-tacos-5bad3e93ae08b539a76a5182",
+  "description": "What do we want from a taco? We want meat seasoned in warm and smoky spices. We want it to rain cheese, sour cream, jalape\u00f1o, and lime. We want the tortilla to exhale steam as we\u2019re reaching in for a big bite. Luckily, these beef and bell pepper bad boys are giving us all of that, making this a bona fide taco-night triumph.",
+  "totalTime": "PT0S",
+  "prepTime": "PT35M",
+  "difficulty": 1,
+  "tags": [
+    {
+      "slug": "spicy"
+    }
+  ],
+  "category": {
+    "name": "Beef"
+  },
+  "ingredients": [
+    {
+      "id": "596631bfc9fd08350247b2f2",
+      "name": "Bell Pepper"
+    },
+    {
+      "id": "554a3947fd2cb9cf488b456b",
+      "name": "Red Onion"
+    },
+    {
+      "id": "554a3c9efd2cb9ba4f8b456c",
+      "name": "Lime"
+    },
+    {
+      "id": "55561153fd2cb9521f8b4568",
+      "name": "Jalape\u00f1o"
+    },
+    {
+      "id": "5550e1064dab71893e8b4569",
+      "name": "Sour Cream"
+    },
+    {
+      "id": "55a55c56fd2cb9f27c8b4567",
+      "name": "Southwest Spice Blend"
+    },
+    {
+      "id": "554a35754dab71d76f8b4568",
+      "name": "Ground Beef"
+    },
+    {
+      "id": "596f6137d56afa3be43b24e2",
+      "name": "Flour Tortillas"
+    },
+    {
+      "id": "5abbe89030006c40d87e8aa2",
+      "name": "Pepper Jack Cheese"
+    },
+    {
+      "id": "554a3c4d4dab71716c8b456c",
+      "name": "Cilantro"
+    },
+    {
+      "id": "5566e2014dab71e3078b4568",
+      "name": "Sugar"
+    },
+    {
+      "id": "5566d4f94dab715a078b4568",
+      "name": "Vegetable Oil"
+    },
+    {
+      "id": "5566ceb7fd2cb95f7f8b4567",
+      "name": "Salt"
+    },
+    {
+      "id": "5566dc00f8b25e5b298b4568",
+      "name": "Pepper"
+    }
+  ],
+  "yields": [
+    {
+      "yields": 4,
+      "ingredients": [
+        {
+          "id": "596631bfc9fd08350247b2f2",
+          "amount": 2,
+          "unit": "unit"
+        },
+        {
+          "id": "554a3947fd2cb9cf488b456b",
+          "amount": 1,
+          "unit": "unit"
+        },
+        {
+          "id": "554a3c9efd2cb9ba4f8b456c",
+          "amount": 2,
+          "unit": "unit"
+        },
+        {
+          "id": "55561153fd2cb9521f8b4568",
+          "amount": 1,
+          "unit": "unit"
+        },
+        {
+          "id": "5550e1064dab71893e8b4569",
+          "amount": 8,
+          "unit": "tablespoon"
+        },
+        {
+          "id": "55a55c56fd2cb9f27c8b4567",
+          "amount": 2,
+          "unit": "tablespoon"
+        },
+        {
+          "id": "554a35754dab71d76f8b4568",
+          "amount": 20,
+          "unit": "ounce"
+        },
+        {
+          "id": "596f6137d56afa3be43b24e2",
+          "amount": 12,
+          "unit": "unit"
+        },
+        {
+          "id": "5abbe89030006c40d87e8aa2",
+          "amount": 1,
+          "unit": "cup"
+        },
+        {
+          "id": "554a3c4d4dab71716c8b456c",
+          "amount": 0.5,
+          "unit": "ounce"
+        },
+        {
+          "id": "5566e2014dab71e3078b4568",
+          "amount": 0.25,
+          "unit": "teaspoon"
+        },
+        {
+          "id": "5566d4f94dab715a078b4568",
+          "amount": 4,
+          "unit": "tablespoon"
+        },
+        {
+          "id": "5566ceb7fd2cb95f7f8b4567",
+          "amount": null,
+          "unit": null
+        },
+        {
+          "id": "5566dc00f8b25e5b298b4568",
+          "amount": null,
+          "unit": null
+        }
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "instructions": "Wash and dry all produce. Core and seed bell peppers, then thinly slice. Halve and peel onion. Thinly slice one half. Finely dice other half. Zest 1 tsp zest from limes, then cut each into quarters. Halve jalape\u00f1o lengthwise, removing ribs and seeds first for less heat. Thinly slice one half and finely chop the other."
+    },
+    {
+      "instructions": "In a small bowl, combine lime zest, sour cream, 2 tsp water, and a squeeze of lime to taste. Season with salt and pepper."
+    },
+    {
+      "instructions": "In another small bowl, toss together sliced jalape\u00f1o, juice of one lime quarter, a pinch of salt, and sugar to taste (we used \u00bc tsp sugar)."
+    },
+    {
+      "instructions": "Heat a large drizzle of oil in a large pan over medium-high heat. Add bell peppers and cook, tossing, until beginning to soften, 2-3 minutes. Add sliced onion and cook, tossing often, until tender and lightly charred, 5-6 minutes. Season with salt and pepper. Remove from pan and set aside."
+    },
+    {
+      "instructions": "Lower heat under same pan to medium and add a large drizzle of oil. Add diced onion and cook, stirring, until softened, 2-3 minutes. Stir in chopped jalape\u00f1o (to taste) and Southwest spice. Cook until fragrant, about 30 seconds. Add beef, breaking it up into pieces. Cook, tossing occasionally, until browned and cooked through, 4-5 minutes. Season with plenty of salt and pepper."
+    },
+    {
+      "instructions": "Wrap tortillas in a lightly dampened paper towel and microwave on high until warm and soft, about 30 seconds. Divide beef, bell peppers, onion, and cheese between tortillas. Dollop with crema. Tear cilantro leaves from stems and scatter over top. Garnish with marinated jalape\u00f1o to taste. Serve with remaining lime quarters on the side."
+    }
+  ],
+  "nutrition": [
+    {
+      "name": "Calories",
+      "amount": 770,
+      "unit": "kcal"
+    }
+  ],
+  "allergens": [],
+  "utensils": [
+    {
+      "name": "Zester"
+    },
+    {
+      "name": "Small Bowl"
+    },
+    {
+      "name": "Large Pan"
+    },
+    {
+      "name": "Paper Towel"
+    }
+  ]
+}

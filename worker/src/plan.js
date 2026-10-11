@@ -4,8 +4,49 @@ import { makeRng, shuffle } from "./random.js";
 function rankPool(pool, prefs, rng) {
   const shuffled = shuffle(pool, rng);
   if (!prefs.cheapBias) return shuffled;
-  // Prefer cheaper-grocery bands, but shuffle inside a band so ties are not sticky.
-  return shuffled.sort((a, b) => Math.floor((b.cheapScore || 0) / 10) - Math.floor((a.cheapScore || 0) / 10));
+  // Wide bands so a one-point staple score cannot pin the same recipe every time.
+  return shuffled.sort((a, b) => Math.floor((b.cheapScore || 0) / 15) - Math.floor((a.cheapScore || 0) / 15));
+}
+
+export function sourceKey(meal) {
+  return /blue apron/i.test(String((meal && meal.source) || "")) ? "ba" : "hf";
+}
+
+/** Steak, ground beef, or another beef cut. Pepper "ground" does not count. */
+export function beefCut(meal) {
+  const blob = `${(meal && meal.name) || ""} ${((meal && meal.ingredients) || []).join(" ")}`.toLowerCase();
+  const ground = /\b(ground beef|burger|cheeseburger|meatball|bolognese)\b/.test(blob);
+  const steak = /\b(steak|sirloin|rib-?eye|bavette|flank|skirt|tenderloin|filet|brisket|short rib)\b/.test(blob);
+  if (ground && !steak) return "ground";
+  if (steak && !ground) return "steak";
+  if (ground && steak) return "mixed";
+  return "other";
+}
+
+function pickOne(ranked, protein, already) {
+  if (!ranked.length) return null;
+  const haveBa = ranked.some((m) => sourceKey(m) === "ba");
+  const haveHf = ranked.some((m) => sourceKey(m) === "hf");
+  const baN = already.filter((m) => sourceKey(m) === "ba").length;
+  const hfN = already.filter((m) => sourceKey(m) === "hf").length;
+  const cuts = new Set(ranked.map(beefCut));
+  const usedCuts = new Set(already.map(beefCut));
+  const unusedCuts = [...cuts].filter((c) => !usedCuts.has(c));
+  let best = null;
+  let bestScore = Infinity;
+  ranked.forEach((m, index) => {
+    let score = index;
+    if (haveBa && haveHf && baN !== hfN) {
+      const want = baN < hfN ? "ba" : "hf";
+      if (sourceKey(m) !== want) score += 100;
+    }
+    if (protein === "beef" && unusedCuts.length && !unusedCuts.includes(beefCut(m))) score += 40;
+    if (score < bestScore) {
+      bestScore = score;
+      best = m;
+    }
+  });
+  return best;
 }
 
 export function buildPlanFromCandidates(candidates, prefs) {
@@ -57,6 +98,7 @@ export function buildPlanFromCandidates(candidates, prefs) {
   const labels = dayLabels.slice(0, total);
   const rng = makeRng(`${prefs.seed || "meal"}|plan`);
   const exclude = new Set((prefs.excludeIds || []).map((id) => String(id)));
+  const picked = { beef: [], chicken: [], salmon: [], vegetarian: [] };
 
   function titleKey(m) {
     return String(m.name || "")
@@ -69,8 +111,9 @@ export function buildPlanFromCandidates(candidates, prefs) {
   }
 
   function choose(pool) {
+    // Already-shown ids are never a fallback. An empty pool becomes a shortage.
     const fresh = pool.filter((m) => !exclude.has(m.id));
-    return rankPool(fresh.length ? fresh : pool, prefs, rng);
+    return rankPool(fresh, prefs, rng);
   }
 
   ordered.forEach((protein, idx) => {
@@ -90,7 +133,20 @@ export function buildPlanFromCandidates(candidates, prefs) {
       return;
     }
     const ranked = choose(pool);
-    const primary = ranked[0];
+    const primary = pickOne(ranked, protein, picked[protein]);
+    if (!primary) {
+      shortages.push(protein);
+      slots.push({
+        day: labels[idx],
+        protein,
+        mealId: null,
+        kept: false,
+        swapOpen: true,
+        alternateIds: [],
+      });
+      return;
+    }
+    picked[protein].push(primary);
     used.add(primary.id);
     usedTitles.add(titleKey(primary));
     slots.push({

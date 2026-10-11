@@ -9,12 +9,6 @@
 
 const SLOT_PROTEINS = new Set(["beef", "chicken", "salmon", "vegetarian"]);
 
-const FAMILY = {
-  salmon: ["salmon"],
-  chicken: ["chicken"],
-  beef: ["beef", "steak", "sirloin", "bavette", "brisket", "tenderloin", "flank", "ribeye"],
-};
-
 const NAME_RE = {
   salmon: /\bsalmon\b/i,
   chicken: /\bchicken\b/i,
@@ -96,90 +90,56 @@ export function inferProtein({ name, ingredients, tags, category } = {}) {
   return null;
 }
 
-function shippedNoun(meal) {
-  if (meal.protein === "salmon") return "salmon";
-  if (meal.protein === "chicken") return "chicken";
-  if (meal.protein === "beef") {
-    const blob = `${meal.name || ""} ${(meal.ingredients || []).map(ingredientName).join(" ")}`;
-    if (/\b(steak|sirloin|bavette|brisket|tenderloin|flank|ribeye)\b/i.test(blob)) return "steak";
-    return "beef";
+/** Sides and other foods a step should not invent. Pantry staples are intentionally absent. */
+const KEY_FOODS = [
+  "sweet potato", "green bean", "snap pea", "bell pepper",
+  "potato", "carrot", "broccoli", "zucchini", "kale", "spinach", "rice", "pasta", "noodle",
+  "bulgur", "quinoa", "couscous", "tortilla", "chickpea", "lentil", "tofu", "mushroom",
+  "tomato", "onion", "shallot", "garlic", "lemon", "lime", "cucumber", "asparagus",
+  "avocado", "cauliflower", "eggplant", "cabbage", "radish", "apple", "corn", "gnocchi",
+  "polenta", "farro", "orzo", "edamame", "halloumi", "feta", "cheddar", "parmesan",
+  "mozzarella", "peanut", "almond", "walnut", "bun", "barley", "artichoke", "caper", "date",
+  "cilantro", "jalapeno", "jalapeño",
+];
+
+function foodIn(blob, word) {
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp("\\b" + escaped + "(?:es|s)?\\b", "i").test(blob);
+}
+
+/** Foods named in the steps that the ingredient list does not contain. */
+export function missingKeyFoods(meal) {
+  const ing = `${meal && meal.name ? meal.name : ""} ${(meal && meal.ingredients ? meal.ingredients : []).map(ingredientName).join(" ")}`;
+  const steps = stepBlob(meal && meal.steps);
+  const missing = [];
+  const foods = KEY_FOODS.slice().sort((a, b) => b.length - a.length);
+  for (const food of foods) {
+    if (!foodIn(steps, food)) continue;
+    if (foodIn(ing, food)) continue;
+    if (food === "potato" && foodIn(ing, "sweet potato")) continue;
+    if (food === "bean" && foodIn(ing, "green bean")) continue;
+    missing.push(food);
   }
-  return "";
+  return missing;
 }
 
-function inFamily(word, protein) {
-  const family = FAMILY[protein] || [];
-  return family.includes(String(word || "").toLowerCase());
-}
-
-function replaceAliens(text, protein, noun) {
-  if (!noun) return text;
-  const aliens = ["tenderloin", "sirloin", "bavette", "brisket", "ribeye", "flank", "chicken", "salmon", "steak", "pork", "beef"];
-  let out = text;
-  for (const word of aliens) {
-    if (inFamily(word, protein)) continue;
-    const re = new RegExp("\\b" + word + "s?\\b\\*?", "gi");
-    out = out.replace(re, (full, offset, str) => {
-      const before = str.slice(Math.max(0, offset - 20), offset);
-      if (/(cauliflower|eggplant|portobello|mushroom|veggie|vegetable)\s+$/i.test(before)) return full;
-      const after = str.slice(offset + full.length, offset + full.length + 28);
-      if (/^\s*(stock|broth|bouillon|base|consomme|powder|seasoning|spice|rub|blend)\b/i.test(after)) return full;
-      return noun;
-    });
-  }
-  return out
-    .replace(/\b(salmon|chicken|steak|beef)\b(?:\s+or\s+\1\b)+/gi, "$1")
-    .replace(/[ \t]{2,}/g, " ")
-    .replace(/\s+([,.;])/g, "$1")
-    .trim();
-}
-
-function wantedRe(protein) {
-  if (protein === "beef") return /\b(beef|steak)\b/i;
-  if (protein === "salmon") return /\bsalmon\b/i;
-  if (protein === "chicken") return /\bchicken\b/i;
-  return null;
-}
-
-/** Prefer the "Swap in <our protein>" branch when HelloFresh left both methods in one step. */
-function preferSwap(step, protein, noun) {
-  const re = /swap in\s+(.+?)\s+for\s+[a-z]+(?:\*)?(?:\s*\([^)]*\))?\s*[.;:]?\s*/i;
-  const match = step.match(re);
-  if (!match) return null;
-  const wanted = wantedRe(protein);
-  const offers = match[1].replace(/\*/g, "");
-  const head = step.slice(0, match.index).trim();
-  let rest = step.slice(match.index + match[0].length).trim();
-  if (!wanted || !wanted.test(offers)) {
-    return replaceAliens(head || step, protein, noun);
-  }
-  const parts = rest.split(/\s+or\s+/i);
-  if (parts.length > 1) {
-    const hit = parts.find((part) => wanted.test(part));
-    if (hit) rest = hit.trim();
-  }
-  if (!rest) return replaceAliens(step, protein, noun);
-  return replaceAliens(rest, protein, noun);
-}
-
-export function alignSteps(steps, meal) {
-  const protein = meal && meal.protein;
-  const noun = shippedNoun(meal || {});
-  return (steps || []).map((step) => {
-    let text = String(step || "").replace(/\u00a0/g, " ").replace(/[ \t]+/g, " ").trim();
-    if (!text || protein === "vegetarian" || !noun) return text;
-    const swapped = preferSwap(text, protein, noun);
-    text = swapped == null ? replaceAliens(text, protein, noun) : swapped;
-    if (protein === "salmon") {
-      // Pounding is the chicken-cutlet template. HelloFresh's own swap note says not to pound salmon.
-      text = text.replace(/(?:^|\.\s+)[^.]*\bpound\b[^.]*(?=\.|$)/gi, "");
-    }
-    return text.replace(/\*+/g, "").replace(/[ \t]{2,}/g, " ").replace(/\s+\./g, ".").trim();
-  }).filter(Boolean);
+/** Whitespace and markup only. Protein words are not rewritten; mismatches are dropped. */
+export function alignSteps(steps) {
+  return (steps || []).map((step) => String(step || "")
+    .replace(/\u00a0/g, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/\*+/g, "")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\s+\./g, ".")
+    .trim()
+  ).filter(Boolean);
 }
 
 function stepBlob(steps) {
-  return stripFalseCuts((steps || []).join(" \n "));
+  return stripFalseCuts((steps || []).join(" \n "))
+    .replace(/consuming raw or undercooked\b[\s\S]*$/i, " ");
 }
 
 function stepsHaveAlien(steps, protein) {
@@ -190,7 +150,7 @@ function stepsHaveAlien(steps, protein) {
   const checks = [
     ["salmon", /\bsalmon\b/i],
     ["chicken", /\bchicken\b/i],
-    ["beef", /\b(beef|steak|sirloin|bavette|brisket|tenderloin)\b/i],
+    ["beef", /\b(beef|steak|sirloin|bavette|brisket|tenderloin|flank|rib-?eye)\b/i],
   ];
   for (const [id, re] of checks) {
     if (id === protein) continue;
@@ -216,11 +176,13 @@ export function recipeIssues(meal) {
     if (hasUnwantedAnimal(name) || hasUnwantedAnimal(rawBlob(meal.ingredients)) || hasUnwantedAnimal(stepText)) {
       issues.push("vegetarian-animal");
     }
+    if (missingKeyFoods(meal).length) issues.push("step-ingredients");
     return issues;
   }
   if (nameHits.some((id) => id !== protein)) issues.push("title");
   if (ingHits.length !== 1 || ingHits[0] !== protein) issues.push("ingredients");
   if (stepsHaveAlien(meal.steps, protein)) issues.push("steps");
+  if (missingKeyFoods(meal).length) issues.push("step-ingredients");
   const inferred = inferProtein({
     name: meal.name,
     ingredients: meal.ingredients,
@@ -230,11 +192,14 @@ export function recipeIssues(meal) {
   return issues;
 }
 
-/** Return a copy whose steps follow the shipped protein, or null if it still disagrees. */
+/**
+ * Return the meal when title, ingredients, and steps already agree.
+ * Template steps that name another protein or a food that was not shipped are dropped.
+ */
 export function alignMeal(meal) {
   if (!meal || typeof meal !== "object") return null;
   if (!SLOT_PROTEINS.has(meal.protein)) return null;
-  const steps = alignSteps(meal.steps, meal);
+  const steps = alignSteps(meal.steps);
   const next = { ...meal, steps };
   if ((next.steps || []).length < 2) return null;
   if (recipeIssues(next).length) return null;

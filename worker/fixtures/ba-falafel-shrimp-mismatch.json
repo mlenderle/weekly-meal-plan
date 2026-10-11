@@ -1,0 +1,71 @@
+{
+  "title": "Falafel & Barley Bowls",
+  "ingredients": [
+    {
+      "quantity_unicode_str": "10 oz",
+      "name": "Shrimp (peeled & deveined)"
+    },
+    {
+      "quantity_unicode_str": "\u00bd cup",
+      "name": "Pearled Barley"
+    },
+    {
+      "quantity_unicode_str": "4 oz",
+      "name": "Falafel Mix"
+    },
+    {
+      "quantity_unicode_str": "3 oz",
+      "name": "Baby Kale"
+    },
+    {
+      "quantity_unicode_str": "1 each",
+      "name": "Avocado"
+    },
+    {
+      "quantity_unicode_str": "1 each",
+      "name": "Bell Pepper"
+    },
+    {
+      "quantity_unicode_str": "\u00bd cup",
+      "name": "Tzatziki (cucumber-yogurt sauce)"
+    },
+    {
+      "quantity_unicode_str": "1 tbsp",
+      "name": "Pomegranate Syrup"
+    },
+    {
+      "quantity_unicode_str": "1 tbsp",
+      "name": "Red Wine Vinegar"
+    },
+    {
+      "quantity_unicode_str": "2 tsp",
+      "name": "Honey"
+    },
+    {
+      "quantity_unicode_str": "\u00bd tbsp",
+      "name": "Za'atar Seasoning (Sumac, Aleppo Pepper, Sesame Seeds, Salt, Thyme & Whole Oregano)"
+    }
+  ],
+  "preparation_steps": [
+    {
+      "title": "Cook the barley",
+      "instruction": "Fill a medium pot 3/4 of the way up with salted water; cover and heat to boiling on high. Once boiling, add the barley and cook, uncovered, 28 to 30 minutes, or until tender. Turn off the heat. Drain thoroughly."
+    },
+    {
+      "title": "Prepare the ingredients & make the dressing",
+      "instruction": "Meanwhile, in a medium bowl, combine the falafel mix , za'atar (reserving a pinch for serving), and 1 / 2 cup of water (or 1 cup for 4 servings) . Set aside to rest, without stirring, at least 10 minutes, or until the water is absorbed. Wash and dry the fresh produce. Cut off and discard the stem of the pepper(s) . Halve lengthwise; remove the ribs and seeds, then medium dice. Halve and pit the avocado(s) . Using a spoon, remove the avocado from the skin, then thinly slice. In a large bowl, whisk together the pomegranate syrup , vinegar , honey , and a drizzle of olive oil ; season with salt and pepper."
+    },
+    {
+      "title": "Cook the shrimp ",
+      "instruction": "Pat the shrimp dry with paper towels ; s eason with salt and pepper. In a medium nonstick pan, heat a drizzle of olive oil on medium-high until hot. Add the seasoned shrimp. Cook, stirring occasionally, 3 to 5 minutes, or until opaque and cooked through. Turn off the heat."
+    },
+    {
+      "title": "Form & cook the falafel",
+      "instruction": "Form the falafel mixture into 6 equal-sized patties (or 12 patties for 4 servings) . In a large nonstick pan, heat a thin layer of oil on medium. Once the oil is hot enough that a pinch of falafel sizzles immediately when added, add the falafel patties in an even layer. Cook 3 to 4 minutes per side, or until golden brown and heated through (if the pan seems dry, add a drizzle of oil before flipping). Transfer to a paper towel-lined plate; immediately season with salt."
+    },
+    {
+      "title": "Make the salad & serve your dish",
+      "instruction": "To the bowl of dressing , add the cooked barley , kale , and diced pepper(s) ; season with salt and pepper. Toss to combine. Serve the salad topped with the cooked falafel , sliced avocado(s) , tzatziki , and remaining za'atar . Enjoy!"
+    }
+  ]
+}
