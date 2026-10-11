@@ -30,7 +30,7 @@ export const LIMITS = {
   readPerMinute: 60,
 };
 
-export const MAX_BODY_BYTES = 4096;
+export const MAX_BODY_BYTES = 8192;
 
 const AVOID_IDS = new Set([
   "dairy", "nuts", "soy", "gluten", "spicy", "mushrooms", "sesame", "egg", "mustard", "shellfish",
@@ -186,7 +186,7 @@ export function sanitizeMatchPrefs(raw) {
   const excludeSeen = new Set();
   prefs.excludeIds = [];
   for (const item of excludeIn) {
-    if (prefs.excludeIds.length >= 24) break;
+    if (prefs.excludeIds.length >= 64) break;
     const id = String(item || "").trim().toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 80);
     if (id.length < 4 || excludeSeen.has(id)) continue;
     excludeSeen.add(id);
@@ -246,17 +246,24 @@ async function handleMatch(prefs, env) {
     errors.push("HelloFresh: " + (err.message || String(err)));
   }
 
-  // --- Blue Apron live JSON-LD ---
+  // --- Blue Apron live pages (archive fallback when the edge challenge blocks us) ---
   try {
-    const ba = await fetchBlueApronPool(fetch, prefs.seed);
-    for (const { ld, url } of ba) {
+    const ba = await fetchBlueApronPool(fetch, prefs.seed, proteinsNeeded);
+    const pages = Array.isArray(ba) ? ba : (ba && ba.pages) || [];
+    for (const { ld, url } of pages) {
       const norm = normalizeJsonLdRecipe(ld, "Blue Apron", url);
       if (!norm) continue;
       if (!proteinsNeeded.includes(norm.protein)) continue;
       acceptMeal(candidates, norm);
     }
+    if ((!pages.length) && ba && ba.error) errors.push("Blue Apron: " + ba.error);
   } catch (err) {
     errors.push("Blue Apron: " + (err.message || String(err)));
+  }
+
+  const exclude = new Set(prefs.excludeIds || []);
+  for (const id of Object.keys(candidates)) {
+    if (exclude.has(id)) delete candidates[id];
   }
 
   for (const id of Object.keys(candidates)) {

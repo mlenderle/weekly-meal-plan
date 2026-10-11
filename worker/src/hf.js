@@ -9,7 +9,7 @@ const HF_SEARCH_PAGE = "https://www.hellofresh.com/recipes/search?q=dinner";
 const HF_API = "https://gw.hellofresh.com/api/recipes/search";
 
 const PROTEIN_QUERIES = {
-  beef: ["steak dinner", "beef bowl", "sirloin", "ranch steak", "beef tenderloin"],
+  beef: ["steak dinner", "sirloin steak", "flank steak", "ground beef", "beef burgers", "beef tacos"],
   chicken: ["chicken cutlets", "chicken salad dinner", "roast chicken", "chicken thighs"],
   salmon: ["salmon dinner", "salmon fillet", "glazed salmon", "salmon bowl"],
   vegetarian: [
@@ -43,7 +43,6 @@ export async function getHelloFreshToken(fetchImpl = fetch) {
       Accept: "text/html",
     },
     cache: "no-store",
-    cf: { cacheTtl: 0 },
   });
   if (!res.ok) throw new Error(`HF token page HTTP ${res.status}`);
   const html = await res.text();
@@ -60,22 +59,46 @@ export async function getHelloFreshToken(fetchImpl = fetch) {
 const HF_ORDERS = ["-date", "-rating", "date"];
 
 /**
- * Which queries, sorts, and pages to ask for. Different seeds walk different
- * slices of the catalog instead of always taking the top-rated first page.
+ * Four consecutive result pages. The window start moves with the seed so a
+ * later search is not stuck on skip 0–11 (the same first page every time).
+ */
+export function helloFreshPageSkips(seed, protein) {
+  const rng = makeRng(`${seed}|hf|pages|${protein}`);
+  const start = Math.floor(rng() * 3) * 12;
+  return [0, 1, 2, 3].map((i) => start + i * 12);
+}
+
+/**
+ * Which queries, sorts, and pages to ask for. Beef always includes a steak
+ * query and a ground-beef query. Different seeds walk different pages.
  */
 export function helloFreshSearchPlan(protein, seed) {
   const rng = makeRng(`${seed}|hf|${protein}`);
+  const skips = helloFreshPageSkips(seed, protein);
+  const order = () => HF_ORDERS[Math.floor(rng() * HF_ORDERS.length)];
+  if (protein === "beef") {
+    const steak = shuffle(["steak dinner", "sirloin steak", "flank steak", "ribeye steak"], rng)[0];
+    const ground = shuffle(["ground beef", "beef burgers", "beef tacos", "beef meatballs"], rng)[0];
+    const other = shuffle(["beef stew", "brisket", "short ribs", "beef bowl"], rng)[0];
+    const flip = Math.floor(rng() * 2);
+    // Keep both cuts on the first two pages. A high skip on a small steak query
+    // used to return nothing and the week came back all ground beef, or the reverse.
+    return [
+      { q: steak, extra: "", order: order(), skip: flip ? 0 : 12, limit: 8 },
+      { q: ground, extra: "", order: order(), skip: flip ? 12 : 0, limit: 8 },
+      { q: other, extra: "", order: order(), skip: skips[2], limit: 8 },
+      { q: flip ? ground : steak, extra: "", order: order(), skip: skips[3], limit: 8 },
+    ];
+  }
   const queries = PROTEIN_QUERIES[protein] || [protein];
   const extras = PROTEIN_EXTRAS[protein] || [""];
-  const jobs = [];
-  for (const q of queries) {
-    for (const extra of extras) jobs.push({ q, extra });
-  }
-  return shuffle(jobs, rng).slice(0, 4).map((job) => ({
-    q: job.q,
-    extra: job.extra,
-    order: HF_ORDERS[Math.floor(rng() * HF_ORDERS.length)],
-    skip: Math.floor(rng() * 12),
+  const picked = shuffle(queries, rng);
+  while (picked.length < 4) picked.push(queries[picked.length % queries.length]);
+  return picked.slice(0, 4).map((q, i) => ({
+    q,
+    extra: extras[i % extras.length] || "",
+    order: order(),
+    skip: skips[i],
     limit: 8,
   }));
 }
@@ -92,7 +115,6 @@ async function searchOnce(token, job, fetchImpl) {
       "User-Agent": "WeeklyMealPlanner/1.0",
     },
     cache: "no-store",
-    cf: { cacheTtl: 0 },
   });
   if (!res.ok) throw new Error(`HF search HTTP ${res.status} for q=${job.q}`);
   return res.json();

@@ -63,7 +63,7 @@ The Worker echoes `Access-Control-Allow-Origin` only when the request `Origin` i
 
 ### Rate limit and request size
 
-`POST /match` is limited per `CF-Connecting-IP` to 10 requests a minute and 40 an hour (in-isolate; free tier, no extra Cloudflare product). Over the limit the Worker returns **429** and `Retry-After` with `{ "ok": false, "error": "Too many recipe lookups..." }`. `GET /health` has a lighter cap (60 a minute). Bodies over 4 KB are **413**. Protein counts are clamped to 0–7 with a week total of 7, and avoid lists are shortened to known tags plus a few short custom phrases.
+`POST /match` is limited per `CF-Connecting-IP` to 10 requests a minute and 40 an hour (in-isolate; free tier, no extra Cloudflare product). Over the limit the Worker returns **429** and `Retry-After` with `{ "ok": false, "error": "Too many recipe lookups..." }`. `GET /health` has a lighter cap (60 a minute). Bodies over 8 KB are **413**. Protein counts are clamped to 0–7 with a week total of 7, and avoid lists are shortened to known tags plus a few short custom phrases.
 
 ### Health
 

@@ -1,0 +1,490 @@
+{
+  "id": "68da75bdd1aa3c560df059c4",
+  "name": "Blue Plate Special Salmon Dinner Bar",
+  "slug": "blue-plate-special-salmon-dinner-bar",
+  "websiteUrl": "https://www.hellofresh.com/recipes/blue-plate-special-salmon-dinner-bar-68da75bdd1aa3c560df059c4",
+  "description": "Our chef-curated \u201cperfect plates\u201d are the answer to your dinner woes! Set out a sumptuous spread of tender chicken cutlets, sweet peas, roasted carrots, fluffy mashed potatoes, and two (two!!) sauces: savory-sweet cherry sauce and classic onion gravy for spooning over anything and everything. Serve ",
+  "totalTime": "PT10M",
+  "prepTime": null,
+  "difficulty": 2,
+  "tags": [
+    {
+      "slug": "pork-free"
+    },
+    {
+      "slug": "classic-plates"
+    },
+    {
+      "slug": "regional-specialty"
+    },
+    {
+      "slug": "pescatarian"
+    },
+    {
+      "slug": "kid-friendly"
+    }
+  ],
+  "category": {
+    "name": "Seafood"
+  },
+  "ingredients": [
+    {
+      "id": "68d57cd79ed4d6794189bc41",
+      "name": "Sour Cream"
+    },
+    {
+      "id": "64b6744fa1aa6db20ea0d57f",
+      "name": "Cherry Jam"
+    },
+    {
+      "id": "68d57e85d232ff05cfc441e8",
+      "name": "Salmon"
+    },
+    {
+      "id": "64b67452d4684302b8753f61",
+      "name": "Vidalia Onion Paste"
+    },
+    {
+      "id": "64b67451a7c1f8a1e13bae05",
+      "name": "Carrot"
+    },
+    {
+      "id": "64b6744dd4684302b8753dac",
+      "name": "Peas"
+    },
+    {
+      "id": "64b67451d4684302b8753f28",
+      "name": "Chicken Stock Concentrate"
+    },
+    {
+      "id": "64b6744ed4684302b8753dbe",
+      "name": "Scallions"
+    },
+    {
+      "id": "68d58e14681e58ed6e5afd36",
+      "name": "Flour"
+    },
+    {
+      "id": "64b6744cd4684302b8753d2d",
+      "name": "Garlic Powder"
+    },
+    {
+      "id": "674894a1989edba91be33e2b",
+      "name": "Potatoes"
+    },
+    {
+      "id": "5afc835e30006c4576393862",
+      "name": "Mexican Cheese Blend"
+    },
+    {
+      "id": "68d576a397ed48723708e5ed",
+      "name": "Salt"
+    },
+    {
+      "id": "68d5769b97ed48723708e5e5",
+      "name": "Cooking Oil"
+    },
+    {
+      "id": "68d5769dff933740cefe746f",
+      "name": "Butter"
+    },
+    {
+      "id": "68d576b3ff933740cefe7481",
+      "name": "Black Pepper"
+    }
+  ],
+  "yields": [
+    {
+      "yields": 2,
+      "ingredients": [
+        {
+          "id": "68d57cd79ed4d6794189bc41",
+          "amount": 4.5,
+          "unit": "tablespoon"
+        },
+        {
+          "id": "64b6744fa1aa6db20ea0d57f",
+          "amount": 1,
+          "unit": "unit"
+        },
+        {
+          "id": "68d57e85d232ff05cfc441e8",
+          "amount": 10,
+          "unit": "ounce"
+        },
+        {
+          "id": "64b67452d4684302b8753f61",
+          "amount": 0.5,
+          "unit": "ounce"
+        },
+        {
+          "id": "64b67451a7c1f8a1e13bae05",
+          "amount": 12,
+          "unit": "ounce"
+        },
+        {
+          "id": "64b6744dd4684302b8753dac",
+          "amount": 4,
+          "unit": "ounce"
+        },
+        {
+          "id": "64b67451d4684302b8753f28",
+          "amount": 2,
+          "unit": "unit"
+        },
+        {
+          "id": "64b6744ed4684302b8753dbe",
+          "amount": 2,
+          "unit": "unit"
+        },
+        {
+          "id": "68d58e14681e58ed6e5afd36",
+          "amount": 1,
+          "unit": "tablespoon"
+        },
+        {
+          "id": "64b6744cd4684302b8753d2d",
+          "amount": 1,
+          "unit": "teaspoon"
+        },
+        {
+          "id": "674894a1989edba91be33e2b",
+          "amount": 5,
+          "unit": "unit"
+        },
+        {
+          "id": "5afc835e30006c4576393862",
+          "amount": 0.5,
+          "unit": "cup"
+        },
+        {
+          "id": "68d576a397ed48723708e5ed",
+          "amount": null,
+          "unit": "teaspoon (tsp)"
+        },
+        {
+          "id": "68d5769b97ed48723708e5e5",
+          "amount": 3,
+          "unit": "teaspoon (tsp)"
+        },
+        {
+          "id": "68d5769dff933740cefe746f",
+          "amount": 3,
+          "unit": "tablespoon (tbsp)"
+        },
+        {
+          "id": "68d576b3ff933740cefe7481",
+          "amount": null,
+          "unit": "teaspoon (tsp)"
+        }
+      ]
+    },
+    {
+      "yields": 3,
+      "ingredients": [
+        {
+          "id": "68d57cd79ed4d6794189bc41",
+          "amount": 6.75,
+          "unit": "tablespoon"
+        },
+        {
+          "id": "64b6744fa1aa6db20ea0d57f",
+          "amount": 1.5,
+          "unit": "unit"
+        },
+        {
+          "id": "68d57e85d232ff05cfc441e8",
+          "amount": 15,
+          "unit": "ounce"
+        },
+        {
+          "id": "64b67452d4684302b8753f61",
+          "amount": 0.75,
+          "unit": "ounce"
+        },
+        {
+          "id": "64b67451a7c1f8a1e13bae05",
+          "amount": 18,
+          "unit": "ounce"
+        },
+        {
+          "id": "64b6744dd4684302b8753dac",
+          "amount": 6,
+          "unit": "ounce"
+        },
+        {
+          "id": "64b67451d4684302b8753f28",
+          "amount": 3,
+          "unit": "unit"
+        },
+        {
+          "id": "64b6744ed4684302b8753dbe",
+          "amount": 3,
+          "unit": "unit"
+        },
+        {
+          "id": "68d58e14681e58ed6e5afd36",
+          "amount": 1.5,
+          "unit": "tablespoon"
+        },
+        {
+          "id": "64b6744cd4684302b8753d2d",
+          "amount": 1.5,
+          "unit": "teaspoon"
+        },
+        {
+          "id": "674894a1989edba91be33e2b",
+          "amount": 7.5,
+          "unit": "unit"
+        },
+        {
+          "id": "5afc835e30006c4576393862",
+          "amount": 0.75,
+          "unit": "cup"
+        },
+        {
+          "id": "68d576a397ed48723708e5ed",
+          "amount": null,
+          "unit": "teaspoon (tsp)"
+        },
+        {
+          "id": "68d5769b97ed48723708e5e5",
+          "amount": 2.25,
+          "unit": "teaspoon (tsp)"
+        },
+        {
+          "id": "68d5769dff933740cefe746f",
+          "amount": 4.5,
+          "unit": "tablespoon (tbsp)"
+        },
+        {
+          "id": "68d576b3ff933740cefe7481",
+          "amount": null,
+          "unit": "teaspoon (tsp)"
+        }
+      ]
+    },
+    {
+      "yields": 4,
+      "ingredients": [
+        {
+          "id": "68d57cd79ed4d6794189bc41",
+          "amount": 9,
+          "unit": "tablespoon"
+        },
+        {
+          "id": "64b6744fa1aa6db20ea0d57f",
+          "amount": 2,
+          "unit": "unit"
+        },
+        {
+          "id": "68d57e85d232ff05cfc441e8",
+          "amount": 20,
+          "unit": "ounce"
+        },
+        {
+          "id": "64b67452d4684302b8753f61",
+          "amount": 1,
+          "unit": "ounce"
+        },
+        {
+          "id": "64b67451a7c1f8a1e13bae05",
+          "amount": 24,
+          "unit": "ounce"
+        },
+        {
+          "id": "64b6744dd4684302b8753dac",
+          "amount": 8,
+          "unit": "ounce"
+        },
+        {
+          "id": "64b67451d4684302b8753f28",
+          "amount": 4,
+          "unit": "unit"
+        },
+        {
+          "id": "64b6744ed4684302b8753dbe",
+          "amount": 4,
+          "unit": "unit"
+        },
+        {
+          "id": "68d58e14681e58ed6e5afd36",
+          "amount": 2,
+          "unit": "tablespoon"
+        },
+        {
+          "id": "64b6744cd4684302b8753d2d",
+          "amount": 2,
+          "unit": "teaspoon"
+        },
+        {
+          "id": "674894a1989edba91be33e2b",
+          "amount": 10,
+          "unit": "unit"
+        },
+        {
+          "id": "5afc835e30006c4576393862",
+          "amount": 1,
+          "unit": "cup"
+        },
+        {
+          "id": "68d576a397ed48723708e5ed",
+          "amount": null,
+          "unit": "teaspoon (tsp)"
+        },
+        {
+          "id": "68d5769b97ed48723708e5e5",
+          "amount": 3,
+          "unit": "teaspoon (tsp)"
+        },
+        {
+          "id": "68d5769dff933740cefe746f",
+          "amount": 6,
+          "unit": "tablespoon (tbsp)"
+        },
+        {
+          "id": "68d576b3ff933740cefe7481",
+          "amount": null,
+          "unit": "teaspoon (tsp)"
+        }
+      ]
+    },
+    {
+      "yields": 6,
+      "ingredients": [
+        {
+          "id": "68d57cd79ed4d6794189bc41",
+          "amount": 13.5,
+          "unit": "tablespoon"
+        },
+        {
+          "id": "64b6744fa1aa6db20ea0d57f",
+          "amount": 3,
+          "unit": "unit"
+        },
+        {
+          "id": "68d57e85d232ff05cfc441e8",
+          "amount": 30,
+          "unit": "ounce"
+        },
+        {
+          "id": "64b67452d4684302b8753f61",
+          "amount": 1.5,
+          "unit": "ounce"
+        },
+        {
+          "id": "64b67451a7c1f8a1e13bae05",
+          "amount": 36,
+          "unit": "ounce"
+        },
+        {
+          "id": "64b6744dd4684302b8753dac",
+          "amount": 12,
+          "unit": "ounce"
+        },
+        {
+          "id": "64b67451d4684302b8753f28",
+          "amount": 6,
+          "unit": "unit"
+        },
+        {
+          "id": "64b6744ed4684302b8753dbe",
+          "amount": 6,
+          "unit": "unit"
+        },
+        {
+          "id": "68d58e14681e58ed6e5afd36",
+          "amount": 3,
+          "unit": "tablespoon"
+        },
+        {
+          "id": "64b6744cd4684302b8753d2d",
+          "amount": 3,
+          "unit": "teaspoon"
+        },
+        {
+          "id": "674894a1989edba91be33e2b",
+          "amount": 15,
+          "unit": "unit"
+        },
+        {
+          "id": "5afc835e30006c4576393862",
+          "amount": 1.5,
+          "unit": "cup"
+        }
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "instructions": "Adjust rack to top position and preheat oven to 425 degrees. Wash and dry produce. Trim, peel, and cut carrots on a diagonal into \u00bd-inch-thick pieces.Toss carrots on a baking sheet with a large drizzle of oil, salt, and pepper. Roast on top rack until browned and tender, 20-25 minutes."
+    },
+    {
+      "instructions": "While carrots roast, dice potatoes into \u00bd-inch pieces. Trim and thinly slice scallions, separating whites from greens.Place potatoes in a medium pot with enough salted water to cover by 2 inches. Bring to a boil and cook until tender, 10-12 minutes. Reserve \u00bd cup potato cooking liquid, then drain.Return potatoes to pot and keep covered off heat until ready to mash in Step 6."
+    },
+    {
+      "instructions": "Pat chicken* dry with paper towels; place between two large pieces of plastic wrap. Pound with a mallet or rolling pin until \u00bd inch thick. Season all over with garlic powder, salt, and pepper.Heat a drizzle of oil in a large pan over medium-high heat. Add chicken; cook until browned and cooked through, 4-6 minutes per side. Turn off heat; transfer to a cutting board and tent with foil to keep warm. Wipe out pan and let cool slightly. TIP: If you added any other items to your meal (apps, sides, and/or dessert), you can get started on them now!"
+    },
+    {
+      "instructions": "Meanwhile, in a small microwave-safe bowl, whisk together jam, half the stock concentrates, 1 TBSP water, and 1 TBSP butter (2 TBSP water and 2 TBSP butter for 4). Cover with plastic wrap and microwave until butter has melted, 1-2 minutes. Carefully remove plastic wrap and whisk in 1 packet of sour cream (2 packets for 4).In a medium microwave-safe bowl, combine peas with 1 TBSP butter (2 TBSP for 4), salt, and pepper. Cover with plastic wrap and microwave until peas are warmed through and butter has melted, 2-3 minutes. Carefully remove plastic wrap and stir to combine."
+    },
+    {
+      "instructions": "Heat pan used for chicken over medium-high heat. Add 2 TBSP butter (4 TBSP for 4 servings) and scallion whites. Cook, stirring, until scallions are lightly browned 1-2 minutes.Whisk in flour and cook, whisking, until lightly browned, 1 minute more.Whisk in \u00be cup water (1\u00bc cups water for 4), Vidalia onion paste, and remaining stock concentrate. Cook, whisking occasionally, until slightly thickened, 2-3 minutes."
+    },
+    {
+      "instructions": "Add remaining sour cream and 1 TBSP butter (2 TBSP for 4 servings) to pot with drained potatoes.Mash until smooth and creamy, adding splashes of reserved potato cooking liquid as needed. Taste and season with salt and pepper."
+    },
+    {
+      "instructions": "Slice chicken crosswise.Serve chicken, mashed potatoes, roasted carrots, peas, cherry sauce, gravy, scallion greens, and Mexican cheese blend family style and let everyone build their own plate. (Don't forget to serve with any extra items you may have ordered to build out your meal!)"
+    }
+  ],
+  "nutrition": [
+    {
+      "name": "Calories",
+      "amount": 1100,
+      "unit": "kcal"
+    }
+  ],
+  "allergens": [],
+  "utensils": [
+    {
+      "name": "Peeler"
+    },
+    {
+      "name": "Baking Sheet"
+    },
+    {
+      "name": "Medium Pot"
+    },
+    {
+      "name": "Strainer"
+    },
+    {
+      "name": "Paper Towel"
+    },
+    {
+      "name": "Plastic Wrap"
+    },
+    {
+      "name": "Meat Mallet"
+    },
+    {
+      "name": "Large Pan"
+    },
+    {
+      "name": "Aluminum Foil"
+    },
+    {
+      "name": "Small Bowl"
+    },
+    {
+      "name": "Whisk"
+    },
+    {
+      "name": "Medium Bowl"
+    },
+    {
+      "name": "Potato Masher"
+    }
+  ]
+}

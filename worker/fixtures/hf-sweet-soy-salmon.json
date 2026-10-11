@@ -1,0 +1,282 @@
+{
+  "id": "661d65e43d20ae432f30b541",
+  "name": "Sweet Soy-Glazed Salmon & Kale Salad",
+  "slug": "sweet-soy-glazed-salmon-and-kale-salad",
+  "websiteUrl": "https://www.hellofresh.com/recipes/sweet-soy-glazed-salmon-and-kale-salad-661d65e43d20ae432f30b541",
+  "description": "Get ready for a fish dish that\u2019s light, filling, flavorful, and on the table in a quick and easy 15 minutes! You\u2019ll drizzle seared salmon with a sweet soy glaze, and serve it over sesame-dressed kale and cabbage salad topped with tangy pickled red onion and carrots and sprinkled with crunchy peanuts. The only question is: What will you do with all that time you freed up by picking this meal?",
+  "totalTime": "PT0S",
+  "prepTime": "PT15M",
+  "difficulty": 1,
+  "tags": [
+    {
+      "slug": "carb-smart"
+    },
+    {
+      "slug": "protein-smart"
+    },
+    {
+      "slug": "quick"
+    },
+    {
+      "slug": "easy-prep-and-clean"
+    },
+    {
+      "slug": "quick-prep-internal"
+    },
+    {
+      "slug": "seasonal"
+    }
+  ],
+  "category": {
+    "name": ""
+  },
+  "ingredients": [
+    {
+      "id": "56ba63e7fd2cb957058b4567",
+      "name": "Salmon"
+    },
+    {
+      "id": "632a936a061be7ce6808a137",
+      "name": "Sweet Soy Glaze"
+    },
+    {
+      "id": "554a3947fd2cb9cf488b456b",
+      "name": "Red Onion"
+    },
+    {
+      "id": "58e5482dc9fd084fda594d72",
+      "name": "Shredded Carrots"
+    },
+    {
+      "id": "5c3f996ee3f33960cc6ec232",
+      "name": "Rice Wine Vinegar"
+    },
+    {
+      "id": "5566ef2dfd2cb95e018b4568",
+      "name": "Kale"
+    },
+    {
+      "id": "558c448ef8b25e2c0e8b4567",
+      "name": "Coleslaw Mix"
+    },
+    {
+      "id": "6347198c8f5afb7ba6064f11",
+      "name": "Sesame Dressing"
+    },
+    {
+      "id": "55cb71b679a23c5a378b4567",
+      "name": "Peanuts"
+    },
+    {
+      "id": "5566cdf2f8b25e0d298b4568",
+      "name": "Olive Oil"
+    },
+    {
+      "id": "606db3ad4f75e662fe596b59",
+      "name": "Cooking Oil"
+    },
+    {
+      "id": "5566e2014dab71e3078b4568",
+      "name": "Sugar"
+    },
+    {
+      "id": "5566ceb7fd2cb95f7f8b4567",
+      "name": "Salt"
+    },
+    {
+      "id": "5566dc00f8b25e5b298b4568",
+      "name": "Pepper"
+    }
+  ],
+  "yields": [
+    {
+      "yields": 2,
+      "ingredients": [
+        {
+          "id": "56ba63e7fd2cb957058b4567",
+          "amount": 10,
+          "unit": "ounce"
+        },
+        {
+          "id": "632a936a061be7ce6808a137",
+          "amount": 4,
+          "unit": "tablespoon"
+        },
+        {
+          "id": "554a3947fd2cb9cf488b456b",
+          "amount": 1,
+          "unit": "unit"
+        },
+        {
+          "id": "58e5482dc9fd084fda594d72",
+          "amount": 4,
+          "unit": "ounce"
+        },
+        {
+          "id": "5c3f996ee3f33960cc6ec232",
+          "amount": 5,
+          "unit": "teaspoon"
+        },
+        {
+          "id": "5566ef2dfd2cb95e018b4568",
+          "amount": 4,
+          "unit": "ounce"
+        },
+        {
+          "id": "558c448ef8b25e2c0e8b4567",
+          "amount": 4,
+          "unit": "ounce"
+        },
+        {
+          "id": "6347198c8f5afb7ba6064f11",
+          "amount": 1.5,
+          "unit": "ounce"
+        },
+        {
+          "id": "55cb71b679a23c5a378b4567",
+          "amount": 0.5,
+          "unit": "ounce"
+        },
+        {
+          "id": "5566cdf2f8b25e0d298b4568",
+          "amount": 2,
+          "unit": "teaspoon"
+        },
+        {
+          "id": "606db3ad4f75e662fe596b59",
+          "amount": 1,
+          "unit": "teaspoon"
+        },
+        {
+          "id": "5566e2014dab71e3078b4568",
+          "amount": 0.5,
+          "unit": "teaspoon"
+        },
+        {
+          "id": "5566ceb7fd2cb95f7f8b4567",
+          "amount": null,
+          "unit": null
+        },
+        {
+          "id": "5566dc00f8b25e5b298b4568",
+          "amount": null,
+          "unit": null
+        }
+      ]
+    },
+    {
+      "yields": 4,
+      "ingredients": [
+        {
+          "id": "56ba63e7fd2cb957058b4567",
+          "amount": 20,
+          "unit": "ounce"
+        },
+        {
+          "id": "632a936a061be7ce6808a137",
+          "amount": 8,
+          "unit": "tablespoon"
+        },
+        {
+          "id": "554a3947fd2cb9cf488b456b",
+          "amount": 2,
+          "unit": "unit"
+        },
+        {
+          "id": "58e5482dc9fd084fda594d72",
+          "amount": 8,
+          "unit": "ounce"
+        },
+        {
+          "id": "5c3f996ee3f33960cc6ec232",
+          "amount": 10,
+          "unit": "teaspoon"
+        },
+        {
+          "id": "5566ef2dfd2cb95e018b4568",
+          "amount": 8,
+          "unit": "ounce"
+        },
+        {
+          "id": "558c448ef8b25e2c0e8b4567",
+          "amount": 8,
+          "unit": "ounce"
+        },
+        {
+          "id": "6347198c8f5afb7ba6064f11",
+          "amount": 3,
+          "unit": "ounce"
+        },
+        {
+          "id": "55cb71b679a23c5a378b4567",
+          "amount": 1,
+          "unit": "ounce"
+        },
+        {
+          "id": "5566cdf2f8b25e0d298b4568",
+          "amount": 2,
+          "unit": "teaspoon"
+        },
+        {
+          "id": "606db3ad4f75e662fe596b59",
+          "amount": 1,
+          "unit": "teaspoon"
+        },
+        {
+          "id": "5566e2014dab71e3078b4568",
+          "amount": 1,
+          "unit": "teaspoon"
+        },
+        {
+          "id": "5566ceb7fd2cb95f7f8b4567",
+          "amount": null,
+          "unit": null
+        },
+        {
+          "id": "5566dc00f8b25e5b298b4568",
+          "amount": null,
+          "unit": null
+        }
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "instructions": "\u2022 Wash and dry produce. \u2022 Pat salmon* dry; season all over with salt and pepper. \u2022 Drizzle oil in a hot large pan. Cook salmon, skin sides down, until skin is crisp, 5-7 minutes. Flip; cook until cooked through, 1-2 minutes more. Transfer to a plate and drizzle with as much sweet soy glaze as you like. TIP: While salmon cooks, move to Step 2!"
+    },
+    {
+      "instructions": "\u2022 Thinly slice onion. \u2022 In a small microwave-safe bowl, mix onion, shredded carrots, vinegar, \u00bd tsp sugar (1 tsp for 4), salt, and pepper. Cover with plastic wrap; microwave for 1-2 minutes. \u2022 Set aside to pickle, tossing occasionally."
+    },
+    {
+      "instructions": "\u2022 Remove and discard any large stems from kale; chop if desired. Place in a large bowl; using your hands, massage kale with a large drizzle of olive oil until leaves are tender, 1 minute. \u2022 Add coleslaw mix to bowl with kale. Season with salt and pepper. \u2022 Add 1 tsp veggie pickling liquid (2 tsp for 4) and as much sesame dressing as you like; toss to combine."
+    },
+    {
+      "instructions": "\u2022 Top salad with glazed salmon and as many pickled veggies (draining first) as you like. Sprinkle with peanuts and serve. TIP: If you have extra time, toast your peanuts! Salmon is fully cooked when internal temperature reaches 145\u00b0."
+    }
+  ],
+  "nutrition": [
+    {
+      "name": "Calories",
+      "amount": 720,
+      "unit": "kcal"
+    }
+  ],
+  "allergens": [],
+  "utensils": [
+    {
+      "name": "Paper Towel"
+    },
+    {
+      "name": "Large Pan"
+    },
+    {
+      "name": "Small Bowl"
+    },
+    {
+      "name": "Plastic Wrap"
+    },
+    {
+      "name": "Large Bowl"
+    }
+  ]
+}

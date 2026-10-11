@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs";
 import { alignMeal, inferProtein, recipeFitsSlot, recipeIssues } from "../worker/src/protein.js";
 import { normalizeHelloFreshItem } from "../worker/src/normalize.js";
 import { buildPlanFromCandidates } from "../worker/src/plan.js";
-import { helloFreshSearchPlan } from "../worker/src/hf.js";
+import { helloFreshSearchPlan, helloFreshPageSkips } from "../worker/src/hf.js";
 import { blueApronSeedPlan } from "../worker/src/ba.js";
 import { sanitizeMatchPrefs } from "../worker/src/index.js";
 
@@ -36,13 +36,10 @@ const garlicHerb = meal({
   ],
 });
 
-const alignedSalmon = alignMeal(garlicHerb);
-assert.ok(alignedSalmon, "salmon card with chicken template steps should be rewritten, not dropped");
-assert.equal(alignedSalmon.protein, "salmon");
-assert.match(alignedSalmon.ingredients.join(" "), /Salmon/);
-assert.doesNotMatch(alignedSalmon.steps.join(" "), /\bchicken\b/i);
-assert.match(alignedSalmon.steps.join(" "), /\bsalmon\b/i);
-const pounded = alignMeal(meal({
+assert.equal(alignMeal(garlicHerb), null, "salmon card with chicken template steps is dropped, not rewritten");
+assert.ok(recipeIssues(garlicHerb).includes("steps"));
+
+const pounded = meal({
   name: "Blue Plate Special Salmon Dinner Bar",
   protein: "salmon",
   ingredients: ["10 oz Salmon", "2 Chicken Stock Concentrate", "12 oz Potatoes", "1 tbsp Butter"],
@@ -51,33 +48,40 @@ const pounded = alignMeal(meal({
     "Pat chicken* dry with paper towels. Pound with a mallet until chicken is about 1/2 inch thick. Season with salt. Cook chicken 5-7 minutes per side.",
     "Slice chicken and serve with the potatoes.",
   ],
-}));
-assert.ok(pounded);
-assert.doesNotMatch(pounded.steps.join(" "), /\b(chicken|pound)\b/i);
-assert.match(pounded.steps.join(" "), /Cook salmon 5-7 minutes per side/i);
+});
+assert.equal(alignMeal(pounded), null);
+assert.ok(recipeIssues(pounded).includes("steps"));
 assert.match(pounded.ingredients.join(" "), /Chicken Stock Concentrate/);
 
-assert.equal(recipeFitsSlot(alignedSalmon, "salmon"), true);
-assert.equal(recipeFitsSlot(alignedSalmon, "chicken"), false);
-assert.deepEqual(recipeIssues(alignedSalmon), []);
+const coherentSalmon = alignMeal(meal({
+  name: "Garlic Herb Salmon",
+  protein: "salmon",
+  ingredients: ["10 oz Salmon", "1 Lemon", "1/4 oz Parsley", "1 tsp Garlic Powder"],
+  steps: [
+    "Rinse and dry the produce.",
+    "Pat the salmon dry with paper towels. Season with garlic powder, salt, and pepper. Cook the salmon until it flakes, 3-5 minutes per side.",
+    "Serve the salmon with the lemon.",
+  ],
+}));
+assert.ok(coherentSalmon);
+assert.equal(coherentSalmon.protein, "salmon");
+assert.match(coherentSalmon.steps.join(" "), /\bsalmon\b/i);
+assert.equal(recipeFitsSlot(coherentSalmon, "salmon"), true);
+assert.equal(recipeFitsSlot(coherentSalmon, "chicken"), false);
+assert.deepEqual(recipeIssues(coherentSalmon), []);
 
-const herbed = alignMeal(meal({
+assert.equal(alignMeal(meal({
   name: "Herbed Salmon over Apple & Kale Salad",
   protein: "salmon",
   ingredients: ["4 oz Kale", "10 oz Salmon", "1 Apple", "1 tsp Garlic Powder"],
   steps: [
     "Rinse and dry the produce. Chop the kale.",
-    "Pat chicken* dry with paper towels. Pound until chicken is about 1/2 inch thick. Cook chicken 3-5 minutes per side. Transfer to a cutting board. Swap in salmon* for chicken (no need to pound salmon!). Cook salmon (skin sides down) until skin is crisp, 5-7 minutes. Flip and cook until cooked through, 1-2 minutes more.",
-    "Slice chicken crosswise. Top with chicken. Serve salmon (no need to slice!) atop salad.",
+    "Pat chicken* dry with paper towels. Pound until chicken is about 1/2 inch thick. Cook chicken 3-5 minutes per side. Swap in salmon* for chicken.",
+    "Slice chicken crosswise and serve.",
   ],
-}));
-assert.ok(herbed);
-const cookStep = herbed.steps[1];
-assert.match(cookStep, /Cook salmon \(skin sides down\)/i);
-assert.doesNotMatch(cookStep, /3-5 minutes per side/i);
-assert.doesNotMatch(herbed.steps.join(" "), /\bchicken\b/i);
+})), null);
 
-const bavette = alignMeal(meal({
+const bavette = meal({
   name: "2x Bavette Steak & Creamy Cannellini Beans",
   protein: "beef",
   ingredients: ["10 oz Bavette Steak", "1 Zucchini", "2 Chicken Stock Concentrate", "1 tbsp Butter"],
@@ -86,19 +90,15 @@ const bavette = alignMeal(meal({
     "Pat chicken* dry with paper towels. Add chicken; cook until browned and cooked through, 5-7 minutes per side.",
     "Slice chicken crosswise. Top with chicken and spoon the pan sauce over chicken.",
   ],
-}));
-assert.ok(bavette, "steak + chicken stock must stay beef and not be tagged chicken");
-assert.equal(bavette.protein, "beef");
-assert.match(bavette.ingredients.join(" "), /Chicken Stock Concentrate/);
-assert.match(bavette.ingredients.join(" "), /Bavette Steak/);
-assert.doesNotMatch(bavette.steps.join(" "), /\bchicken\b/i);
-assert.match(bavette.steps.join(" "), /\bsteak\b/i);
+});
+assert.equal(alignMeal(bavette), null, "chicken template steps are dropped even when the title is steak");
 assert.equal(inferProtein({
   name: bavette.name,
   ingredients: bavette.ingredients.map((n) => ({ name: n })),
 }), "beef");
+assert.ok(recipeIssues(bavette).includes("steps"));
 
-const swapBeef = alignMeal(meal({
+assert.equal(alignMeal(meal({
   name: "Beef Tenderloin with Balsamic Mushroom Sauce",
   protein: "beef",
   ingredients: ["10 oz Beef Tenderloin", "8 oz Mushrooms", "1 tbsp Butter", "1 tsp Thyme"],
@@ -107,10 +107,7 @@ const swapBeef = alignMeal(meal({
     "Pat pork* dry with paper towels. Swap in chicken or beef for pork; cook chicken until cooked through, 3-5 minutes per side, or cook beef to desired doneness, 4-7 minutes per side.",
     "Slice the beef and serve with the mushrooms.",
   ],
-}));
-assert.ok(swapBeef);
-assert.match(swapBeef.steps[1], /cook beef to desired doneness/i);
-assert.doesNotMatch(swapBeef.steps.join(" "), /\b(chicken|pork)\b/i);
+})), null);
 
 assert.equal(alignMeal(meal({
   name: "Garlic Herb Salmon",
@@ -150,12 +147,7 @@ const hf = normalizeHelloFreshItem({
   tags: [{ slug: "protein-smart" }],
   category: { name: "poultry" },
 });
-assert.ok(hf);
-assert.equal(hf.id, "68d65a7ed232ff05cfc495f1");
-assert.equal(hf.protein, "salmon");
-assert.doesNotMatch(hf.steps.join(" "), /\bchicken\b/i);
-assert.match(hf.ingredients.join(" "), /Chicken Stock Concentrate/);
-assert.match(hf.ingredients.join(" "), /Salmon/);
+assert.equal(hf, null, "HelloFresh salmon card that still says to pat the chicken is dropped");
 
 const catalog = JSON.parse(readFileSync(new URL("../meal-plan-data.json", import.meta.url), "utf8"));
 for (const candidate of Object.values(catalog.candidates)) {
@@ -228,6 +220,13 @@ const excluded = buildPlanFromCandidates(salmonPool(), {
 });
 assert.equal(excluded.slots[0].mealId, "salmon-5");
 
+const noneLeft = buildPlanFromCandidates(salmonPool(), {
+  ...prefs,
+  seed: "keep",
+  excludeIds: ["salmon-0", "salmon-1", "salmon-2", "salmon-3", "salmon-4", "salmon-5"],
+});
+assert.equal(noneLeft.slots[0].mealId, null);
+
 const band = {};
 for (const [id, score] of [["salmon-a", 84], ["salmon-b", 86], ["salmon-c", 40]]) {
   band[id] = meal({
@@ -256,6 +255,13 @@ const planB = helloFreshSearchPlan("salmon", "seed-b");
 assert.equal(JSON.stringify(planA), JSON.stringify(helloFreshSearchPlan("salmon", "seed-a")));
 assert.notEqual(JSON.stringify(planA), JSON.stringify(planB));
 assert.ok(planA.length >= 3 && planA.length <= 4);
+const beefPlan = helloFreshSearchPlan("beef", "beef-seed");
+assert.ok(beefPlan.some((job) => /ground|burger|taco|meatball/.test(job.q)), JSON.stringify(beefPlan));
+assert.ok(beefPlan.some((job) => /steak|sirloin|flank|ribeye/.test(job.q)), JSON.stringify(beefPlan));
+const skips = new Set();
+for (let n = 0; n < 12; n++) helloFreshPageSkips("page-" + n, "salmon").forEach((skip) => skips.add(skip));
+assert.ok([...skips].some((skip) => skip >= 24), [...skips].join(","));
+assert.ok([...skips].includes(0));
 
 const baA = blueApronSeedPlan("one");
 const baB = blueApronSeedPlan("two");

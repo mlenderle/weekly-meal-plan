@@ -580,14 +580,15 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
       const ids = [];
       const push = (id) => {
         const clean = String(id || "").trim();
-        if (!clean || ids.includes(clean) || ids.length >= 24) return;
+        if (!clean || ids.includes(clean) || ids.length >= 64) return;
         ids.push(clean);
       };
+      // On-screen meals first, so Get more excludes what the user is looking at.
+      Object.keys(liveCatalog || {}).forEach(push);
       try {
         const saved = JSON.parse(localStorage.getItem(RECENT_IDS_KEY) || "[]");
         if (Array.isArray(saved)) saved.forEach(push);
       } catch (_) {}
-      Object.keys(liveCatalog || {}).forEach(push);
       return ids;
     }
 
@@ -596,7 +597,7 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
         const out = [];
         const push = (id) => {
           const clean = String(id || "").trim();
-          if (!clean || out.includes(clean) || out.length >= 24) return;
+          if (!clean || out.includes(clean) || out.length >= 64) return;
           out.push(clean);
         };
         (ids || []).forEach(push);
@@ -1076,14 +1077,17 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
 
         const freshIds = Object.entries(incoming)
           .map(([id, m]) => ({ id: m && m.id ? m.id : id, meal: m }))
-          .filter(({ meal, id }) => id && meal && meal.protein === s.protein)
+          .filter(({ meal, id }) => id && meal && meal.protein === s.protein && !before.has(id))
           .map(({ id }) => id);
-        const mergedIds = [...freshIds, ...eligiblePool(s.protein).map((m) => m.id)];
-        s.alternateIds = shuffle([...new Set(mergedIds)].filter((id) => id !== s.mealId)).slice(0, 12);
+        const addedIds = [...new Set(freshIds)].filter((id) => id !== s.mealId);
+        if (addedIds.length) {
+          s.alternateIds = shuffle(addedIds).slice(0, 12);
+          s.hideCatalogBackfill = true;
+        }
         rememberRecipeIds(Object.keys(liveCatalog));
         renderPickerSummary("Live");
         render();
-        const added = [...new Set(freshIds)].filter((id) => !before.has(id)).length;
+        const added = addedIds.length;
         setFreshStatus(
           "Added " + added + " fresh " + s.protein + " option" + (added === 1 ? "" : "s") + ". Your selected meals stayed unchanged.",
           false
@@ -1223,8 +1227,10 @@ const DATA = {"version":3,"title":"Weekly Meal Planner","timezone":"America/Bois
           panel.innerHTML = `<div class="swap-title">Choose a ${escapeHtml(protein || "matching")} option</div>`;
           const seen = new Set();
           const extras = [];
-          const candidates = [s.mealId, ...s.alternateIds]
-            .concat(eligiblePool(s.protein).map((m) => m.id));
+          const candidates = [s.mealId, ...s.alternateIds];
+          if (!s.hideCatalogBackfill) {
+            candidates.push(...eligiblePool(s.protein).map((m) => m.id));
+          }
           for (const id of candidates) {
             if (!id || seen.has(id) || id === s.mealId) {
               if (id) seen.add(id);
